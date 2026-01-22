@@ -105,8 +105,8 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        {/* Gender Analysis */}
-        <div className="bg-slate-900/40 backdrop-blur-xl p-10 rounded-[3rem] border border-white/[0.05] shadow-2xl">
+        {/* Gender Analysis - Full width for balanced look */}
+        <div className="bg-slate-900/40 backdrop-blur-xl p-10 rounded-[3rem] border border-white/[0.05] shadow-2xl lg:col-span-2">
           <div className="flex items-center justify-between mb-10">
             <div>
               <h3 className="font-extrabold text-white uppercase text-xs tracking-[0.2em] mb-1">KOMPOSISI JANTINA</h3>
@@ -114,7 +114,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
             </div>
             <div className="w-10 h-10 rounded-full border border-white/[0.05] flex items-center justify-center text-slate-500 font-mono text-[10px]">01</div>
           </div>
-          <div className="h-[300px]">
+          <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={getGenderData()} layout="vertical" margin={{ left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#ffffff05" />
@@ -134,7 +134,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
           </div>
         </div>
 
-        {/* Ethnic Distribution */}
+        {/* Ethnic Distribution - Half width */}
         <div className="bg-slate-900/40 backdrop-blur-xl p-10 rounded-[3rem] border border-white/[0.05] shadow-2xl">
           <div className="flex items-center justify-between mb-10">
             <div>
@@ -163,18 +163,18 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
           </div>
         </div>
 
-        {/* Academic Level Breakdown */}
-        <div className="bg-slate-900/40 backdrop-blur-xl p-10 rounded-[3rem] border border-white/[0.05] shadow-2xl lg:col-span-2">
+        {/* Form Distribution - Half width (Side-by-side with Ethnic) */}
+        <div className="bg-slate-900/40 backdrop-blur-xl p-10 rounded-[3rem] border border-white/[0.05] shadow-2xl">
           <div className="flex items-center justify-between mb-10">
             <div>
-              <h3 className="font-extrabold text-white uppercase text-xs tracking-[0.2em] mb-1">KEKHSUSAN TINGKATAN</h3>
-              <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Membership distribution by academic level</p>
+              <h3 className="font-extrabold text-white uppercase text-xs tracking-[0.2em] mb-1">TINGKATAN</h3>
+              <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Membership by academic level</p>
             </div>
             <div className="w-10 h-10 rounded-full border border-white/[0.05] flex items-center justify-center text-slate-500 font-mono text-[10px]">03</div>
           </div>
-          <div className="h-[350px]">
+          <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={getFormData()} margin={{ left: 20, right: 20, bottom: 20 }}>
+              <BarChart data={getFormData()} margin={{ left: 10, right: 10, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff05" />
                 <XAxis dataKey="name" stroke="#475569" fontSize={9} fontWeight="900" axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} />
                 <YAxis stroke="#475569" fontSize={9} fontWeight="900" axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} />
@@ -182,9 +182,9 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
                   cursor={{ fill: '#ffffff05' }}
                   contentStyle={{ backgroundColor: '#020617', border: '1px solid #ffffff10', borderRadius: '24px', fontSize: '12px', fontWeight: 'bold', padding: '16px' }}
                 />
-                <Bar dataKey="count" fill="#ef4444" radius={[15, 15, 0, 0]} barSize={80}>
+                <Bar dataKey="count" fill="#ef4444" radius={[15, 15, 0, 0]} barSize={40}>
                    {getFormData().map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.count > 10 ? '#ef4444' : '#334155'} />
+                    <Cell key={`cell-${index}`} fill={entry.count > 0 ? '#ef4444' : '#1e293b'} />
                   ))}
                 </Bar>
               </BarChart>
