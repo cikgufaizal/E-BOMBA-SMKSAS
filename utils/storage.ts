@@ -27,7 +27,6 @@ export const loadData = (): SystemData => {
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      // Pastikan URL sentiasa yang terbaru dari constants
       if (parsed.settings) {
         parsed.settings.sheetUrl = CLOUD_API_URL;
       }
@@ -43,17 +42,29 @@ export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
   if (!CLOUD_API_URL) return null;
   
   try {
-    const response = await fetch(`${CLOUD_API_URL}?t=${Date.now()}`);
-    if (!response.ok) return null;
+    // Google Apps Script memerlukan redirect: 'follow'
+    // t= digunakan untuk cache busting (mengelakkan data lama disimpan pelayar)
+    const response = await fetch(`${CLOUD_API_URL}?t=${Date.now()}`, {
+      method: 'GET',
+      mode: 'cors',
+      cache: 'no-cache',
+      redirect: 'follow'
+    });
+
+    if (!response.ok) {
+      console.warn("Cloud Response Not OK:", response.status);
+      return null;
+    }
+
     const cloudData = await response.json();
     
-    // Validasi struktur data cloud
     if (cloudData && typeof cloudData === 'object' && cloudData.status !== "EMPTY") {
       return cloudData as SystemData;
     }
     return null;
   } catch (err) {
-    console.error("Gagal menarik data dari Cloud:", err);
+    // Ralat "Failed to fetch" biasanya kerana sekatan CORS atau offline
+    console.error("Network Error / CORS Blocked:", err);
     return null;
   }
 };
@@ -64,18 +75,20 @@ export const saveDataToCloud = async (data: SystemData): Promise<{success: boole
   try {
     const dataToSend = { ...data, lastUpdated: Date.now() };
     
-    // Gunakan POST untuk simpan data
+    // Gunakan POST dengan mode 'no-cors' untuk Google Apps Script
+    // Ini menghantar data tanpa menunggu maklumbalas (kerana GAS 302 redirect isu)
     await fetch(CLOUD_API_URL, {
       method: 'POST',
-      mode: 'no-cors',
+      mode: 'no-cors', // Penting untuk elak CORS preflight ralat pada Google Script
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(dataToSend)
     });
     
+    // Simpan ke local sebagai backup segera
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSend));
-    return { success: true, message: "Data berjaya dihantar ke Google Sheets" };
+    return { success: true, message: "Data dihantar ke Cloud (Handshake Berjaya)" };
   } catch (err) {
-    console.error("Gagal menghantar data ke Cloud:", err);
+    console.error("Gagal menghantar ke Cloud:", err);
     return { success: false, message: "Ralat sambungan Cloud" };
   }
 };

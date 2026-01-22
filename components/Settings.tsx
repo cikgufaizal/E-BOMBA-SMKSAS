@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { CheckCircle2, RefreshCw, Lock, Shield, Link, AlertTriangle, Copy, School, MapPin, Type, Database, Check, UploadCloud, DownloadCloud } from 'lucide-react';
+import { CheckCircle2, RefreshCw, Lock, Shield, Link, AlertTriangle, Database, UploadCloud, DownloadCloud, FileDown, FileUp } from 'lucide-react';
 import { SystemData } from '../types';
 import { FormCard, Input, Button } from './CommonUI';
 import { saveData, saveDataToCloud } from '../utils/storage';
@@ -19,32 +20,34 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
   const [address, setAddress] = useState(data.settings?.address || '');
   const [isSaving, setIsSaving] = useState(false);
 
-  const CORRECT_PASSWORD = 'CEB1003';
-
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === CORRECT_PASSWORD) setIsAuthorized(true);
-    else { alert("Kata laluan salah!"); setPassword(''); }
+    if (password === 'CEB1003') setIsAuthorized(true);
+    else { alert("Akses Ditolak!"); setPassword(''); }
   };
 
-  const handleSaveSettings = () => {
-    const updatedSettings = { 
-      ...data.settings,
-      sheetUrl, schoolName, clubName, address,
-      autoSync: true
+  const exportData = () => {
+    const dataStr = JSON.stringify(data, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const exportFileDefaultName = `BACKUP_BOMBA_${new Date().toISOString().split('T')[0]}.json`;
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
+  const importData = (e: any) => {
+    const fileReader = new FileReader();
+    fileReader.readAsText(e.target.files[0], "UTF-8");
+    fileReader.onload = (event: any) => {
+      try {
+        const imported = JSON.parse(event.target.result);
+        if (confirm("Gantikan data sedia ada dengan fail backup ini?")) {
+          updateData(imported);
+          alert("Restore Berjaya!");
+        }
+      } catch (err) { alert("Format fail tidak sah!"); }
     };
-    updateData({ settings: updatedSettings });
-    saveData({ ...data, settings: updatedSettings });
-    alert("Tetapan Admin Disimpan!");
-  };
-
-  const handleForcePush = async () => {
-    if (!sheetUrl) return alert("Sila masukkan URL API!");
-    if (!confirm("Amaran: Data di Cloud (Google Sheets) akan digantikan dengan data Laptop ini. Teruskan?")) return;
-    setIsSaving(true);
-    const res = await saveDataToCloud(data);
-    setIsSaving(false);
-    alert(res.message);
   };
 
   if (!isAuthorized) {
@@ -52,10 +55,10 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
       <div className="min-h-[60vh] flex items-center justify-center p-6">
         <div className="w-full max-w-md bg-slate-900 border border-slate-800 p-10 rounded-[2.5rem] shadow-2xl text-center">
           <Lock className="w-12 h-12 text-red-600 mx-auto mb-6" />
-          <h2 className="text-2xl font-black text-white uppercase italic mb-8">Admin Access</h2>
+          <h2 className="text-2xl font-black text-white uppercase italic mb-8">Admin Restricted Access</h2>
           <form onSubmit={handleLogin} className="space-y-4">
-            <input type="password" placeholder="PASSWORD" className="w-full px-6 py-4 bg-slate-950 border border-slate-800 rounded-2xl text-center text-white" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
-            <Button type="submit" className="w-full h-14">VERIFY IDENTITY</Button>
+            <input type="password" placeholder="ENTER ADMIN KEY" className="w-full px-6 py-4 bg-slate-950 border border-slate-800 rounded-2xl text-center text-white font-black" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
+            <Button type="submit" className="w-full h-14">AUTHORIZE SESSION</Button>
           </form>
         </div>
       </div>
@@ -63,64 +66,50 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-20 animate-in fade-in duration-500">
+    <div className="max-w-4xl mx-auto space-y-8 pb-20 animate-in fade-in">
       <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 flex justify-between items-center">
         <div className="flex items-center gap-5">
           <Shield className="w-8 h-8 text-red-600" />
-          <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Enterprise Cloud Bridge</h2>
+          <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">System Intelligence Core</h2>
         </div>
-        <Button variant="secondary" onClick={() => setIsAuthorized(false)}>Logout</Button>
+        <Button variant="secondary" onClick={() => setIsAuthorized(false)}>Secured Exit</Button>
       </div>
 
-      <FormCard title="Manual Cloud Synchronization">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-           <div className="p-6 bg-slate-950 border border-slate-800 rounded-2xl space-y-4">
-              <div className="flex items-center gap-3">
-                 <DownloadCloud className="w-6 h-6 text-emerald-500" />
-                 <h4 className="font-bold text-white uppercase text-xs">Tarik Data Cloud</h4>
-              </div>
-              <p className="text-[10px] text-slate-500">Ambil data terbaru dari Google Sheets dan kemaskini laptop ini.</p>
-              <Button onClick={onForcePull} variant="secondary" className="w-full">Muat Turun Sekarang</Button>
-           </div>
-           <div className="p-6 bg-slate-950 border border-slate-800 rounded-2xl space-y-4">
-              <div className="flex items-center gap-3">
-                 <UploadCloud className="w-6 h-6 text-red-500" />
-                 <h4 className="font-bold text-white uppercase text-xs">Tolak Data Ke Cloud</h4>
-              </div>
-              <p className="text-[10px] text-slate-500">Hantar data laptop ini untuk menggantikan data di Google Sheets.</p>
-              <Button onClick={handleForcePush} disabled={isSaving} className="w-full">
-                {isSaving ? <RefreshCw className="animate-spin w-4 h-4" /> : <UploadCloud className="w-4 h-4" />}
-                Muat Naik Sekarang
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <FormCard title="Local Data Backup">
+          <div className="space-y-4">
+            <Button onClick={exportData} variant="success" className="w-full">
+              <FileDown className="w-4 h-4" /> Export JSON Backup
+            </Button>
+            <div className="relative">
+              <input type="file" className="hidden" id="import-json" onChange={importData} accept=".json" />
+              <Button onClick={() => document.getElementById('import-json')?.click()} variant="secondary" className="w-full">
+                <FileUp className="w-4 h-4" /> Import JSON Backup
+              </Button>
+            </div>
+          </div>
+        </FormCard>
+
+        <FormCard title="Cloud Handshake">
+           <div className="space-y-4">
+              <Button onClick={onForcePull} variant="secondary" className="w-full">
+                <DownloadCloud className="w-4 h-4" /> Manual Pull from Cloud
+              </Button>
+              <Button onClick={async () => { setIsSaving(true); const r = await saveDataToCloud(data); setIsSaving(false); alert(r.message); }} className="w-full">
+                {isSaving ? <RefreshCw className="animate-spin w-4 h-4" /> : <UploadCloud className="w-4 h-4" />} Push Local to Cloud
               </Button>
            </div>
-        </div>
-      </FormCard>
+        </FormCard>
+      </div>
 
-      <FormCard title="API Configuration">
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-              <Link className="w-3 h-3 text-red-600" /> Google Apps Script Web App URL
-            </label>
-            <input 
-              className="w-full px-6 py-4 bg-slate-950 border border-slate-800 rounded-2xl text-red-500 text-sm font-mono focus:border-red-600 outline-none transition-all"
-              placeholder="https://script.google.com/macros/s/.../exec"
-              value={sheetUrl}
-              onChange={(e) => setSheetUrl(e.target.value)}
-            />
-          </div>
-          <Button onClick={handleSaveSettings} className="w-full h-12">Simpan URL API</Button>
-        </div>
-      </FormCard>
-
-      <FormCard title="Profil Rasmi Unit">
+      <FormCard title="Global Unit Profiles">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Input label="Sekolah" value={schoolName} onChange={(e: any) => setSchoolName(e.target.value)} />
-          <Input label="Unit" value={clubName} onChange={(e: any) => setClubName(e.target.value)} />
+          <Input label="Nama Sekolah" value={schoolName} onChange={(e: any) => setSchoolName(e.target.value)} />
+          <Input label="Nama Unit" value={clubName} onChange={(e: any) => setClubName(e.target.value)} />
           <div className="md:col-span-2">
-            <Input label="Alamat" value={address} onChange={(e: any) => setAddress(e.target.value)} />
+            <Input label="Alamat Surat-Menyurat" value={address} onChange={(e: any) => setAddress(e.target.value)} />
           </div>
-          <Button onClick={handleSaveSettings} className="md:col-span-2 h-14">Kemaskini Profil</Button>
+          <Button onClick={() => { updateData({ settings: { ...data.settings, schoolName, clubName, address } as any }); alert("Profil dikemaskini."); }} className="md:col-span-2 h-14">Save Global Profile</Button>
         </div>
       </FormCard>
     </div>
