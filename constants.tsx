@@ -2,8 +2,8 @@
 import React from 'react';
 
 export const SCHOOL_INFO = {
-  name: "SMK SULTAN AHMAD SHAH",
-  address: "Jalan Sultan Ahmad Shah, 25200 Kuantan",
+  name: "SMK SULTAN AHMAD SHAH, CAMERON HIGHLANDS",
+  address: "Tanah Rata, 39000 Cameron Highlands",
   postcode: "Pahang Darul Makmur",
   clubName: "KADET BOMBA"
 };

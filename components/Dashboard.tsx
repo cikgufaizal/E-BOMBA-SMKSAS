@@ -8,16 +8,15 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer, 
-  Cell,
-  Legend
+  Cell
 } from 'recharts';
 import { 
   Users, 
   GraduationCap, 
   Award, 
-  CalendarCheck,
-  TrendingUp,
-  Activity
+  Activity,
+  Zap,
+  ArrowUpRight
 } from 'lucide-react';
 import { SystemData, Jantina, Kaum } from '../types';
 
@@ -35,88 +34,99 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
     const male = data.students.filter(s => s.jantina === Jantina.Lelaki).length;
     const female = data.students.filter(s => s.jantina === Jantina.Perempuan).length;
     return [
-      { name: 'LELAKI', count: male, percentage: totalStudents ? ((male / totalStudents) * 100).toFixed(1) : 0 },
-      { name: 'PEREMPUAN', count: female, percentage: totalStudents ? ((female / totalStudents) * 100).toFixed(1) : 0 },
+      { name: 'LELAKI', count: male },
+      { name: 'PEREMPUAN', count: female },
     ];
   };
 
   const getRaceData = () => {
-    return Object.values(Kaum).map(race => {
-      const count = data.students.filter(s => s.kaum === race).length;
-      return { 
-        name: race, 
-        count, 
-        percentage: totalStudents ? ((count / totalStudents) * 100).toFixed(1) : 0 
-      };
-    });
+    return Object.values(Kaum).map(race => ({
+      name: race, 
+      count: data.students.filter(s => s.kaum === race).length
+    }));
   };
 
   const getFormData = () => {
-    return ['1', '2', '3', '4', '5'].map(form => {
-      const count = data.students.filter(s => s.tingkatan === form).length;
-      return { 
-        name: `T${form}`, 
-        count,
-        percentage: totalStudents ? ((count / totalStudents) * 100).toFixed(1) : 0
-      };
-    });
+    return ['1', '2', '3', '4', '5'].map(form => ({
+      name: `TING. ${form}`, 
+      count: data.students.filter(s => s.tingkatan === form).length
+    }));
   };
 
-  const COLORS = ['#dc2626', '#b45309', '#0f766e', '#4338ca', '#7e22ce', '#be123c'];
+  const COLORS = ['#ef4444', '#f59e0b', '#10b981', '#6366f1', '#a855f7', '#ec4899'];
 
-  const StatCard = ({ title, value, icon: Icon, gradient }: any) => (
-    <div className={`relative overflow-hidden rounded-3xl p-8 bg-slate-900 border border-slate-800 shadow-2xl transition-all duration-300 hover:border-red-900/50 group`}>
-      <div className="relative z-10 flex justify-between items-start">
-        <div>
-          <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2 group-hover:text-red-500 transition-colors">{title}</p>
-          <h3 className="text-4xl font-black text-white tracking-tighter">{value}</h3>
+  const StatCard = ({ title, value, icon: Icon, delay }: any) => (
+    <div className="relative group overflow-hidden bg-slate-900/40 backdrop-blur-xl border border-white/[0.05] rounded-[2.5rem] p-10 transition-all duration-500 hover:border-red-500/30 hover:-translate-y-2 shadow-2xl">
+      <div className="relative z-10">
+        <div className="flex items-center justify-between mb-8">
+          <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.05] group-hover:bg-red-600 group-hover:text-white transition-all duration-500">
+            <Icon className="w-6 h-6 text-red-600 group-hover:text-white" />
+          </div>
+          <ArrowUpRight className="w-5 h-5 text-slate-700 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0" />
         </div>
-        <div className={`p-4 rounded-2xl bg-slate-950 border border-slate-800 group-hover:scale-110 group-hover:border-red-600/30 transition-all duration-500`}>
-          <Icon className="w-6 h-6 text-slate-400 group-hover:text-red-600" />
-        </div>
+        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">{title}</p>
+        <h3 className="text-5xl font-extrabold text-white tracking-tighter leading-none">{value}</h3>
       </div>
-      <div className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.07] transition-all duration-500">
-        <Icon className="w-40 h-40 text-white" />
+      
+      {/* Background Decor */}
+      <div className="absolute -right-8 -bottom-8 opacity-[0.02] group-hover:opacity-[0.08] transition-all duration-700">
+        <Icon className="w-48 h-48 rotate-12" />
       </div>
-      <div className={`absolute bottom-0 left-0 h-1 w-0 group-hover:w-full transition-all duration-700 bg-red-600`}></div>
+      
+      {/* Animated Shine */}
+      <div className="absolute inset-0 shimmer opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
     </div>
   );
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-700">
+    <div className="space-y-12 animate-slide-up">
+      {/* TOP HEADER */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <div className="flex items-center gap-3 text-red-500 mb-2">
+            <Zap className="w-4 h-4 fill-current" />
+            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Real-time Analytics</span>
+          </div>
+          <h2 className="text-4xl font-extrabold text-white tracking-tighter italic">UNIT PERFORMANCE <span className="text-slate-700 not-italic">OVERVIEW</span></h2>
+        </div>
+        <div className="flex gap-2">
+           <div className="px-5 py-2 rounded-xl bg-white/[0.03] border border-white/[0.05] text-[10px] font-black uppercase text-slate-500">System Ready</div>
+           <div className="px-5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-black uppercase text-emerald-500">Secure Link</div>
+        </div>
+      </div>
+
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Guru Penasihat" value={totalTeachers} icon={GraduationCap} />
-        <StatCard title="Kekuatan Anggota" value={totalStudents} icon={Users} />
-        <StatCard title="Barisan AJK" value={totalCommittees} icon={Award} />
-        <StatCard title="Operasi Aktiviti" value={totalActivities} icon={Activity} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <StatCard title="GURU PEMBIMBING" value={totalTeachers} icon={GraduationCap} />
+        <StatCard title="KEKUATAN ANGGOTA" value={totalStudents} icon={Users} />
+        <StatCard title="BARISAN AJK" value={totalCommittees} icon={Award} />
+        <StatCard title="OPERASI AKTIVITI" value={totalActivities} icon={Activity} />
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Gender Chart */}
-        <div className="bg-slate-900/40 backdrop-blur-md p-8 rounded-[2rem] shadow-2xl border border-slate-800">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-               <div className="w-1.5 h-6 bg-red-600 rounded-full"></div>
-               <h3 className="font-black text-white uppercase text-xs tracking-widest">Komposisi Jantina</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        {/* Gender Analysis */}
+        <div className="bg-slate-900/40 backdrop-blur-xl p-10 rounded-[3rem] border border-white/[0.05] shadow-2xl">
+          <div className="flex items-center justify-between mb-10">
+            <div>
+              <h3 className="font-extrabold text-white uppercase text-xs tracking-[0.2em] mb-1">KOMPOSISI JANTINA</h3>
+              <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Demographic split by gender</p>
             </div>
-            <TrendingUp className="w-4 h-4 text-slate-600" />
+            <div className="w-10 h-10 rounded-full border border-white/[0.05] flex items-center justify-center text-slate-500 font-mono text-[10px]">01</div>
           </div>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={getGenderData()} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#1e293b" />
+              <BarChart data={getGenderData()} layout="vertical" margin={{ left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#ffffff05" />
                 <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" width={80} stroke="#475569" fontSize={10} fontWeight="bold" />
+                <YAxis dataKey="name" type="category" stroke="#475569" fontSize={9} fontWeight="900" width={100} tick={{ fill: '#64748b' }} axisLine={false} tickLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '10px' }}
-                  itemStyle={{ color: '#f1f5f9' }}
-                  cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                  cursor={{ fill: '#ffffff05' }}
+                  contentStyle={{ backgroundColor: '#020617', border: '1px solid #ffffff10', borderRadius: '16px', fontSize: '10px', fontWeight: 'bold' }}
                 />
-                <Bar dataKey="count" radius={[0, 8, 8, 0]} barSize={32}>
+                <Bar dataKey="count" radius={[0, 10, 10, 0]} barSize={40}>
                   {getGenderData().map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={index === 0 ? '#dc2626' : '#991b1b'} />
+                    <Cell key={`cell-${index}`} fill={index === 0 ? '#ef4444' : '#7f1d1d'} />
                   ))}
                 </Bar>
               </BarChart>
@@ -124,26 +134,26 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
           </div>
         </div>
 
-        {/* Race Chart */}
-        <div className="bg-slate-900/40 backdrop-blur-md p-8 rounded-[2rem] shadow-2xl border border-slate-800">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-               <div className="w-1.5 h-6 bg-amber-600 rounded-full"></div>
-               <h3 className="font-black text-white uppercase text-xs tracking-widest">Taburan Etnik</h3>
+        {/* Ethnic Distribution */}
+        <div className="bg-slate-900/40 backdrop-blur-xl p-10 rounded-[3rem] border border-white/[0.05] shadow-2xl">
+          <div className="flex items-center justify-between mb-10">
+            <div>
+              <h3 className="font-extrabold text-white uppercase text-xs tracking-[0.2em] mb-1">TABURAN ETNIK</h3>
+              <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Diversity within the unit</p>
             </div>
-            <TrendingUp className="w-4 h-4 text-slate-600" />
+            <div className="w-10 h-10 rounded-full border border-white/[0.05] flex items-center justify-center text-slate-500 font-mono text-[10px]">02</div>
           </div>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={getRaceData()}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
-                <XAxis dataKey="name" stroke="#475569" fontSize={10} fontWeight="bold" />
-                <YAxis stroke="#475569" fontSize={10} fontWeight="bold" />
+              <BarChart data={getRaceData()} margin={{ bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff05" />
+                <XAxis dataKey="name" stroke="#475569" fontSize={8} fontWeight="900" axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} />
+                <YAxis stroke="#475569" fontSize={8} fontWeight="900" axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '10px' }}
-                  cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                  cursor={{ fill: '#ffffff05' }}
+                  contentStyle={{ backgroundColor: '#020617', border: '1px solid #ffffff10', borderRadius: '16px', fontSize: '10px', fontWeight: 'bold' }}
                 />
-                <Bar dataKey="count" radius={[8, 8, 0, 0]} barSize={40}>
+                <Bar dataKey="count" radius={[10, 10, 0, 0]} barSize={32}>
                   {getRaceData().map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
@@ -153,26 +163,30 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
           </div>
         </div>
 
-        {/* Form Chart */}
-        <div className="bg-slate-900/40 backdrop-blur-md p-8 rounded-[2rem] shadow-2xl border border-slate-800 lg:col-span-2">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-               <div className="w-1.5 h-6 bg-slate-400 rounded-full"></div>
-               <h3 className="font-black text-white uppercase text-xs tracking-widest">Analisis Keahlian Mengikut Tingkatan</h3>
+        {/* Academic Level Breakdown */}
+        <div className="bg-slate-900/40 backdrop-blur-xl p-10 rounded-[3rem] border border-white/[0.05] shadow-2xl lg:col-span-2">
+          <div className="flex items-center justify-between mb-10">
+            <div>
+              <h3 className="font-extrabold text-white uppercase text-xs tracking-[0.2em] mb-1">KEKHSUSAN TINGKATAN</h3>
+              <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Membership distribution by academic level</p>
             </div>
-            <TrendingUp className="w-4 h-4 text-slate-600" />
+            <div className="w-10 h-10 rounded-full border border-white/[0.05] flex items-center justify-center text-slate-500 font-mono text-[10px]">03</div>
           </div>
-          <div className="h-[300px]">
+          <div className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={getFormData()}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
-                <XAxis dataKey="name" stroke="#475569" fontSize={10} fontWeight="bold" />
-                <YAxis stroke="#475569" fontSize={10} fontWeight="bold" />
+              <BarChart data={getFormData()} margin={{ left: 20, right: 20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff05" />
+                <XAxis dataKey="name" stroke="#475569" fontSize={9} fontWeight="900" axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} />
+                <YAxis stroke="#475569" fontSize={9} fontWeight="900" axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '10px' }}
-                  cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                  cursor={{ fill: '#ffffff05' }}
+                  contentStyle={{ backgroundColor: '#020617', border: '1px solid #ffffff10', borderRadius: '24px', fontSize: '12px', fontWeight: 'bold', padding: '16px' }}
                 />
-                <Bar dataKey="count" fill="#b91c1c" radius={[12, 12, 0, 0]} barSize={60} />
+                <Bar dataKey="count" fill="#ef4444" radius={[15, 15, 0, 0]} barSize={80}>
+                   {getFormData().map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.count > 10 ? '#ef4444' : '#334155'} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>

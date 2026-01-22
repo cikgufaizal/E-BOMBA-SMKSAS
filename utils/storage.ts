@@ -1,6 +1,6 @@
 
 import { SystemData } from '../types';
-import { CLOUD_API_URL } from '../constants';
+import { CLOUD_API_URL, SCHOOL_INFO } from '../constants';
 
 const STORAGE_KEY = 'ekelab_data_v1';
 
@@ -15,9 +15,9 @@ const createEmptyData = (): SystemData => ({
   settings: {
     sheetUrl: CLOUD_API_URL,
     autoSync: true,
-    schoolName: 'SMK SULTAN AHMAD SHAH',
-    clubName: 'KADET BOMBA',
-    address: 'Jalan Sultan Ahmad Shah, 25200 Kuantan'
+    schoolName: SCHOOL_INFO.name,
+    clubName: SCHOOL_INFO.clubName,
+    address: SCHOOL_INFO.address
   }
 });
 
