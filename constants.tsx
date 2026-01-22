@@ -8,6 +8,12 @@ export const SCHOOL_INFO = {
   clubName: "KADET BOMBA"
 };
 
+/**
+ * URL API KEKAL (HARDCODED)
+ * Sistem akan sentiasa merujuk URL ini secara automatik.
+ */
+export const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbyyGItePiD1F3Cy4mFaETxFx2NPuA5NjKLcC9fEjdpk1IjZmMLPnp3uLs-5GMmTdmNVEg/exec"; 
+
 export const THEME_COLOR = {
   primary: "bg-red-700",
   secondary: "bg-amber-600",

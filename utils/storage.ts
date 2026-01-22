@@ -1,5 +1,6 @@
 
 import { SystemData } from '../types';
+import { CLOUD_API_URL } from '../constants';
 
 const STORAGE_KEY = 'ekelab_data_v1';
 
@@ -12,7 +13,7 @@ const createEmptyData = (): SystemData => ({
   annualPlans: [],
   lastUpdated: 0,
   settings: {
-    sheetUrl: '', 
+    sheetUrl: CLOUD_API_URL,
     autoSync: true,
     schoolName: 'SMK SULTAN AHMAD SHAH',
     clubName: 'KADET BOMBA',
@@ -25,7 +26,12 @@ export const loadData = (): SystemData => {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     try {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      // Pastikan URL sentiasa yang terbaru dari constants
+      if (parsed.settings) {
+        parsed.settings.sheetUrl = CLOUD_API_URL;
+      }
+      return parsed;
     } catch (e) {
       return createEmptyData();
     }
@@ -33,33 +39,33 @@ export const loadData = (): SystemData => {
   return createEmptyData();
 };
 
-export const fetchDataFromCloud = async (url: string): Promise<SystemData | null> => {
-  if (!url || !url.includes('script.google.com')) return null;
+export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
+  if (!CLOUD_API_URL) return null;
+  
   try {
-    const response = await fetch(`${url}?t=${Date.now()}`);
+    const response = await fetch(`${CLOUD_API_URL}?t=${Date.now()}`);
     if (!response.ok) return null;
     const cloudData = await response.json();
     
     // Validasi struktur data cloud
-    if (cloudData && typeof cloudData === 'object' && (Array.isArray(cloudData.students) || Array.isArray(cloudData.teachers))) {
+    if (cloudData && typeof cloudData === 'object' && cloudData.status !== "EMPTY") {
       return cloudData as SystemData;
     }
     return null;
   } catch (err) {
-    console.error("Cloud Fetch Error:", err);
+    console.error("Gagal menarik data dari Cloud:", err);
     return null;
   }
 };
 
 export const saveDataToCloud = async (data: SystemData): Promise<{success: boolean, message: string}> => {
-  const url = data.settings?.sheetUrl;
-  if (!url || !url.includes('script.google.com')) return { success: false, message: "URL API Tidak Sah" };
+  if (!CLOUD_API_URL) return { success: false, message: "URL API Tidak Dikesan" };
 
   try {
-    // Pastikan timestamp sentiasa dikemaskini sebelum hantar
     const dataToSend = { ...data, lastUpdated: Date.now() };
     
-    await fetch(url, {
+    // Gunakan POST untuk simpan data
+    await fetch(CLOUD_API_URL, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain' },
@@ -67,10 +73,10 @@ export const saveDataToCloud = async (data: SystemData): Promise<{success: boole
     });
     
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSend));
-    return { success: true, message: "Data berjaya diselaraskan ke Cloud" };
+    return { success: true, message: "Data berjaya dihantar ke Google Sheets" };
   } catch (err) {
-    console.error("Cloud Save Error:", err);
-    return { success: false, message: "Gagal menyambung ke Cloud" };
+    console.error("Gagal menghantar data ke Cloud:", err);
+    return { success: false, message: "Ralat sambungan Cloud" };
   }
 };
 

@@ -1,11 +1,10 @@
-
 /**
- * SISTEM PENGURUSAN KADET BOMBA PROFESSIONAL - CLOUD BRIDGE v9.0
+ * SISTEM PENGURUSAN KADET BOMBA - CLOUD CORE v10.0
  * -----------------------------------------------------------------------------
- * SISTEM INI AKAN MENYUSUN DATA KE DALAM BARIS-BARIS SPREADSHEET (ROWS).
+ * MENYIMPAN DATA DALAM BARIS SPREADSHEET (HUMAN READABLE)
  */
 
-const SYNC_SHEET = "SYSTEM_SYNC_STATE";
+const SYNC_SHEET = "DATABASE_SYNC";
 
 function doGet(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -15,7 +14,8 @@ function doGet(e) {
   var data = sheet.getRange(1, 1).getValue();
   if (!data) return createJsonResponse({ status: "EMPTY", lastUpdated: 0 });
   
-  return ContentService.createTextOutput(data).setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(data)
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
@@ -29,19 +29,19 @@ function doPost(e) {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var syncSheet = ss.getSheetByName(SYNC_SHEET) || ss.insertSheet(SYNC_SHEET);
     
-    // 1. BANDINGKAN TIMESTAMP (ELAK OVERWRITE)
+    // 1. SEMAK TIMESTAMP UNTUK ELAK DATA LAMA PADAM DATA BARU
     var oldDataRaw = syncSheet.getRange(1, 1).getValue();
     if (oldDataRaw) {
       var oldData = JSON.parse(oldDataRaw);
       if (contents.lastUpdated && oldData.lastUpdated && contents.lastUpdated < oldData.lastUpdated) {
-        return ContentService.createTextOutput("FAILED: OLDER_VERSION_DETECTED");
+        return ContentService.createTextOutput("FAILED: OLDER_VERSION_IGNORE");
       }
     }
 
-    // 2. SIMPAN STATE UTAMA (UNTUK APP TARIK)
+    // 2. SIMPAN STATE UTAMA (SUMBER UNTUK APP)
     syncSheet.clear().getRange(1, 1).setValue(e.postData.contents);
     
-    // 3. SUSUN DATA KE DALAM BARIS (UNTUK CIKGU TENGOK/PRINT DI GOOGLE SHEETS)
+    // 3. PECAHKAN DATA KE BARIS SPREADSHEET (UNTUK CIKGU BACA)
     if (contents.students) {
       updateRows(ss, 'AHLI', ['ID', 'NAMA', 'NO KP', 'TING.', 'KELAS', 'JANTINA', 'KAUM'], 
         contents.students.map(s => [s.id, s.nama, s.noKP, s.tingkatan, s.kelas, s.jantina, s.kaum]));
@@ -58,13 +58,8 @@ function doPost(e) {
     }
 
     if (contents.attendances) {
-      updateRows(ss, 'KEHADIRAN', ['ID', 'TARIKH', 'JUMLAH HADIR'], 
-        contents.attendances.map(att => [att.id, att.tarikh, att.presents.length]));
-    }
-
-    if (contents.annualPlans) {
-      updateRows(ss, 'RANCANGAN_TAHUNAN', ['ID', 'BULAN', 'PROGRAM', 'TEMPAT', 'CATATAN'], 
-        contents.annualPlans.map(p => [p.id, p.bulan, p.program, p.tempat, p.catatan]));
+      updateRows(ss, 'KEHADIRAN', ['ID', 'TARIKH', 'BIL_HADIR'], 
+        contents.attendances.map(att => [att.id, att.tarikh, (att.presents ? att.presents.length : 0)]));
     }
 
     return ContentService.createTextOutput("SUCCESS");
@@ -86,5 +81,6 @@ function updateRows(ss, name, headers, rows) {
 }
 
 function createJsonResponse(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
 }
