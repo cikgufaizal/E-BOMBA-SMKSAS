@@ -82,6 +82,9 @@ export interface AnnualPlan {
 export interface CloudSettings {
   sheetUrl: string;
   logoUrl?: string;
+  schoolName?: string;
+  clubName?: string;
+  address?: string;
   autoSync: boolean;
   lastSync?: string;
 }

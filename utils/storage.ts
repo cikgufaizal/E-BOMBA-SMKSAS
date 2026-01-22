@@ -11,7 +11,11 @@ const createEmptyData = (): SystemData => ({
   annualPlans: [],
   settings: {
     sheetUrl: '',
-    autoSync: false
+    autoSync: false,
+    schoolName: '',
+    clubName: '',
+    address: '',
+    logoUrl: ''
   }
 });
 
@@ -49,18 +53,18 @@ export const saveData = async (data: SystemData) => {
 };
 
 export const testCloudConnection = async (url: string): Promise<boolean> => {
-  if (!url) return false;
+  if (!url || !url.startsWith('https://script.google.com')) return false;
   try {
-    // Kami menggunakan no-cors kerana Google Apps Script tidak menghantar header CORS yang betul
-    // Namun fetch akan tetap menghantar data ke sana.
-    await fetch(url, {
+    const response = await fetch(url, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ test: true })
+      body: JSON.stringify({ test: true, timestamp: new Date().toISOString() })
     });
+    // Kerana no-cors, kita anggap berjaya jika tiada exception dilempar
     return true; 
   } catch (err) {
+    console.error("Connection test failed:", err);
     return false;
   }
 };

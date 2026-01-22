@@ -40,32 +40,33 @@ const App: React.FC = () => {
     type: null
   });
 
-  // Auto-Config via URL (untuk Cross-Device Persistence)
+  // Auto-Config via URL Master Link
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const cloudKey = params.get('config');
     if (cloudKey) {
       try {
         const decoded = JSON.parse(atob(cloudKey));
-        if (decoded.url || decoded.logoUrl) {
-          setData(prev => {
-             const newData = {
-               ...prev,
-               settings: { 
-                 ...prev.settings, 
-                 sheetUrl: decoded.url || prev.settings?.sheetUrl || '', 
-                 logoUrl: decoded.logoUrl || prev.settings?.logoUrl || '',
-                 autoSync: !!decoded.url 
-               }
-             };
-             saveData(newData);
-             return newData;
-          });
-          window.history.replaceState({}, document.title, window.location.pathname);
-          alert("Auto-Konfigurasi Identiti Berjaya!");
-        }
+        setData(prev => {
+           const newData = {
+             ...prev,
+             settings: { 
+               ...prev.settings, 
+               sheetUrl: decoded.url || prev.settings?.sheetUrl || '', 
+               logoUrl: decoded.logoUrl || prev.settings?.logoUrl || '',
+               schoolName: decoded.schoolName || prev.settings?.schoolName || SCHOOL_INFO.name,
+               clubName: decoded.clubName || prev.settings?.clubName || SCHOOL_INFO.clubName,
+               address: decoded.address || prev.settings?.address || SCHOOL_INFO.address,
+               autoSync: !!decoded.url 
+             }
+           };
+           saveData(newData);
+           return newData;
+        });
+        window.history.replaceState({}, document.title, window.location.pathname);
+        alert("Konfigurasi Master Berjaya Diimport!");
       } catch (e) {
-        console.error("Gagal nyahkod konfigurasi URL");
+        console.error("Gagal nyahkod pautan master");
       }
     }
   }, []);
@@ -88,6 +89,9 @@ const App: React.FC = () => {
     { id: 'rancangan', label: 'Rancangan Tahunan', icon: ClipboardList },
     { id: 'settings', label: 'Konfigurasi Cloud', icon: SettingsIcon },
   ];
+
+  const currentSchoolName = data.settings?.schoolName || SCHOOL_INFO.name;
+  const currentClubName = data.settings?.clubName || SCHOOL_INFO.clubName;
 
   const renderContent = () => {
     switch (activeTab) {
@@ -137,10 +141,10 @@ const App: React.FC = () => {
           </div>
           <div className={`${!isSidebarOpen && 'md:hidden'}`}>
             <h2 className="font-black text-xl leading-tight tracking-tighter text-white uppercase italic">
-              {SCHOOL_INFO.clubName}
+              {currentClubName}
             </h2>
             <p className="text-[10px] font-black text-red-500/80 uppercase tracking-widest mt-1">
-              {SCHOOL_INFO.name}
+              {currentSchoolName}
             </p>
           </div>
         </div>
@@ -175,7 +179,7 @@ const App: React.FC = () => {
                     {data.settings?.sheetUrl ? 'Cloud Connected' : 'Local Mode'}
                    </p>
                 </div>
-                <p className="text-sm font-bold text-slate-200 tracking-tighter italic">V3.0 Enterprise</p>
+                <p className="text-sm font-bold text-slate-200 tracking-tighter italic uppercase">Enterprise V3.1</p>
               </div>
             ) : (
               <div className="w-full text-center text-[10px] font-black text-red-600">PRO</div>

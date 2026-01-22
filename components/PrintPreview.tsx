@@ -14,6 +14,10 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
   const currentYear = new Date().getFullYear();
   const printTime = new Date().toLocaleString('ms-MY');
 
+  const schoolName = data.settings?.schoolName || SCHOOL_INFO.name;
+  const clubName = data.settings?.clubName || SCHOOL_INFO.clubName;
+  const address = data.settings?.address || SCHOOL_INFO.address;
+
   const Header = () => (
     <div className="relative mb-8 border-b-2 border-black pb-4 print-text-black">
       <div className="flex items-center justify-center gap-6">
@@ -21,11 +25,10 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
           <img src={data.settings.logoUrl} alt="Logo Sekolah" className="w-24 h-24 object-contain" />
         )}
         <div className="text-center">
-          <h1 className="text-2xl font-bold uppercase leading-tight">{SCHOOL_INFO.name}</h1>
-          <p className="text-sm">{SCHOOL_INFO.address}</p>
-          <p className="text-sm font-bold">{SCHOOL_INFO.postcode}</p>
+          <h1 className="text-2xl font-bold uppercase leading-tight">{schoolName}</h1>
+          <p className="text-sm whitespace-pre-wrap">{address}</p>
           <div className="mt-2 border-t border-black/20 pt-1">
-            <h2 className="text-xl font-bold uppercase">{SCHOOL_INFO.clubName}</h2>
+            <h2 className="text-xl font-bold uppercase">{clubName}</h2>
             <p className="text-md">SESI PERSEKOLAHAN {currentYear}</p>
           </div>
         </div>
@@ -35,7 +38,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
 
   const Footer = () => (
     <div className="mt-12 pt-4 border-t border-slate-300 text-[10px] text-slate-600 flex justify-between no-print">
-      <span>Sistem Pengurusan E-BOMBA Professional</span>
+      <span>Sistem Pengurusan {clubName} Professional</span>
       <span>Dicetak: {printTime}</span>
     </div>
   );
@@ -46,7 +49,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         <p>Disediakan oleh:</p>
         <div className="w-64 border-b border-black"></div>
         <p className="text-xs font-bold">(NAMA: _____________________)</p>
-        <p className="text-[10px]">Guru Penasihat Kadet Bomba</p>
+        <p className="text-[10px]">Guru Penasihat {clubName}</p>
       </div>
       <div className="space-y-12">
         <p>Disahkan oleh:</p>
@@ -60,7 +63,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
   const renderAhli = () => (
     <div className="p-10 bg-white min-h-screen text-black">
       <Header />
-      <h3 className="text-center font-bold text-lg mb-6 border-b pb-2">SENARAI INDUK AHLI KADET BOMBA</h3>
+      <h3 className="text-center font-bold text-lg mb-6 border-b pb-2">SENARAI INDUK AHLI {clubName}</h3>
       <table className="w-full border-collapse border border-black text-sm">
         <thead>
           <tr className="bg-gray-100 print-bg-gray">
@@ -190,7 +193,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     return (
       <div className="p-12 bg-white min-h-screen text-black">
         <Header />
-        <h3 className="text-center font-bold text-xl mb-8 underline uppercase">LAPORAN AKTIVITI MINGGUAN KADET BOMBA</h3>
+        <h3 className="text-center font-bold text-xl mb-8 underline uppercase">LAPORAN AKTIVITI MINGGUAN {clubName}</h3>
         
         <div className="space-y-6 text-sm">
           <table className="w-full border-collapse">

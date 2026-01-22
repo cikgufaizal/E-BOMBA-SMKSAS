@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Cloud, Copy, CheckCircle2, RefreshCw, Activity, HelpCircle, Lock, ShieldCheck, Share2, Image as ImageIcon } from 'lucide-react';
+import { Cloud, Copy, CheckCircle2, RefreshCw, Activity, HelpCircle, Lock, ShieldCheck, Share2, Image as ImageIcon, School } from 'lucide-react';
 import { SystemData } from '../types';
 import { FormCard, Input, Button } from './CommonUI';
 import { testCloudConnection } from '../utils/storage';
@@ -14,6 +14,10 @@ const Settings: React.FC<Props> = ({ data, updateData }) => {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [url, setUrl] = useState(data.settings?.sheetUrl || '');
   const [logoUrl, setLogoUrl] = useState(data.settings?.logoUrl || '');
+  const [schoolName, setSchoolName] = useState(data.settings?.schoolName || 'SMK SULTAN AHMAD SHAH');
+  const [clubName, setClubName] = useState(data.settings?.clubName || 'KADET BOMBA');
+  const [address, setAddress] = useState(data.settings?.address || 'Jalan Sultan Ahmad Shah, 25200 Kuantan');
+  
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -25,60 +29,12 @@ const Settings: React.FC<Props> = ({ data, updateData }) => {
     if (password === CORRECT_PASSWORD) {
       setIsAuthorized(true);
     } else {
-      alert("Kata laluan salah! Akses dinafikan.");
+      alert("Kata laluan salah!");
       setPassword('');
     }
   };
 
-  const googleScriptCode = `
-/**
- * SISTEM PENGURUSAN KADET BOMBA - CLOUD BRIDGE v3.0
- */
-function doGet(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName('DB_BACKUP');
-  var data = sheet ? sheet.getRange(1, 1).getValue() : "{}";
-  return ContentService.createTextOutput(data).setMimeType(ContentService.MimeType.JSON);
-}
-
-function doPost(e) {
-  try {
-    var data = JSON.parse(e.postData.contents);
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    
-    // Simpan Backup Raw Data
-    var backupSheet = ss.getSheetByName('DB_BACKUP') || ss.insertSheet('DB_BACKUP');
-    backupSheet.clear();
-    backupSheet.getRange(1, 1).setValue(JSON.stringify(data));
-    
-    // Kemaskini Tab Ahli
-    updateSheet(ss, 'DATA_AHLI', ['ID', 'Nama', 'No KP', 'Tingkatan', 'Kelas', 'Jantina', 'Kaum'], (data.students || []).map(s => [
-      s.id, s.nama, s.noKP, s.tingkatan, s.kelas, s.jantina, s.kaum
-    ]));
-    
-    return ContentService.createTextOutput("SUCCESS").setMimeType(ContentService.MimeType.TEXT);
-  } catch (err) {
-    return ContentService.createTextOutput("ERROR: " + err.message).setMimeType(ContentService.MimeType.TEXT);
-  }
-}
-
-function updateSheet(ss, sheetName, headers, rows) {
-  var sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
-  sheet.clear();
-  sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold').setBackground('#f3f4f6');
-  if (rows && rows.length > 0) {
-    sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
-  }
-  sheet.setFrozenRows(1);
-}
-  `.trim();
-
-  const handleSaveConfig = async () => {
-    if (url && !url.startsWith('https://script.google.com')) {
-      alert("Pautan Google Web App tidak sah.");
-      return;
-    }
-    
+  const handleSaveAll = async () => {
     setTesting(true);
     const success = url ? await testCloudConnection(url) : true;
     setTesting(false);
@@ -88,21 +44,25 @@ function updateSheet(ss, sheetName, headers, rows) {
         ...data.settings,
         sheetUrl: url, 
         logoUrl: logoUrl,
+        schoolName: schoolName,
+        clubName: clubName,
+        address: address,
         autoSync: !!url,
         lastSync: new Date().toISOString() 
       } 
     });
-    alert("Konfigurasi disimpan secara kekal.");
+    alert("Semua tetapan identiti dan cloud telah disimpan.");
   };
 
   const copyMasterLink = () => {
     const baseUrl = window.location.origin + window.location.pathname;
-    const configKey = btoa(JSON.stringify({ url, logoUrl }));
+    const configData = { url, logoUrl, schoolName, clubName, address };
+    const configKey = btoa(JSON.stringify(configData));
     const masterLink = `${baseUrl}?config=${configKey}`;
     navigator.clipboard.writeText(masterLink);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
-    alert("Pautan Master disalin! Ia mengandungi tetapan Cloud & Logo.");
+    alert("Pautan Master disalin! Semua identiti sekolah kini boleh dipindahkan.");
   };
 
   if (!isAuthorized) {
@@ -113,13 +73,13 @@ function updateSheet(ss, sheetName, headers, rows) {
             <Lock className="w-10 h-10 text-red-600" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-black text-white uppercase tracking-tighter italic">Akses Terkunci</h2>
-            <p className="text-slate-500 text-sm font-bold uppercase tracking-widest">Sila masukkan kata laluan pentadbir</p>
+            <h2 className="text-2xl font-black text-white uppercase tracking-tighter italic">Admin Panel</h2>
+            <p className="text-slate-500 text-sm font-bold uppercase tracking-widest">Masukkan kata laluan untuk konfigurasi</p>
           </div>
           <form onSubmit={handleLogin} className="space-y-4">
             <input 
               type="password" 
-              placeholder="Kata Laluan..."
+              placeholder="••••••••"
               className="w-full px-6 py-4 bg-slate-950 border border-slate-800 rounded-2xl text-center text-white focus:ring-2 focus:ring-red-600 outline-none"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -139,108 +99,70 @@ function updateSheet(ss, sheetName, headers, rows) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-900/40 p-8 rounded-[2rem] border border-slate-800">
          <div className="flex items-center gap-6">
             <div className="p-4 bg-red-600 rounded-2xl shadow-[0_0_30px_rgba(220,38,38,0.3)]">
-               <Cloud className="w-8 h-8 text-white" />
+               <School className="w-8 h-8 text-white" />
             </div>
             <div>
-               <h2 className="text-3xl font-black text-white uppercase tracking-tighter italic">Tetapan Enterprise</h2>
-               <p className="text-emerald-500 text-sm font-bold uppercase tracking-widest mt-1">Status: Pentadbir Diizinkan</p>
+               <h2 className="text-3xl font-black text-white uppercase tracking-tighter italic">Konfigurasi Identiti</h2>
+               <p className="text-emerald-500 text-sm font-bold uppercase tracking-widest mt-1">Status: Master Admin</p>
             </div>
          </div>
          <Button variant="secondary" onClick={() => setIsAuthorized(false)}>
-            <Lock className="w-4 h-4" /> Kunci Semula
+            <Lock className="w-4 h-4" /> Tutup Panel
          </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        <FormCard title="1. Identiti Sekolah">
-          <div className="space-y-6">
-            <div className="flex items-center gap-4 mb-4">
-               <div className="w-20 h-20 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-center overflow-hidden">
-                  {logoUrl ? <img src={logoUrl} alt="Preview" className="w-full h-full object-contain" /> : <ImageIcon className="w-8 h-8 text-slate-700" />}
+        <FormCard title="1. Maklumat Rasmi Sekolah">
+          <div className="space-y-5">
+            <div className="flex items-center gap-4 mb-2">
+               <div className="w-16 h-16 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center overflow-hidden">
+                  {logoUrl ? <img src={logoUrl} alt="Preview" className="w-full h-full object-contain" /> : <ImageIcon className="w-6 h-6 text-slate-700" />}
                </div>
-               <div>
-                  <h4 className="text-sm font-bold text-white uppercase">Pratonton Logo</h4>
-                  <p className="text-xs text-slate-500">Logo akan muncul di sidebar & laporan.</p>
-               </div>
+               <Input 
+                  placeholder="Pautan Logo (.png/.jpg)" 
+                  value={logoUrl}
+                  onChange={(e: any) => setLogoUrl(e.target.value)}
+                  className="flex-1"
+               />
             </div>
-            <Input 
-              label="Pautan Logo Sekolah (URL)" 
-              placeholder="https://link-ke-gambar-logo.png" 
-              value={logoUrl}
-              onChange={(e: any) => setLogoUrl(e.target.value)}
-            />
-            <Button onClick={handleSaveConfig} variant="success" className="w-full">
-               Simpan Logo Sahaja
-            </Button>
+            <Input label="Nama Sekolah (Huruf Besar)" value={schoolName} onChange={(e: any) => setSchoolName(e.target.value)} />
+            <Input label="Nama Unit/Kelab" value={clubName} onChange={(e: any) => setClubName(e.target.value)} />
+            <Input label="Alamat & Poskod" value={address} onChange={(e: any) => setAddress(e.target.value)} />
           </div>
         </FormCard>
 
         <div className="space-y-8">
-          <FormCard title="2. Diagnosis & Cloud">
+          <FormCard title="2. Pangkalan Data Cloud">
             <div className="space-y-6">
                <Input 
-                 label="Pautan Web App (Deployment URL)" 
+                 label="Google Web App URL" 
                  placeholder="https://script.google.com/macros/s/.../exec" 
                  value={url}
                  onChange={(e: any) => setUrl(e.target.value)}
                />
-               <Button onClick={handleSaveConfig} disabled={testing} className="w-full py-4">
-                 {testing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Activity className="w-4 h-4" />}
-                 Uji & Simpan Semua Tetapan
+               <Button onClick={handleSaveAll} disabled={testing} className="w-full py-4">
+                 {testing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                 Simpan Semua Konfigurasi
                </Button>
                
-               {data.settings?.sheetUrl && (
-                 <div className="pt-4 border-t border-slate-800">
-                    <p className="text-[10px] text-slate-500 font-bold uppercase mb-3">Pautan Master (Cloud + Logo)</p>
-                    <Button onClick={copyMasterLink} variant="secondary" className="w-full border-dashed border-slate-600">
-                       <Share2 className="w-4 h-4" /> {copiedLink ? 'Disalin!' : 'Salin Pautan Master'}
-                    </Button>
-                 </div>
-               )}
+               <div className="pt-4 border-t border-slate-800">
+                  <p className="text-[10px] text-slate-500 font-black uppercase mb-3">Sync Identiti ke Peranti Lain</p>
+                  <Button onClick={copyMasterLink} variant="secondary" className="w-full border-dashed border-slate-700">
+                     <Share2 className="w-4 h-4" /> {copiedLink ? 'Pautan Master Disalin!' : 'Salin Pautan Master'}
+                  </Button>
+               </div>
             </div>
           </FormCard>
-        </div>
 
-        <FormCard title="3. Kod Skrip Google">
-          <div className="space-y-6">
-            <div className="bg-slate-950 p-6 rounded-xl border border-slate-800 relative group">
-               <pre className="text-[10px] text-emerald-500 font-mono overflow-x-auto h-64 leading-relaxed">
-                 {googleScriptCode}
-               </pre>
-               <Button 
-                onClick={() => {
-                  navigator.clipboard.writeText(googleScriptCode);
-                  setCopiedCode(true);
-                  setTimeout(() => setCopiedCode(false), 2000);
-                }} 
-                variant="secondary" 
-                className="absolute top-4 right-4 py-2 px-3"
-              >
-                 {copiedCode ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-               </Button>
+          <div className="bg-emerald-950/10 border border-emerald-900/20 p-6 rounded-[1.5rem] space-y-3">
+            <div className="flex items-center gap-2 text-emerald-500">
+               <HelpCircle className="w-4 h-4" />
+               <h3 className="font-black text-[10px] uppercase tracking-[0.2em]">Tips Profesional</h3>
             </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Sebaik sahaja anda klik <b>Simpan</b>, identiti ini akan digunakan dalam semua Dashboard dan Laporan Cetakan A4 secara automatik. Gunakan <b>Pautan Master</b> untuk setup komputer lain dalam 1 saat.
+            </p>
           </div>
-        </FormCard>
-
-        <div className="bg-rose-950/20 border border-rose-900/30 p-6 rounded-[1.5rem] space-y-4 h-fit">
-            <div className="flex items-center gap-3 text-rose-500">
-               <HelpCircle className="w-5 h-5" />
-               <h3 className="font-black text-xs uppercase tracking-widest">Peringatan Penting</h3>
-            </div>
-            <ul className="space-y-3 text-[11px] text-slate-400 font-medium">
-               <li className="flex gap-3">
-                  <span className="text-rose-500 font-bold">●</span>
-                  <span>Gunakan pautan gambar logo yang berakhir dengan .png atau .jpg</span>
-               </li>
-               <li className="flex gap-3">
-                  <span className="text-rose-500 font-bold">●</span>
-                  <span>Set <b>"Who has access"</b> kepada <b>"Anyone"</b> dalam Google Script.</span>
-               </li>
-               <li className="flex gap-3">
-                  <span className="text-rose-500 font-bold">●</span>
-                  <span>Simpan <b>Pautan Master</b> untuk buka di peranti lain bersama logo sekolah.</span>
-               </li>
-            </ul>
         </div>
       </div>
     </div>
