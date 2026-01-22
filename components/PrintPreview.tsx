@@ -19,7 +19,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
   const address = data.settings?.address || SCHOOL_INFO.address;
 
   const Header = () => (
-    <div className="relative mb-8 border-b-2 border-black pb-4 print-text-black">
+    <div className="relative mb-8 border-b-2 border-black pb-4 text-black">
       <div className="flex items-center justify-center gap-6">
         {data.settings?.logoUrl && (
           <img src={data.settings.logoUrl} alt="Logo Sekolah" className="w-24 h-24 object-contain" />
@@ -36,15 +36,8 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     </div>
   );
 
-  const Footer = () => (
-    <div className="mt-12 pt-4 border-t border-slate-300 text-[10px] text-slate-600 flex justify-between no-print">
-      <span>Sistem Pengurusan {clubName} Professional</span>
-      <span>Dicetak: {printTime}</span>
-    </div>
-  );
-
   const SignatureSection = () => (
-    <div className="mt-16 grid grid-cols-2 gap-12 print-text-black">
+    <div className="mt-16 grid grid-cols-2 gap-12 text-black">
       <div className="space-y-12">
         <p>Disediakan oleh:</p>
         <div className="w-64 border-b border-black"></div>
@@ -60,8 +53,15 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     </div>
   );
 
+  const FooterInfo = () => (
+    <div className="mt-12 pt-4 border-t border-slate-300 text-[10px] text-slate-600 flex justify-between">
+      <span>Sistem Pengurusan {clubName} Professional</span>
+      <span>Dicetak: {printTime}</span>
+    </div>
+  );
+
   const renderAhli = () => (
-    <div className="p-10 bg-white min-h-screen text-black">
+    <div className="text-black">
       <Header />
       <h3 className="text-center font-bold text-lg mb-6 border-b pb-2">SENARAI INDUK AHLI {clubName}</h3>
       <table className="w-full border-collapse border border-black text-sm">
@@ -89,7 +89,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         </tbody>
       </table>
       <SignatureSection />
-      <Footer />
+      <FooterInfo />
     </div>
   );
 
@@ -99,7 +99,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         return order.indexOf(a.jawatan) - order.indexOf(b.jawatan);
     });
     return (
-      <div className="p-10 bg-white min-h-screen text-black">
+      <div className="text-black">
         <Header />
         <h3 className="text-center font-bold text-lg mb-6 underline">CARTA ORGANISASI AHLI JAWATANKUASA</h3>
         <table className="w-full border-collapse border border-black text-sm">
@@ -126,7 +126,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
           </tbody>
         </table>
         <SignatureSection />
-        <Footer />
+        <FooterInfo />
       </div>
     );
   };
@@ -146,7 +146,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     });
 
     return (
-      <div className="p-6 bg-white min-h-screen text-black">
+      <div className="text-black">
         <Header />
         <h3 className="text-center font-bold text-md mb-6 uppercase border-b pb-2">RUMUSAN KEHADIRAN AKTIVITI ({currentYear})</h3>
         <table className="w-full border-collapse border border-black text-[7pt]">
@@ -177,7 +177,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
           </tbody>
         </table>
         <SignatureSection />
-        <Footer />
+        <FooterInfo />
       </div>
     );
   };
@@ -191,7 +191,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     const percent = totalCount ? Math.round((presentCount / totalCount) * 100) : 0;
 
     return (
-      <div className="p-12 bg-white min-h-screen text-black">
+      <div className="text-black">
         <Header />
         <h3 className="text-center font-bold text-xl mb-8 underline uppercase">LAPORAN AKTIVITI MINGGUAN {clubName}</h3>
         
@@ -234,12 +234,12 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
           </div>
         </div>
         <SignatureSection />
-        <Footer />
+        <FooterInfo />
       </div>
     );
   };
 
-  const content = () => {
+  const getReportContent = () => {
     switch(type) {
       case 'AHLI': return renderAhli();
       case 'AJK': return renderAJK();
@@ -251,7 +251,8 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
 
   return (
     <div className="min-h-screen bg-slate-800 overflow-y-auto no-print">
-      <div className="fixed top-0 left-0 right-0 h-16 bg-white shadow-xl z-50 flex items-center justify-between px-8 text-black">
+      {/* Navigation Bar (no-print) */}
+      <div className="fixed top-0 left-0 right-0 h-16 bg-white shadow-xl z-50 flex items-center justify-between px-8 text-black no-print">
         <div className="flex items-center gap-4">
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-600">
             <ArrowLeft className="w-6 h-6" />
@@ -266,14 +267,11 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         </button>
       </div>
 
-      <div className="pt-24 pb-12 flex justify-center">
-        <div className="bg-white shadow-2xl w-[210mm] min-h-[297mm] transition-all" id="printable-area">
-          {content()}
+      {/* Main Container for Preview and Print */}
+      <div className="pt-24 pb-12 flex justify-center bg-slate-800 min-h-screen">
+        <div className="bg-white shadow-2xl w-[210mm] min-h-[297mm] p-[15mm] print-area">
+          {getReportContent()}
         </div>
-      </div>
-      
-      <div className="hidden print:block bg-white text-black">
-        {content()}
       </div>
     </div>
   );

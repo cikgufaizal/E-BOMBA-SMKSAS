@@ -13,18 +13,36 @@
             color: #f1f5f9;
         }
         @media print {
-            body {
+            @page {
+                size: A4;
+                margin: 0;
+            }
+            html, body {
+                height: auto !important;
                 background-color: white !important;
                 color: black !important;
+                overflow: visible !important;
+            }
+            #root {
+                height: auto !important;
+                overflow: visible !important;
             }
             .no-print {
                 display: none !important;
+            }
+            .print-area {
+                width: 210mm !important;
+                margin: 0 auto !important;
+                padding: 15mm !important;
+                background: white !important;
+                box-shadow: none !important;
+                overflow: visible !important;
+                display: block !important;
             }
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color: black !important;
-                border-color: #333 !important;
             }
             .print-bg-gray {
                 background-color: #f3f4f6 !important;
