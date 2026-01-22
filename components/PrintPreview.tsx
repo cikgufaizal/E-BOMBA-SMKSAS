@@ -18,19 +18,19 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
   const clubName = data.settings?.clubName || SCHOOL_INFO.clubName;
   const address = data.settings?.address || SCHOOL_INFO.address;
 
-  // Header Standard mengikut Imej
+  // Header Rasmi: Logo di sebelah KIRI mengikut permintaan pengguna
   const OfficialHeader = () => (
     <div className="mb-6 text-black">
-      <div className="flex justify-between items-start">
-        <div className="text-left space-y-0.5">
-          <h1 className="text-[11pt] font-normal uppercase leading-tight">{schoolName}</h1>
-          <p className="text-[10pt] font-normal whitespace-pre-wrap max-w-md">{address}</p>
-        </div>
+      <div className="flex items-start gap-6">
         {data.settings?.logoUrl && (
-          <img src={data.settings.logoUrl} alt="Logo" className="w-20 h-20 object-contain" />
+          <img src={data.settings.logoUrl} alt="Logo" className="w-24 h-24 object-contain shrink-0" />
         )}
+        <div className="text-left space-y-0.5 pt-2">
+          <h1 className="text-[12pt] font-bold uppercase leading-tight">{schoolName}</h1>
+          <p className="text-[10pt] font-normal whitespace-pre-wrap max-w-2xl">{address}</p>
+        </div>
       </div>
-      <div className="mt-4 border-b-[1.5pt] border-black w-full"></div>
+      <div className="mt-4 border-b-[2pt] border-black w-full"></div>
     </div>
   );
 
@@ -44,14 +44,14 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
   const renderAhli = () => (
     <div className="text-black">
       <OfficialHeader />
-      <h3 className="text-center font-bold text-lg mb-8 uppercase underline">SENARAI INDUK AHLI {clubName}</h3>
+      <h3 className="text-center font-bold text-lg mb-8 uppercase underline underline-offset-4">SENARAI INDUK AHLI {clubName}</h3>
       <table className="w-full border-collapse border border-black text-sm">
         <thead>
           <tr className="bg-gray-100 font-bold">
             <th className="border border-black p-2 text-center w-12">BIL</th>
             <th className="border border-black p-2 text-left uppercase">NAMA PENUH</th>
             <th className="border border-black p-2 text-center w-32">NO. KP</th>
-            <th className="border border-black p-2 text-center w-24">TING.</th>
+            <th className="border border-black p-2 text-center w-32">TINGKATAN / KELAS</th>
           </tr>
         </thead>
         <tbody>
@@ -60,7 +60,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
               <td className="border border-black p-2 text-center text-xs">{idx + 1}</td>
               <td className="border border-black p-2 font-bold text-xs uppercase">{s.nama}</td>
               <td className="border border-black p-2 text-center text-xs">{s.noKP}</td>
-              <td className="border border-black p-2 text-center text-xs uppercase">{s.tingkatan} {s.kelas}</td>
+              <td className="border border-black p-2 text-center text-xs uppercase font-bold">{s.tingkatan} {s.kelas}</td>
             </tr>
           ))}
         </tbody>
@@ -81,13 +81,15 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     return (
       <div className="text-black">
         <OfficialHeader />
-        <h3 className="text-center font-bold text-lg mb-8 uppercase underline">CARTA ORGANISASI AHLI JAWATANKUASA</h3>
+        <h3 className="text-center font-bold text-lg mb-8 uppercase underline underline-offset-4">CARTA ORGANISASI AHLI JAWATANKUASA</h3>
         <table className="w-full border-collapse border border-black text-sm">
           <thead>
             <tr className="bg-gray-100 font-bold">
               <th className="border border-black p-3 text-center w-12">BIL</th>
-              <th className="border border-black p-3 text-left">JAWATAN</th>
+              <th className="border border-black p-3 text-left w-1/4">JAWATAN</th>
               <th className="border border-black p-3 text-left">NAMA PENUH</th>
+              <th className="border border-black p-3 text-center w-32">NO. KP</th>
+              <th className="border border-black p-3 text-center w-32">TING / KELAS</th>
             </tr>
           </thead>
           <tbody>
@@ -97,12 +99,18 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
                 <tr key={ajk.id}>
                   <td className="border border-black p-3 text-center">{idx + 1}</td>
                   <td className="border border-black p-3 font-bold text-xs uppercase">{ajk.jawatan}</td>
-                  <td className="border border-black p-3 text-sm uppercase">{student?.nama || 'N/A'}</td>
+                  <td className="border border-black p-3 text-sm font-bold uppercase">{student?.nama || 'N/A'}</td>
+                  <td className="border border-black p-3 text-center text-xs">{student?.noKP || '-'}</td>
+                  <td className="border border-black p-3 text-center text-xs font-bold uppercase">{student?.tingkatan} {student?.kelas}</td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+        <div className="mt-20 grid grid-cols-2 gap-20">
+          <div className="border-t border-black pt-2 text-center text-xs font-bold uppercase">Disediakan Oleh</div>
+          <div className="border-t border-black pt-2 text-center text-xs font-bold uppercase">Disahkan Oleh</div>
+        </div>
         <FooterInfo />
       </div>
     );
@@ -113,14 +121,14 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     return (
       <div className="text-black">
         <OfficialHeader />
-        <h3 className="text-center font-bold text-lg mb-8 uppercase underline">RUMUSAN KEHADIRAN AKTIVITI ({currentYear})</h3>
+        <h3 className="text-center font-bold text-lg mb-8 uppercase underline underline-offset-4">RUMUSAN KEHADIRAN AKTIVITI ({currentYear})</h3>
         <table className="w-full border-collapse border border-black text-[7pt]">
           <thead>
             <tr className="bg-gray-100 font-bold">
               <th className="border border-black p-1 text-center" rowSpan={2}>BIL</th>
-              <th className="border-2 border-black p-1 text-left uppercase" rowSpan={2}>NAMA PENUH AHLI</th>
-              <th className="border-2 border-black p-1 text-center" rowSpan={2}>TING</th>
-              <th className="border-2 border-black p-1 text-center" colSpan={12}>BULAN</th>
+              <th className="border border-black p-1 text-left uppercase" rowSpan={2}>NAMA PENUH AHLI</th>
+              <th className="border border-black p-1 text-center" rowSpan={2}>TING / KELAS</th>
+              <th className="border border-black p-1 text-center" colSpan={12}>BULAN</th>
             </tr>
             <tr className="bg-gray-50 font-bold">
               {MONTHS.map(m => <th key={m} className="border border-black p-0.5 text-center text-[6pt]">{m.substring(0,3)}</th>)}
@@ -138,7 +146,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
                 <tr key={s.id}>
                   <td className="border border-black p-1 text-center">{idx + 1}</td>
                   <td className="border border-black p-1 font-bold uppercase truncate max-w-[150px]">{s.nama}</td>
-                  <td className="border border-black p-1 text-center font-bold">{s.tingkatan}</td>
+                  <td className="border border-black p-1 text-center font-bold">{s.tingkatan} {s.kelas}</td>
                   {rowAtt.map((m, i) => (
                     <td key={i} className="border border-black p-0.5 text-center font-bold text-[8pt]">
                       {m}
@@ -169,14 +177,14 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         <OfficialHeader />
         
         <div className="flex justify-between items-baseline mb-6">
-          <h3 className="font-bold text-[14pt] uppercase">LAPORAN PERJUMPAAN MINGGUAN</h3>
+          <h3 className="font-bold text-[14pt] uppercase italic">LAPORAN PERJUMPAAN MINGGUAN</h3>
           <p className="font-normal text-[12pt]">Tahun : <span className="ml-2 border-b border-black inline-block w-20 text-center">{yearFromDate}</span></p>
         </div>
 
         <div className="space-y-4 text-[11pt]">
           <div className="flex gap-2">
             <p className="whitespace-nowrap font-bold">Kelab / Persatuan / Badan Beruniform* :</p>
-            <p className="uppercase font-bold">{clubName}</p>
+            <p className="uppercase font-bold underline underline-offset-2">{clubName}</p>
           </div>
 
           <div className="flex gap-2">
@@ -235,7 +243,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
               <div className="pt-10 border-b border-dotted border-black w-64"></div>
               <p className="font-normal text-[10pt] relative">
                 ( <span className="inline-block w-56"></span> )
-                <span className="absolute left-4 top-0 font-bold uppercase">{data.teachers[0]?.nama || 'GURU PENASIHAT'}</span>
+                <span className="absolute left-4 top-0 font-bold uppercase text-center w-full">{data.teachers[0]?.nama || 'GURU PENASIHAT'}</span>
               </p>
               <p className="text-[10pt]">Guru Penasihat.</p>
             </div>
@@ -281,7 +289,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
 
       {/* Preview Wrapper */}
       <div className="pt-24 pb-20 flex justify-center bg-slate-900 min-h-screen no-print">
-        <div className="bg-white shadow-[0_0_100px_rgba(0,0,0,0.5)] w-[210mm] min-h-[297mm] p-[20mm] print-area">
+        <div className="bg-white shadow-[0_0_100px_rgba(0,0,0,0.5)] w-[210mm] min-h-[297mm] p-[20mm] print-area border border-slate-300">
           {getReportContent()}
         </div>
       </div>
