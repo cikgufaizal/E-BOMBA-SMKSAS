@@ -36,24 +36,29 @@ export const loadData = (): SystemData => {
 export const fetchDataFromCloud = async (url: string): Promise<SystemData | null> => {
   if (!url) return null;
   try {
-    // Standard fetch GET. Google Apps Script doGet() akan handle redirect.
-    const response = await fetch(url, {
+    const syncUrl = `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+    
+    const response = await fetch(syncUrl, {
       method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
+      headers: { 'Accept': 'application/json' },
     });
     
-    if (!response.ok) throw new Error("Gagal mengambil data dari awan");
+    if (!response.ok) throw new Error("Cloud Down");
+    
     const cloudData = await response.json();
     
-    // Pastikan data yang diterima adalah objek yang sah dan mempunyai array pelajar
+    // Jika respon dari v3.3 menyatakan sheet masih kosong
+    if (cloudData.status === "EMPTY") {
+      console.log("Cloud sedia tetapi data masih kosong. Memerlukan 'Save' pertama.");
+      return null;
+    }
+
     if (cloudData && (Array.isArray(cloudData.students) || cloudData.settings)) {
       return cloudData as SystemData;
     }
     return null;
   } catch (err) {
-    console.error("Cloud Fetch Error:", err);
+    console.error("Gagal tarik data dari cloud:", err);
     return null;
   }
 };
@@ -61,21 +66,19 @@ export const fetchDataFromCloud = async (url: string): Promise<SystemData | null
 export const saveData = async (data: SystemData) => {
   if (typeof window === 'undefined') return;
   
-  // Simpan ke local storage sentiasa sebagai backup
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   
-  // Jika sync aktif, hantar ke Google Sheets
-  if (data.settings?.sheetUrl && data.settings?.autoSync) {
+  if (data.settings?.sheetUrl) {
     try {
       await fetch(data.settings.sheetUrl, {
         method: 'POST',
-        mode: 'no-cors', // Penting untuk Google Apps Script doPost()
+        mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      console.log("Data berjaya dihantar ke Google Sheets.");
+      console.log("Sync Berjaya.");
     } catch (err) {
-      console.warn("Cloud Sync Error - Data disimpan di peranti ini sahaja.");
+      console.warn("Sync Gagal (Offline/CORS).");
     }
   }
 };
@@ -83,16 +86,13 @@ export const saveData = async (data: SystemData) => {
 export const testCloudConnection = async (url: string): Promise<boolean> => {
   if (!url || !url.startsWith('https://script.google.com')) return false;
   try {
-    // Test menggunakan POST ringkas
     await fetch(url, {
       method: 'POST',
       mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ test: true, timestamp: new Date().toISOString() })
+      body: JSON.stringify({ test: true })
     });
     return true; 
   } catch (err) {
-    console.error("Connection test failed:", err);
     return false;
   }
 };

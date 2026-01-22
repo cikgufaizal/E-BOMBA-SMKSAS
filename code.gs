@@ -1,25 +1,28 @@
 /**
- * SISTEM PENGURUSAN KADET BOMBA PROFESSIONAL - CLOUD BRIDGE v3.2
- * -----------------------------------------------------------
- * PUSH (doPost) & PULL (doGet)
- * 
- * Sila Deploy sebagai Web App:
- * 1. Execute as: Me
- * 2. Who has access: Anyone
+ * SISTEM PENGURUSAN KADET BOMBA PROFESSIONAL - CLOUD BRIDGE v3.3 (PERSONAL)
+ * -----------------------------------------------------------------------
+ * 1. Simpan kod ini di Google Sheets (Extensions > Apps Script).
+ * 2. Deploy sebagai Web App.
+ * 3. Execute as: ME.
+ * 4. Who has access: ANYONE.
  */
 
 const SHEET_BACKUP = "DB_BACKUP";
 
 /**
- * FUNGSI AMBIL DATA (SYNC PULL)
+ * FUNGSI GET: Digunakan untuk tarik data dari Sheets ke App.
  */
 function doGet(e) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName(SHEET_BACKUP);
     
-    if (!sheet) {
-      return createJsonResponse({ error: "No data available. Please save data from the app first." });
+    // Jika sheet backup belum ada, beritahu App untuk buat 'initial save'
+    if (!sheet || sheet.getRange(1, 1).getValue() === "") {
+      return createJsonResponse({ 
+        status: "EMPTY", 
+        message: "Sheet sedia, tetapi belum ada data. Sila klik 'Simpan' di dalam App dahulu." 
+      });
     }
     
     var data = sheet.getRange(1, 1).getValue();
@@ -27,24 +30,26 @@ function doGet(e) {
       .setMimeType(ContentService.MimeType.JSON);
       
   } catch (err) {
-    return createJsonResponse({ error: err.message });
+    return createJsonResponse({ status: "ERROR", message: err.message });
   }
 }
 
 /**
- * FUNGSI SIMPAN DATA (SYNC PUSH)
+ * FUNGSI POST: Digunakan untuk hantar data dari App ke Sheets.
  */
 function doPost(e) {
   try {
     var contents = JSON.parse(e.postData.contents);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     
-    // 1. Simpan Full JSON Backup (Untuk kegunaan App Sync)
+    // 1. Simpan Data JSON Penuh (Master Backup)
     var backupSheet = ss.getSheetByName(SHEET_BACKUP) || ss.insertSheet(SHEET_BACKUP);
+    backupSheet.clear();
     backupSheet.getRange(1, 1).setValue(JSON.stringify(contents));
     backupSheet.getRange(1, 2).setValue("Last Sync: " + new Date().toLocaleString());
+    backupSheet.getRange(1, 2).setFontWeight("bold");
 
-    // 2. Kemaskini Tab-Tab Readable
+    // 2. Kemaskini Tab-Tab Visual (Human Readable)
     
     // TAB: DATA AHLI
     updateSheet(ss, 'DATA_AHLI', ['ID', 'Nama', 'No KP', 'Tingkatan', 'Kelas', 'Jantina', 'Kaum'], (contents.students || []).map(s => [
@@ -59,11 +64,6 @@ function doPost(e) {
     // TAB: DATA AKTIVITI
     updateSheet(ss, 'DATA_AKTIVITI', ['Tarikh', 'Masa', 'Aktiviti', 'Tempat', 'Ulasan'], (contents.activities || []).map(a => [
       a.tarikh, a.masa, a.nama, a.tempat, a.ulasan
-    ]));
-
-    // TAB: RANCANGAN TAHUNAN
-    updateSheet(ss, 'RANCANGAN_TAHUNAN', ['Bulan', 'Program', 'Tempat', 'Catatan'], (contents.annualPlans || []).map(p => [
-      p.bulan, p.program, p.tempat, p.catatan
     ]));
 
     // TAB: STRUKTUR ORGANISASI
@@ -87,30 +87,31 @@ function doPost(e) {
 }
 
 /**
- * UTILITY: Kemaskini helaian
+ * UTILITY: Fungsi untuk kemaskini helaian secara sistematik.
  */
 function updateSheet(ss, sheetName, headers, rows) {
   var sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
   sheet.clear();
   
+  // Design Header
   sheet.getRange(1, 1, 1, headers.length)
     .setValues([headers])
     .setFontWeight('bold')
-    .setBackground('#b91c1c')
+    .setBackground('#dc2626') // Warna Merah Bomba
     .setFontColor('#ffffff')
-    .setHorizontalAlignment('center');
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle');
     
   if (rows && rows.length > 0) {
     sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
+    sheet.getRange(2, 1, rows.length, headers.length).setVerticalAlignment('middle');
   }
   
   sheet.setFrozenRows(1);
   sheet.autoResizeColumns(1, headers.length);
+  sheet.setRowHeight(1, 30);
 }
 
-/**
- * UTILITY: JSON Response helper
- */
 function createJsonResponse(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
