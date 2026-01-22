@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Users, 
@@ -11,16 +10,13 @@ import {
   Settings as SettingsIcon,
   Menu,
   X,
-  Printer,
-  ChevronRight,
   ShieldAlert,
-  Cloud,
   CloudOff,
   Globe
 } from 'lucide-react';
 import { loadData, saveData } from './utils/storage';
 import { SystemData, ReportType } from './types';
-import { THEME_COLOR, SCHOOL_INFO } from './constants';
+import { SCHOOL_INFO } from './constants';
 
 // Internal Components
 import Dashboard from './components/Dashboard';
@@ -43,6 +39,36 @@ const App: React.FC = () => {
     isOpen: false,
     type: null
   });
+
+  // Auto-Config via URL (untuk Cross-Device Persistence)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const cloudKey = params.get('config');
+    if (cloudKey) {
+      try {
+        const decoded = JSON.parse(atob(cloudKey));
+        if (decoded.url || decoded.logoUrl) {
+          setData(prev => {
+             const newData = {
+               ...prev,
+               settings: { 
+                 ...prev.settings, 
+                 sheetUrl: decoded.url || prev.settings?.sheetUrl || '', 
+                 logoUrl: decoded.logoUrl || prev.settings?.logoUrl || '',
+                 autoSync: !!decoded.url 
+               }
+             };
+             saveData(newData);
+             return newData;
+          });
+          window.history.replaceState({}, document.title, window.location.pathname);
+          alert("Auto-Konfigurasi Identiti Berjaya!");
+        }
+      } catch (e) {
+        console.error("Gagal nyahkod konfigurasi URL");
+      }
+    }
+  }, []);
 
   useEffect(() => {
     saveData(data);
@@ -90,40 +116,32 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-slate-950 text-slate-200 overflow-hidden font-sans">
-      {/* Mobile Backdrop */}
-      {!isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/80 z-20 md:hidden backdrop-blur-sm"
-          onClick={() => setSidebarOpen(true)}
-        />
-      )}
-
-      {/* Sidebar */}
       <aside className={`
         fixed md:static inset-y-0 left-0 z-30
-        w-80 bg-slate-900 shadow-[20px_0_50px_rgba(0,0,0,0.5)] border-r border-slate-800 transform transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
+        w-80 bg-slate-900 shadow-[20px_0_50px_rgba(0,0,0,0.5)] border-r border-slate-800 transform transition-all duration-500
         flex flex-col
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0 md:w-24'}
       `}>
-        <div className={`p-6 flex flex-col gap-1 border-b border-slate-800/50 bg-gradient-to-br from-red-950/40 to-slate-900`}>
+        <div className="p-6 flex flex-col gap-1 border-b border-slate-800/50 bg-gradient-to-br from-red-950/40 to-slate-900">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-red-600 rounded-2xl shadow-[0_0_20px_rgba(220,38,38,0.3)]">
-              <ShieldAlert className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-slate-950 rounded-xl shadow-lg border border-red-600/20 flex items-center justify-center overflow-hidden">
+              {data.settings?.logoUrl ? (
+                <img src={data.settings.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+              ) : (
+                <ShieldAlert className="w-6 h-6 text-red-600" />
+              )}
             </div>
-            <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="md:hidden text-slate-400 hover:text-white">
+            <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="md:hidden text-slate-400">
               <X className="w-7 h-7" />
             </button>
           </div>
-          <div className={`transition-all duration-500 ${!isSidebarOpen ? 'md:opacity-0 md:h-0 overflow-hidden scale-95' : 'opacity-100 scale-100'}`}>
+          <div className={`${!isSidebarOpen && 'md:hidden'}`}>
             <h2 className="font-black text-xl leading-tight tracking-tighter text-white uppercase italic">
               {SCHOOL_INFO.clubName}
             </h2>
-            <div className="flex items-center gap-2 mt-1">
-              <p className="text-[10px] font-black text-red-500/80 line-clamp-1 uppercase tracking-[0.2em]">
-                {SCHOOL_INFO.name}
-              </p>
-              <div className="flex-1 border-t border-red-900/30"></div>
-            </div>
+            <p className="text-[10px] font-black text-red-500/80 uppercase tracking-widest mt-1">
+              {SCHOOL_INFO.name}
+            </p>
           </div>
         </div>
 
@@ -133,68 +151,51 @@ const App: React.FC = () => {
               key={item.id}
               onClick={() => setActiveTab(item.id as Tab)}
               className={`
-                w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 group
+                w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300
                 ${activeTab === item.id 
-                  ? `bg-red-600/10 text-red-500 border border-red-600/20 shadow-[0_0_20px_rgba(220,38,38,0.05)]` 
+                  ? `bg-red-600/10 text-red-500 border border-red-600/20` 
                   : 'text-slate-500 hover:bg-slate-800/50 hover:text-slate-300 border border-transparent'}
               `}
             >
-              <item.icon className={`w-5 h-5 shrink-0 transition-transform duration-300 ${activeTab === item.id ? 'scale-110' : 'group-hover:scale-110'}`} />
-              <span className={`font-bold text-xs uppercase tracking-widest whitespace-nowrap transition-all duration-500 ${!isSidebarOpen && 'md:hidden'}`}>
+              <item.icon className="w-5 h-5 shrink-0" />
+              <span className={`font-bold text-xs uppercase tracking-widest whitespace-nowrap ${!isSidebarOpen && 'md:hidden'}`}>
                 {item.label}
               </span>
-              {activeTab === item.id && isSidebarOpen && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-red-600 shadow-[0_0_8px_rgba(220,38,38,1)]"></div>}
             </button>
           ))}
         </nav>
 
         <div className="p-6 border-t border-slate-800/50">
-          <div className={`bg-slate-950/50 border border-slate-800 rounded-2xl p-4 transition-all duration-500 ${!isSidebarOpen && 'md:p-2'}`}>
+          <div className="bg-slate-950/50 border border-slate-800 rounded-2xl p-4">
             {isSidebarOpen ? (
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2">
                    <div className={`w-2 h-2 rounded-full ${data.settings?.sheetUrl ? 'bg-emerald-500 animate-pulse' : 'bg-slate-700'}`}></div>
                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.1em]">
-                    {data.settings?.sheetUrl ? 'Shared Cloud Active' : 'Local Backup Mode'}
+                    {data.settings?.sheetUrl ? 'Cloud Connected' : 'Local Mode'}
                    </p>
                 </div>
-                <div className="flex items-center justify-between">
-                   <p className="text-sm font-bold text-slate-200 uppercase tracking-tighter">Enterprise 2.5</p>
-                   {data.settings?.sheetUrl ? <Globe className="w-3 h-3 text-emerald-500" /> : <CloudOff className="w-3 h-3 text-slate-700" />}
-                </div>
+                <p className="text-sm font-bold text-slate-200 tracking-tighter italic">V3.0 Enterprise</p>
               </div>
             ) : (
-              <div className="w-full text-center text-[10px] font-black text-red-600 uppercase">PRO</div>
+              <div className="w-full text-center text-[10px] font-black text-red-600">PRO</div>
             )}
           </div>
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 bg-[#020617] relative">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-red-900/5 rounded-full blur-[120px] -mr-64 -mt-64 pointer-events-none"></div>
-        
         <header className="h-20 bg-slate-950/50 backdrop-blur-md border-b border-slate-800/50 flex items-center justify-between px-8 shrink-0 relative z-10">
           <div className="flex items-center gap-6">
-            <button 
-              onClick={() => setSidebarOpen(!isSidebarOpen)} 
-              className="p-2.5 hover:bg-slate-900 rounded-xl text-slate-400 transition-colors hidden md:block border border-transparent hover:border-slate-800"
-            >
+            <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-2.5 hover:bg-slate-900 rounded-xl text-slate-400 hidden md:block">
               <Menu className="w-5 h-5" />
             </button>
-            <div>
-               <h1 className="text-xl font-black text-white uppercase tracking-tighter">
-                {menuItems.find(i => i.id === activeTab)?.label}
-              </h1>
-              <div className="h-1 w-12 bg-red-600 mt-1 rounded-full"></div>
-            </div>
+            <h1 className="text-xl font-black text-white uppercase tracking-tighter">
+              {menuItems.find(i => i.id === activeTab)?.label}
+            </h1>
           </div>
-          
-          <div className="flex items-center gap-6">
-            <div className="hidden lg:block text-right">
-              <p className="text-[10px] font-black text-red-500 uppercase tracking-widest">{SCHOOL_INFO.clubName}</p>
-              <p className="text-sm font-bold text-slate-400">{new Date().toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-            </div>
+          <div className="flex items-center gap-4">
+             {data.settings?.sheetUrl ? <Globe className="w-5 h-5 text-emerald-500" /> : <CloudOff className="w-5 h-5 text-slate-600" />}
           </div>
         </header>
 

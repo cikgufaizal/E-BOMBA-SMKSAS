@@ -81,6 +81,7 @@ export interface AnnualPlan {
 
 export interface CloudSettings {
   sheetUrl: string;
+  logoUrl?: string;
   autoSync: boolean;
   lastSync?: string;
 }

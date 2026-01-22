@@ -13,40 +13,26 @@
             color: #f1f5f9;
         }
         @media print {
-            .no-print {
-                display: none !important;
-            }
-            .print-only {
-                display: block !important;
-            }
             body {
                 background-color: white !important;
                 color: black !important;
             }
-            @page {
-                size: A4;
-                margin: 1cm;
+            .no-print {
+                display: none !important;
             }
-            .print-landscape {
-                size: A4 landscape;
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color: black !important;
+                border-color: #333 !important;
+            }
+            .print-bg-gray {
+                background-color: #f3f4f6 !important;
             }
         }
-        .print-only {
-            display: none;
-        }
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #020617;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #1e293b;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #334155;
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
     </style>
 <script type="importmap">
 {

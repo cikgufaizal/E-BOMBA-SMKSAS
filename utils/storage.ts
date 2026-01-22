@@ -1,7 +1,6 @@
 import { SystemData } from '../types';
 
 const STORAGE_KEY = 'ekelab_data_v1';
-const DEFAULT_CLOUD_URL = ''; // Masukkan URL Google Apps Script di sini
 
 const createEmptyData = (): SystemData => ({
   teachers: [],
@@ -11,8 +10,8 @@ const createEmptyData = (): SystemData => ({
   activities: [],
   annualPlans: [],
   settings: {
-    sheetUrl: DEFAULT_CLOUD_URL || '',
-    autoSync: !!DEFAULT_CLOUD_URL
+    sheetUrl: '',
+    autoSync: false
   }
 });
 
@@ -20,27 +19,14 @@ export const loadData = (): SystemData => {
   if (typeof window === 'undefined') return createEmptyData();
   
   const saved = localStorage.getItem(STORAGE_KEY);
-  let data: SystemData;
-
   if (saved) {
     try {
-      data = JSON.parse(saved);
+      return JSON.parse(saved);
     } catch (e) {
-      data = createEmptyData();
+      return createEmptyData();
     }
-  } else {
-    data = createEmptyData();
   }
-
-  if (DEFAULT_CLOUD_URL && (!data.settings?.sheetUrl)) {
-    data.settings = {
-      sheetUrl: DEFAULT_CLOUD_URL,
-      autoSync: true,
-      lastSync: data.settings?.lastSync
-    };
-  }
-
-  return data;
+  return createEmptyData();
 };
 
 export const saveData = async (data: SystemData) => {
@@ -57,7 +43,7 @@ export const saveData = async (data: SystemData) => {
         body: JSON.stringify(data)
       });
     } catch (err) {
-      console.warn("Cloud Sync Network Error - Data saved locally only.");
+      console.warn("Cloud Sync Error - Data saved locally only.");
     }
   }
 };
@@ -65,7 +51,9 @@ export const saveData = async (data: SystemData) => {
 export const testCloudConnection = async (url: string): Promise<boolean> => {
   if (!url) return false;
   try {
-    const response = await fetch(url, {
+    // Kami menggunakan no-cors kerana Google Apps Script tidak menghantar header CORS yang betul
+    // Namun fetch akan tetap menghantar data ke sana.
+    await fetch(url, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
