@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Cloud, Copy, CheckCircle2, RefreshCw, Activity, HelpCircle, Lock, ShieldCheck, Share2, Image as ImageIcon, School, Code2 } from 'lucide-react';
+import { Cloud, Copy, CheckCircle2, RefreshCw, Activity, HelpCircle, Lock, ShieldCheck, Share2, Image as ImageIcon, School, Code2, AlertTriangle } from 'lucide-react';
 import { SystemData } from '../types';
 import { FormCard, Input, Button } from './CommonUI';
 import { testCloudConnection } from '../utils/storage';
@@ -57,16 +57,21 @@ const Settings: React.FC<Props> = ({ data, updateData }) => {
   const copyMasterLink = () => {
     const baseUrl = window.location.origin + window.location.pathname;
     const configData = { url, logoUrl, schoolName, clubName, address };
+    // Gunakan btoa untuk encode konfigurasi ke base64 supaya selamat dalam URL
     const configKey = btoa(JSON.stringify(configData));
     const masterLink = `${baseUrl}?config=${configKey}`;
     navigator.clipboard.writeText(masterLink);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
-    alert("Pautan Master disalin! Gunakan pautan ini di peranti lain untuk sync automatik.");
+    alert("Pautan Master disalin! Kongsikan pautan ini kepada guru lain supaya mereka boleh melihat data yang sama.");
   };
 
   const copyGASCode = () => {
-    const scriptCode = `/**
+    const scriptCode = data.settings?.sheetUrl ? `// KOD GOOGLE APPS SCRIPT v3.2 (Master)
+// Sila rujuk code.gs dalam fail projek untuk kod penuh.` : `// Sila simpan URL Web App dahulu sebelum menyalin kod.`;
+    
+    // Saya letakkan kod v3.2 yang stabil di sini untuk memudahkan user
+    const fullCode = `/**
  * SISTEM PENGURUSAN KADET BOMBA PROFESSIONAL - CLOUD BRIDGE v3.2
  * -----------------------------------------------------------
  */
@@ -76,11 +81,11 @@ function doGet(e) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName(SHEET_BACKUP);
-    if (!sheet) return ContentService.createTextOutput(JSON.stringify({error: "No data"})).setMimeType(ContentService.MimeType.JSON);
+    if (!sheet) return createJsonResponse({ error: "No data" });
     var data = sheet.getRange(1, 1).getValue();
     return ContentService.createTextOutput(data).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({error: err.message})).setMimeType(ContentService.MimeType.JSON);
+    return createJsonResponse({ error: err.message });
   }
 }
 
@@ -119,11 +124,16 @@ function updateSheet(ss, sheetName, headers, rows) {
   if (rows && rows.length > 0) sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
   sheet.setFrozenRows(1);
   sheet.autoResizeColumns(1, headers.length);
+}
+
+function createJsonResponse(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }`;
-    navigator.clipboard.writeText(scriptCode);
+
+    navigator.clipboard.writeText(fullCode);
     setCopiedScript(true);
     setTimeout(() => setCopiedScript(false), 2000);
-    alert("Kod v3.2 Disalin! Paste dalam Apps Script Google Sheet anda dan 'Deploy as Web App'.");
+    alert("Kod Google Apps Script v3.2 Disalin!");
   };
 
   if (!isAuthorized) {
@@ -193,7 +203,7 @@ function updateSheet(ss, sheetName, headers, rows) {
         </FormCard>
 
         <div className="space-y-8">
-          <FormCard title="2. Pangkalan Data Cloud">
+          <FormCard title="2. Pangkalan Data Cloud (Awan)">
             <div className="space-y-6">
                <Input 
                  label="Google Web App URL" 
@@ -203,29 +213,34 @@ function updateSheet(ss, sheetName, headers, rows) {
                />
                <Button onClick={handleSaveAll} disabled={testing} className="w-full py-4">
                  {testing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                 Simpan Semua Konfigurasi
+                 Simpan & Hubungkan Cloud
                </Button>
                
                <div className="pt-4 border-t border-slate-800 space-y-3">
-                  <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Toolbox Pentadbir</p>
-                  <Button onClick={copyGASCode} variant="secondary" className="w-full border-emerald-900/30 text-emerald-500">
-                     <Code2 className="w-4 h-4" /> {copiedScript ? 'Kod Script v3.2 Disalin!' : 'Salin Kod Apps Script v3.2'}
+                  <div className="flex items-center gap-2 mb-1">
+                     <Share2 className="w-3 h-3 text-red-500" />
+                     <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Kongsi Akses Multi-Device</p>
+                  </div>
+                  <Button onClick={copyMasterLink} variant="secondary" className="w-full border-red-900/20 hover:border-red-600/40 text-red-500 bg-red-600/5">
+                     <Share2 className="w-4 h-4" /> {copiedLink ? 'Pautan Master Disalin!' : 'Salin Pautan Master (Untuk Laptop Lain)'}
                   </Button>
-                  <Button onClick={copyMasterLink} variant="secondary" className="w-full border-dashed border-slate-700">
-                     <Share2 className="w-4 h-4" /> {copiedLink ? 'Pautan Master Disalin!' : 'Salin Pautan Master'}
+                  <Button onClick={copyGASCode} variant="secondary" className="w-full border-slate-700 hover:border-emerald-600/40 text-slate-400">
+                     <Code2 className="w-4 h-4" /> {copiedScript ? 'Kod Script v3.2 Disalin!' : 'Salin Kod Google Apps Script'}
                   </Button>
                </div>
             </div>
           </FormCard>
 
-          <div className="bg-emerald-950/10 border border-emerald-900/20 p-6 rounded-[1.5rem] space-y-3">
-            <div className="flex items-center gap-2 text-emerald-500">
-               <HelpCircle className="w-4 h-4" />
-               <h3 className="font-black text-[10px] uppercase tracking-[0.2em]">Tips Profesional</h3>
+          <div className="bg-amber-950/10 border border-amber-900/20 p-6 rounded-[1.5rem] space-y-4">
+            <div className="flex items-center gap-2 text-amber-500">
+               <AlertTriangle className="w-5 h-5" />
+               <h3 className="font-black text-xs uppercase tracking-widest">PENTING: CARA SYNC</h3>
             </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Setiap kali anda menukar kod di Google Sheets, pastikan anda buat <b>New Deployment</b> sebagai <b>Web App</b> dengan akses <b>Anyone</b>. Tanpa akses ini, aplikasi tidak boleh menyimpan data.
-            </p>
+            <ul className="text-[11px] text-slate-400 space-y-2 list-disc pl-4">
+              <li><b>Laptop Sendiri:</b> Gunakan URL Vercel biasa. Data akan auto-sync dari Cloud.</li>
+              <li><b>Laptop Orang Lain:</b> Berikan mereka <b>Pautan Master</b> supaya sistem mereka tahu URL Google Sheet yang mana perlu ditarik.</li>
+              <li>Pastikan Google Sheet telah di-deploy sebagai <b>Web App</b> dengan akses <b>Anyone</b>.</li>
+            </ul>
           </div>
         </div>
       </div>

@@ -36,14 +36,19 @@ export const loadData = (): SystemData => {
 export const fetchDataFromCloud = async (url: string): Promise<SystemData | null> => {
   if (!url) return null;
   try {
-    // Menggunakan fetch GET untuk mengambil data. 
-    // Pastikan Google Apps Script anda mempunyai fungsi doGet(e) yang return ContentService.createTextOutput(JSON.stringify(data))
-    const response = await fetch(url);
+    // Standard fetch GET. Google Apps Script doGet() akan handle redirect.
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    
     if (!response.ok) throw new Error("Gagal mengambil data dari awan");
     const cloudData = await response.json();
     
-    // Validasi struktur data ringkas
-    if (cloudData && Array.isArray(cloudData.students)) {
+    // Pastikan data yang diterima adalah objek yang sah dan mempunyai array pelajar
+    if (cloudData && (Array.isArray(cloudData.students) || cloudData.settings)) {
       return cloudData as SystemData;
     }
     return null;
@@ -56,19 +61,21 @@ export const fetchDataFromCloud = async (url: string): Promise<SystemData | null
 export const saveData = async (data: SystemData) => {
   if (typeof window === 'undefined') return;
   
+  // Simpan ke local storage sentiasa sebagai backup
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   
+  // Jika sync aktif, hantar ke Google Sheets
   if (data.settings?.sheetUrl && data.settings?.autoSync) {
     try {
-      // POST untuk simpan data
       await fetch(data.settings.sheetUrl, {
         method: 'POST',
-        mode: 'no-cors',
+        mode: 'no-cors', // Penting untuk Google Apps Script doPost()
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
+      console.log("Data berjaya dihantar ke Google Sheets.");
     } catch (err) {
-      console.warn("Cloud Sync Error - Data saved locally only.");
+      console.warn("Cloud Sync Error - Data disimpan di peranti ini sahaja.");
     }
   }
 };
@@ -76,7 +83,8 @@ export const saveData = async (data: SystemData) => {
 export const testCloudConnection = async (url: string): Promise<boolean> => {
   if (!url || !url.startsWith('https://script.google.com')) return false;
   try {
-    const response = await fetch(url, {
+    // Test menggunakan POST ringkas
+    await fetch(url, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
