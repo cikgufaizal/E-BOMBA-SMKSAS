@@ -33,6 +33,26 @@ export const loadData = (): SystemData => {
   return createEmptyData();
 };
 
+export const fetchDataFromCloud = async (url: string): Promise<SystemData | null> => {
+  if (!url) return null;
+  try {
+    // Menggunakan fetch GET untuk mengambil data. 
+    // Pastikan Google Apps Script anda mempunyai fungsi doGet(e) yang return ContentService.createTextOutput(JSON.stringify(data))
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Gagal mengambil data dari awan");
+    const cloudData = await response.json();
+    
+    // Validasi struktur data ringkas
+    if (cloudData && Array.isArray(cloudData.students)) {
+      return cloudData as SystemData;
+    }
+    return null;
+  } catch (err) {
+    console.error("Cloud Fetch Error:", err);
+    return null;
+  }
+};
+
 export const saveData = async (data: SystemData) => {
   if (typeof window === 'undefined') return;
   
@@ -40,6 +60,7 @@ export const saveData = async (data: SystemData) => {
   
   if (data.settings?.sheetUrl && data.settings?.autoSync) {
     try {
+      // POST untuk simpan data
       await fetch(data.settings.sheetUrl, {
         method: 'POST',
         mode: 'no-cors',
@@ -61,7 +82,6 @@ export const testCloudConnection = async (url: string): Promise<boolean> => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ test: true, timestamp: new Date().toISOString() })
     });
-    // Kerana no-cors, kita anggap berjaya jika tiada exception dilempar
     return true; 
   } catch (err) {
     console.error("Connection test failed:", err);

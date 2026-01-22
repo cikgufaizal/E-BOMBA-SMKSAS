@@ -12,9 +12,12 @@ import {
   X,
   ShieldAlert,
   CloudOff,
-  Globe
+  Globe,
+  Loader2,
+  // Added RefreshCw to imports
+  RefreshCw
 } from 'lucide-react';
-import { loadData, saveData } from './utils/storage';
+import { loadData, saveData, fetchDataFromCloud } from './utils/storage';
 import { SystemData, ReportType } from './types';
 import { SCHOOL_INFO } from './constants';
 
@@ -35,42 +38,68 @@ const App: React.FC = () => {
   const [data, setData] = useState<SystemData>(loadData());
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [printConfig, setPrintConfig] = useState<{ isOpen: boolean; type: ReportType | null; targetId?: string }>({
     isOpen: false,
     type: null
   });
 
-  // Auto-Config via URL Master Link
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const cloudKey = params.get('config');
-    if (cloudKey) {
-      try {
-        const decoded = JSON.parse(atob(cloudKey));
-        setData(prev => {
-           const newData = {
-             ...prev,
-             settings: { 
-               ...prev.settings, 
-               sheetUrl: decoded.url || prev.settings?.sheetUrl || '', 
-               logoUrl: decoded.logoUrl || prev.settings?.logoUrl || '',
-               schoolName: decoded.schoolName || prev.settings?.schoolName || SCHOOL_INFO.name,
-               clubName: decoded.clubName || prev.settings?.clubName || SCHOOL_INFO.clubName,
-               address: decoded.address || prev.settings?.address || SCHOOL_INFO.address,
-               autoSync: !!decoded.url 
-             }
-           };
-           saveData(newData);
-           return newData;
-        });
-        window.history.replaceState({}, document.title, window.location.pathname);
-        alert("Konfigurasi Master Berjaya Diimport!");
-      } catch (e) {
-        console.error("Gagal nyahkod pautan master");
-      }
+  // Fungsi untuk muat turun data dari Awan
+  const syncFromCloud = async (url: string) => {
+    if (!url) return;
+    setIsLoading(true);
+    const cloudData = await fetchDataFromCloud(url);
+    if (cloudData) {
+      setData(cloudData);
+      saveData(cloudData);
+      console.log("Data awan berjaya diselaraskan.");
     }
+    setIsLoading(false);
+  };
+
+  // Auto-Config via URL Master Link & Auto Sync on Load
+  useEffect(() => {
+    const initialize = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const cloudKey = params.get('config');
+      
+      let currentUrl = data.settings?.sheetUrl;
+
+      if (cloudKey) {
+        try {
+          const decoded = JSON.parse(atob(cloudKey));
+          const updatedSettings = {
+            ...data.settings,
+            sheetUrl: decoded.url || data.settings?.sheetUrl || '', 
+            logoUrl: decoded.logoUrl || data.settings?.logoUrl || '',
+            schoolName: decoded.schoolName || data.settings?.schoolName || SCHOOL_INFO.name,
+            clubName: decoded.clubName || data.settings?.clubName || SCHOOL_INFO.clubName,
+            address: decoded.address || data.settings?.address || SCHOOL_INFO.address,
+            autoSync: !!decoded.url 
+          };
+          
+          const newData = { ...data, settings: updatedSettings };
+          setData(newData);
+          saveData(newData);
+          currentUrl = decoded.url;
+          
+          window.history.replaceState({}, document.title, window.location.pathname);
+          alert("Konfigurasi Master Diimport! Memulakan penyelarasan data...");
+        } catch (e) {
+          console.error("Gagal nyahkod pautan master");
+        }
+      }
+
+      // Jika ada URL (dari local atau pautan master baru), tarik data
+      if (currentUrl) {
+        await syncFromCloud(currentUrl);
+      }
+    };
+
+    initialize();
   }, []);
 
+  // Simpan data setiap kali ada perubahan tempatan
   useEffect(() => {
     saveData(data);
   }, [data]);
@@ -93,20 +122,6 @@ const App: React.FC = () => {
   const currentSchoolName = data.settings?.schoolName || SCHOOL_INFO.name;
   const currentClubName = data.settings?.clubName || SCHOOL_INFO.clubName;
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard': return <Dashboard data={data} />;
-      case 'guru': return <GuruManager data={data} updateData={updateData} />;
-      case 'ahli': return <AhliManager data={data} updateData={updateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'AHLI' })} />;
-      case 'ajk': return <AJKManager data={data} updateData={updateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'AJK' })} />;
-      case 'kehadiran': return <KehadiranManager data={data} updateData={updateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'KEHADIRAN' })} />;
-      case 'aktiviti': return <AktivitiManager data={data} updateData={updateData} onPrint={(id) => setPrintConfig({ isOpen: true, type: 'AKTIVITI', targetId: id })} />;
-      case 'rancangan': return <RancanganManager data={data} updateData={updateData} />;
-      case 'settings': return <Settings data={data} updateData={updateData} />;
-      default: return <Dashboard data={data} />;
-    }
-  };
-
   if (printConfig.isOpen && printConfig.type) {
     return (
       <PrintPreview 
@@ -120,6 +135,14 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-slate-950 text-slate-200 overflow-hidden font-sans">
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center">
+          <Loader2 className="w-12 h-12 text-red-600 animate-spin mb-4" />
+          <p className="text-white font-black uppercase tracking-widest text-sm">Menyemak Data Awan...</p>
+        </div>
+      )}
+
       <aside className={`
         fixed md:static inset-y-0 left-0 z-30
         w-80 bg-slate-900 shadow-[20px_0_50px_rgba(0,0,0,0.5)] border-r border-slate-800 transform transition-all duration-500
@@ -179,7 +202,15 @@ const App: React.FC = () => {
                     {data.settings?.sheetUrl ? 'Cloud Connected' : 'Local Mode'}
                    </p>
                 </div>
-                <p className="text-sm font-bold text-slate-200 tracking-tighter italic uppercase">Enterprise V3.1</p>
+                <div className="flex items-center justify-between mt-2">
+                   <p className="text-sm font-bold text-slate-200 tracking-tighter italic uppercase">Enterprise V3.1</p>
+                   {data.settings?.sheetUrl && (
+                     <button onClick={() => syncFromCloud(data.settings!.sheetUrl)} className="text-red-500 hover:text-red-400">
+                       {/* RefreshCw is now correctly imported */}
+                       <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
+                     </button>
+                   )}
+                </div>
               </div>
             ) : (
               <div className="w-full text-center text-[10px] font-black text-red-600">PRO</div>
@@ -199,13 +230,25 @@ const App: React.FC = () => {
             </h1>
           </div>
           <div className="flex items-center gap-4">
-             {data.settings?.sheetUrl ? <Globe className="w-5 h-5 text-emerald-500" /> : <CloudOff className="w-5 h-5 text-slate-600" />}
+             {data.settings?.sheetUrl ? (
+               <div className="flex items-center gap-2">
+                 <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest hidden sm:block">Cloud Active</span>
+                 <Globe className="w-5 h-5 text-emerald-500" />
+               </div>
+             ) : <CloudOff className="w-5 h-5 text-slate-600" />}
           </div>
         </header>
 
         <div className="flex-1 overflow-y-auto p-6 md:p-10 relative z-10">
           <div className="max-w-7xl mx-auto space-y-10">
-            {renderContent()}
+            {activeTab === 'dashboard' && <Dashboard data={data} />}
+            {activeTab === 'guru' && <GuruManager data={data} updateData={updateData} />}
+            {activeTab === 'ahli' && <AhliManager data={data} updateData={updateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'AHLI' })} />}
+            {activeTab === 'ajk' && <AJKManager data={data} updateData={updateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'AJK' })} />}
+            {activeTab === 'kehadiran' && <KehadiranManager data={data} updateData={updateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'KEHADIRAN' })} />}
+            {activeTab === 'aktiviti' && <AktivitiManager data={data} updateData={updateData} onPrint={(id) => setPrintConfig({ isOpen: true, type: 'AKTIVITI', targetId: id })} />}
+            {activeTab === 'rancangan' && <RancanganManager data={data} updateData={updateData} />}
+            {activeTab === 'settings' && <Settings data={data} updateData={updateData} />}
           </div>
         </div>
       </main>

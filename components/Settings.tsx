@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Cloud, Copy, CheckCircle2, RefreshCw, Activity, HelpCircle, Lock, ShieldCheck, Share2, Image as ImageIcon, School } from 'lucide-react';
+import { Cloud, Copy, CheckCircle2, RefreshCw, Activity, HelpCircle, Lock, ShieldCheck, Share2, Image as ImageIcon, School, Code2 } from 'lucide-react';
 import { SystemData } from '../types';
 import { FormCard, Input, Button } from './CommonUI';
 import { testCloudConnection } from '../utils/storage';
@@ -18,8 +18,8 @@ const Settings: React.FC<Props> = ({ data, updateData }) => {
   const [clubName, setClubName] = useState(data.settings?.clubName || 'KADET BOMBA');
   const [address, setAddress] = useState(data.settings?.address || 'Jalan Sultan Ahmad Shah, 25200 Kuantan');
   
-  const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedScript, setCopiedScript] = useState(false);
   const [testing, setTesting] = useState(false);
 
   const CORRECT_PASSWORD = 'CEB1003';
@@ -62,7 +62,64 @@ const Settings: React.FC<Props> = ({ data, updateData }) => {
     navigator.clipboard.writeText(masterLink);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
-    alert("Pautan Master disalin! Semua identiti sekolah kini boleh dipindahkan.");
+    alert("Pautan Master disalin! Gunakan pautan ini di peranti lain untuk sync automatik.");
+  };
+
+  const copyGASCode = () => {
+    const scriptCode = `/**
+ * SISTEM PENGURUSAN KADET BOMBA PROFESSIONAL - CLOUD BRIDGE v3.1
+ * -----------------------------------------------------------
+ */
+const SHEET_BACKUP = "DB_BACKUP";
+
+function doGet(e) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName(SHEET_BACKUP);
+    if (!sheet) return ContentService.createTextOutput(JSON.stringify({error: "No data"})).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(sheet.getRange(1, 1).getValue()).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({error: err.message})).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doPost(e) {
+  try {
+    var contents = JSON.parse(e.postData.contents);
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var backupSheet = ss.getSheetByName(SHEET_BACKUP) || ss.insertSheet(SHEET_BACKUP);
+    backupSheet.getRange(1, 1).setValue(JSON.stringify(contents));
+    backupSheet.getRange(1, 2).setValue("Last Update: " + new Date().toLocaleString());
+
+    updateSheet(ss, 'DATA_AHLI', ['ID', 'Nama', 'No KP', 'Tingkatan', 'Kelas', 'Jantina', 'Kaum'], (contents.students || []).map(s => [s.id, s.nama, s.noKP, s.tingkatan, s.kelas, s.jantina, s.kaum]));
+    updateSheet(ss, 'DATA_GURU', ['ID', 'Nama', 'Jawatan', 'Telefon'], (contents.teachers || []).map(t => [t.id, t.nama, t.jawatan, t.telefon]));
+    updateSheet(ss, 'DATA_AKTIVITI', ['Tarikh', 'Masa', 'Aktiviti', 'Tempat', 'Ulasan'], (contents.activities || []).map(a => [a.tarikh, a.masa, a.nama, a.tempat, a.ulasan]));
+    updateSheet(ss, 'RANCANGAN_TAHUNAN', ['Bulan', 'Program', 'Tempat', 'Catatan'], (contents.annualPlans || []).map(p => [p.bulan, p.program, p.tempat, p.catatan]));
+    
+    var ajkRows = (contents.committees || []).map(c => {
+      var student = (contents.students || []).find(s => s.id === c.studentId);
+      return [c.jawatan, student ? student.nama : 'N/A', student ? student.tingkatan : '-', student ? student.kelas : '-'];
+    });
+    updateSheet(ss, 'STRUKTUR_ORGANISASI', ['Jawatan', 'Nama Ahli', 'Tingkatan', 'Kelas'], ajkRows);
+
+    return ContentService.createTextOutput("SUCCESS").setMimeType(ContentService.MimeType.TEXT);
+  } catch (err) {
+    return ContentService.createTextOutput("ERROR: " + err.message).setMimeType(ContentService.MimeType.TEXT);
+  }
+}
+
+function updateSheet(ss, sheetName, headers, rows) {
+  var sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
+  sheet.clear();
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold').setBackground('#b91c1c').setFontColor('#ffffff');
+  if (rows && rows.length > 0) sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
+  sheet.setFrozenRows(1);
+  sheet.autoResizeColumns(1, headers.length);
+}`;
+    navigator.clipboard.writeText(scriptCode);
+    setCopiedScript(true);
+    setTimeout(() => setCopiedScript(false), 2000);
+    alert("Kod Google Apps Script telah disalin! Sila paste ke dalam Script Editor Google Sheets anda.");
   };
 
   if (!isAuthorized) {
@@ -145,8 +202,11 @@ const Settings: React.FC<Props> = ({ data, updateData }) => {
                  Simpan Semua Konfigurasi
                </Button>
                
-               <div className="pt-4 border-t border-slate-800">
-                  <p className="text-[10px] text-slate-500 font-black uppercase mb-3">Sync Identiti ke Peranti Lain</p>
+               <div className="pt-4 border-t border-slate-800 space-y-3">
+                  <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Toolbox Pentadbir</p>
+                  <Button onClick={copyGASCode} variant="secondary" className="w-full border-emerald-900/30 text-emerald-500">
+                     <Code2 className="w-4 h-4" /> {copiedScript ? 'Kod Script Disalin!' : 'Salin Kod Google Apps Script'}
+                  </Button>
                   <Button onClick={copyMasterLink} variant="secondary" className="w-full border-dashed border-slate-700">
                      <Share2 className="w-4 h-4" /> {copiedLink ? 'Pautan Master Disalin!' : 'Salin Pautan Master'}
                   </Button>
@@ -160,7 +220,7 @@ const Settings: React.FC<Props> = ({ data, updateData }) => {
                <h3 className="font-black text-[10px] uppercase tracking-[0.2em]">Tips Profesional</h3>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Sebaik sahaja anda klik <b>Simpan</b>, identiti ini akan digunakan dalam semua Dashboard dan Laporan Cetakan A4 secara automatik. Gunakan <b>Pautan Master</b> untuk setup komputer lain dalam 1 saat.
+              Klik <b>Salin Kod Google Apps Script</b> dan tampal ke dalam Extensions > Apps Script pada Google Sheet anda. Pastikan anda "Deploy as Web App" dengan akses "Anyone" untuk fungsi Cloud Bridge berfungsi.
             </p>
           </div>
         </div>
