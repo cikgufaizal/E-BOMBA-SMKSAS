@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   LayoutDashboard, 
   Users, 
@@ -37,7 +37,7 @@ const App: React.FC = () => {
   const [data, setData] = useState<SystemData>(loadData());
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [isSidebarOpen, setSidebarOpen] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
   const [lastSynced, setLastSynced] = useState<string>(new Date().toLocaleTimeString());
   const [printConfig, setPrintConfig] = useState<{ isOpen: boolean; type: ReportType | null; targetId?: string }>({
@@ -45,61 +45,78 @@ const App: React.FC = () => {
     type: null
   });
 
-  // Fungsi Sinkronisasi Utama
-  const syncWithCloud = useCallback(async (isManual: boolean = false) => {
-    const url = data.settings?.sheetUrl;
-    if (!url) return;
-
-    setSyncStatus('syncing');
-    const cloudData = await fetchDataFromCloud(url);
-    
-    if (cloudData) {
-      setData(cloudData);
-      localStorage.setItem('ekelab_data_v1', JSON.stringify(cloudData));
-      setSyncStatus('success');
-      setLastSynced(new Date().toLocaleTimeString());
-      if (isManual) alert("Data berjaya dikemaskini dari Cloud!");
-    } else {
-      // Jika cloud kosong, cuba hantar data local ke cloud
-      const success = await saveData(data);
-      setSyncStatus(success ? 'success' : 'error');
-      if (isManual && !success) alert("Gagal menghubungi Cloud. Sila semak sambungan internet anda.");
-    }
-
-    setTimeout(() => setSyncStatus('idle'), 3000);
+  // Gunakan Ref untuk mengelakkan dependency loop dalam useEffect
+  const dataRef = useRef<SystemData>(data);
+  useEffect(() => {
+    dataRef.current = data;
   }, [data]);
 
-  // Auto-Sync Effects
-  useEffect(() => {
-    // 1. Sync bila tab difokuskan semula
-    const handleFocus = () => syncWithCloud();
-    window.addEventListener('focus', handleFocus);
+  const syncWithCloud = useCallback(async (isManual: boolean = false) => {
+    const currentData = dataRef.current;
+    const url = currentData.settings?.sheetUrl;
     
-    // 2. Sync setiap 2 minit untuk multi-user update
-    const interval = setInterval(() => syncWithCloud(), 120000);
+    // Abaikan jika URL masih placeholder
+    if (!url || url.includes('SILA_GANTI')) {
+      if (isManual) alert("Sila masukkan URL Web App di dalam kod (utils/storage.ts) terlebih dahulu.");
+      return;
+    }
 
-    // 3. Initial load
+    setSyncStatus('syncing');
+    try {
+      const cloudData = await fetchDataFromCloud(url);
+      
+      if (cloudData) {
+        setData(cloudData);
+        setSyncStatus('success');
+        setLastSynced(new Date().toLocaleTimeString());
+        if (isManual) alert("Data berjaya dikemaskini dari Cloud!");
+      } else {
+        // Jika cloud kosong, hantar data sedia ada ke cloud
+        const success = await saveData(currentData);
+        setSyncStatus(success ? 'success' : 'error');
+      }
+    } catch (err) {
+      setSyncStatus('error');
+    } finally {
+      setTimeout(() => setSyncStatus('idle'), 3000);
+    }
+  }, []);
+
+  // Effect 1: Inisialisasi Aplikasi (Hanya Sekali)
+  useEffect(() => {
     const initApp = async () => {
       setIsLoading(true);
       await syncWithCloud();
       setIsLoading(false);
     };
     initApp();
+  }, [syncWithCloud]);
 
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      clearInterval(interval);
-    };
+  // Effect 2: Auto-Sync Berkala
+  useEffect(() => {
+    const interval = setInterval(() => {
+      syncWithCloud();
+    }, 180000); // Setiap 3 minit
+    
+    return () => clearInterval(interval);
   }, [syncWithCloud]);
 
   const handleUpdateData = async (newData: Partial<SystemData>) => {
     const updated = { ...data, ...newData };
     setData(updated);
-    setSyncStatus('syncing');
-    const success = await saveData(updated);
-    setSyncStatus(success ? 'success' : 'error');
-    if (success) setLastSynced(new Date().toLocaleTimeString());
-    setTimeout(() => setSyncStatus('idle'), 2000);
+    
+    // Simpan ke LocalStorage segera
+    localStorage.setItem('ekelab_data_v1', JSON.stringify(updated));
+    
+    // Cuba simpan ke Cloud di belakang tab
+    const url = updated.settings?.sheetUrl;
+    if (url && !url.includes('SILA_GANTI')) {
+      setSyncStatus('syncing');
+      const success = await saveData(updated);
+      setSyncStatus(success ? 'success' : 'error');
+      if (success) setLastSynced(new Date().toLocaleTimeString());
+      setTimeout(() => setSyncStatus('idle'), 2000);
+    }
   };
 
   const menuItems = [
@@ -125,7 +142,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-200 overflow-hidden font-sans italic-none">
+    <div className="flex h-screen bg-slate-950 text-slate-200 overflow-hidden font-sans">
       {isLoading && (
         <div className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center">
           <Loader2 className="w-12 h-12 text-red-600 animate-spin mb-4" />
@@ -163,7 +180,10 @@ const App: React.FC = () => {
           {menuItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id as Tab)}
+              onClick={() => {
+                setActiveTab(item.id as Tab);
+                if (window.innerWidth < 768) setSidebarOpen(false);
+              }}
               className={`
                 w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300
                 ${activeTab === item.id 
@@ -201,7 +221,7 @@ const App: React.FC = () => {
       <main className="flex-1 flex flex-col min-w-0 bg-[#020617]">
         <header className="h-20 bg-slate-950/50 backdrop-blur-md border-b border-slate-800/50 flex items-center justify-between px-8 shrink-0 relative z-10">
           <div className="flex items-center gap-6">
-            <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-2.5 hover:bg-slate-900 rounded-xl text-slate-400 hidden md:block">
+            <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-2.5 hover:bg-slate-900 rounded-xl text-slate-400">
               <Menu className="w-5 h-5" />
             </button>
             <h1 className="text-xl font-black text-white uppercase tracking-tighter">
@@ -210,7 +230,7 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4">
-             <div className="px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl flex items-center gap-3">
+             <div className="hidden sm:flex px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl items-center gap-3">
                 <div className="flex -space-x-2">
                    <div className="w-6 h-6 rounded-full bg-red-600 border-2 border-slate-900 flex items-center justify-center text-[8px] font-bold">G</div>
                    <div className="w-6 h-6 rounded-full bg-slate-700 border-2 border-slate-900 flex items-center justify-center text-[8px] font-bold">A</div>
