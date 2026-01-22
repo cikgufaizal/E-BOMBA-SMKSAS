@@ -15,7 +15,8 @@ import {
   ChevronRight,
   ShieldAlert,
   Cloud,
-  CloudOff
+  CloudOff,
+  Globe
 } from 'lucide-react';
 import { loadData, saveData } from './utils/storage';
 import { SystemData, ReportType } from './types';
@@ -154,12 +155,12 @@ const App: React.FC = () => {
                 <div className="flex items-center gap-2">
                    <div className={`w-2 h-2 rounded-full ${data.settings?.sheetUrl ? 'bg-emerald-500 animate-pulse' : 'bg-slate-700'}`}></div>
                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.1em]">
-                    {data.settings?.sheetUrl ? 'Cloud Connected' : 'Local Backup Mode'}
+                    {data.settings?.sheetUrl ? 'Shared Cloud Active' : 'Local Backup Mode'}
                    </p>
                 </div>
                 <div className="flex items-center justify-between">
                    <p className="text-sm font-bold text-slate-200 uppercase tracking-tighter">Enterprise 2.5</p>
-                   {data.settings?.sheetUrl ? <Cloud className="w-3 h-3 text-emerald-500" /> : <CloudOff className="w-3 h-3 text-slate-700" />}
+                   {data.settings?.sheetUrl ? <Globe className="w-3 h-3 text-emerald-500" /> : <CloudOff className="w-3 h-3 text-slate-700" />}
                 </div>
               </div>
             ) : (
