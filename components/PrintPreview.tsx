@@ -66,7 +66,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
       <h3 className="text-center font-bold text-lg mb-6 border-b pb-2">SENARAI INDUK AHLI {clubName}</h3>
       <table className="w-full border-collapse border border-black text-sm">
         <thead>
-          <tr className="bg-gray-100 print-bg-gray">
+          <tr className="bg-gray-100">
             <th className="border border-black p-2 text-xs">BIL</th>
             <th className="border border-black p-2 text-xs">NAMA PENUH</th>
             <th className="border border-black p-2 text-xs">NO. KP</th>
@@ -104,7 +104,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         <h3 className="text-center font-bold text-lg mb-6 underline">CARTA ORGANISASI AHLI JAWATANKUASA</h3>
         <table className="w-full border-collapse border border-black text-sm">
           <thead>
-            <tr className="bg-gray-100 print-bg-gray">
+            <tr className="bg-gray-100">
               <th className="border border-black p-2 text-xs">BIL</th>
               <th className="border border-black p-2 text-xs">JAWATAN</th>
               <th className="border border-black p-2 text-xs">NAMA PENUH</th>
@@ -151,13 +151,13 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         <h3 className="text-center font-bold text-md mb-6 uppercase border-b pb-2">RUMUSAN KEHADIRAN AKTIVITI ({currentYear})</h3>
         <table className="w-full border-collapse border border-black text-[7pt]">
           <thead>
-            <tr className="bg-gray-100 print-bg-gray">
+            <tr className="bg-gray-100">
               <th className="border border-black p-1" rowSpan={2}>BIL</th>
               <th className="border border-black p-1" rowSpan={2}>NAMA PENUH AHLI</th>
               <th className="border border-black p-1" rowSpan={2}>TING</th>
               <th className="border border-black p-1 text-center" colSpan={12}>BULAN</th>
             </tr>
-            <tr className="bg-gray-50 print-bg-gray">
+            <tr className="bg-gray-50">
               {MONTHS.map(m => <th key={m} className="border border-black p-0.5 text-[6pt]">{m.substring(0,3)}</th>)}
             </tr>
           </thead>
@@ -250,7 +250,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
   };
 
   return (
-    <div className="min-h-screen bg-slate-800 overflow-y-auto no-print">
+    <div className="min-h-screen bg-slate-800 overflow-y-auto">
       {/* Navigation Bar (no-print) */}
       <div className="fixed top-0 left-0 right-0 h-16 bg-white shadow-xl z-50 flex items-center justify-between px-8 text-black no-print">
         <div className="flex items-center gap-4">
@@ -269,7 +269,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
 
       {/* Main Container for Preview and Print */}
       <div className="pt-24 pb-12 flex justify-center bg-slate-800 min-h-screen">
-        <div className="bg-white shadow-2xl w-[210mm] min-h-[297mm] p-[15mm] print-area">
+        <div className="bg-white shadow-2xl w-[210mm] min-h-[297mm] p-10 print-area">
           {getReportContent()}
         </div>
       </div>
