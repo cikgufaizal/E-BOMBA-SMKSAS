@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Cloud, Copy, CheckCircle2, RefreshCw, Activity, HelpCircle, Lock, ShieldCheck, Share2, Image as ImageIcon, School, Code2 } from 'lucide-react';
 import { SystemData } from '../types';
@@ -62,12 +63,12 @@ const Settings: React.FC<Props> = ({ data, updateData }) => {
     navigator.clipboard.writeText(masterLink);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
-    alert("Pautan Master disalin! Gunakan pautan ini di peranti lain untuk sync automatik.");
+    alert("Pautan Master disalin!");
   };
 
   const copyGASCode = () => {
     const scriptCode = `/**
- * SISTEM PENGURUSAN KADET BOMBA PROFESSIONAL - CLOUD BRIDGE v3.1
+ * SISTEM PENGURUSAN KADET BOMBA PROFESSIONAL - CLOUD BRIDGE v3.2
  * -----------------------------------------------------------
  */
 const SHEET_BACKUP = "DB_BACKUP";
@@ -77,7 +78,8 @@ function doGet(e) {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName(SHEET_BACKUP);
     if (!sheet) return ContentService.createTextOutput(JSON.stringify({error: "No data"})).setMimeType(ContentService.MimeType.JSON);
-    return ContentService.createTextOutput(sheet.getRange(1, 1).getValue()).setMimeType(ContentService.MimeType.JSON);
+    var data = sheet.getRange(1, 1).getValue();
+    return ContentService.createTextOutput(data).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({error: err.message})).setMimeType(ContentService.MimeType.JSON);
   }
@@ -89,7 +91,7 @@ function doPost(e) {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var backupSheet = ss.getSheetByName(SHEET_BACKUP) || ss.insertSheet(SHEET_BACKUP);
     backupSheet.getRange(1, 1).setValue(JSON.stringify(contents));
-    backupSheet.getRange(1, 2).setValue("Last Update: " + new Date().toLocaleString());
+    backupSheet.getRange(1, 2).setValue("Last Sync: " + new Date().toLocaleString());
 
     updateSheet(ss, 'DATA_AHLI', ['ID', 'Nama', 'No KP', 'Tingkatan', 'Kelas', 'Jantina', 'Kaum'], (contents.students || []).map(s => [s.id, s.nama, s.noKP, s.tingkatan, s.kelas, s.jantina, s.kaum]));
     updateSheet(ss, 'DATA_GURU', ['ID', 'Nama', 'Jawatan', 'Telefon'], (contents.teachers || []).map(t => [t.id, t.nama, t.jawatan, t.telefon]));
@@ -101,6 +103,9 @@ function doPost(e) {
       return [c.jawatan, student ? student.nama : 'N/A', student ? student.tingkatan : '-', student ? student.kelas : '-'];
     });
     updateSheet(ss, 'STRUKTUR_ORGANISASI', ['Jawatan', 'Nama Ahli', 'Tingkatan', 'Kelas'], ajkRows);
+    
+    var attRows = (contents.attendances || []).map(a => [a.tarikh, a.presents ? a.presents.length : 0, contents.students ? contents.students.length : 0]);
+    updateSheet(ss, 'LOG_KEHADIRAN', ['Tarikh', 'Bil Hadir', 'Jumlah Ahli'], attRows);
 
     return ContentService.createTextOutput("SUCCESS").setMimeType(ContentService.MimeType.TEXT);
   } catch (err) {
@@ -119,7 +124,7 @@ function updateSheet(ss, sheetName, headers, rows) {
     navigator.clipboard.writeText(scriptCode);
     setCopiedScript(true);
     setTimeout(() => setCopiedScript(false), 2000);
-    alert("Kod Google Apps Script telah disalin! Sila paste ke dalam Script Editor Google Sheets anda.");
+    alert("Kod v3.2 Disalin! Paste dalam Apps Script Google Sheet anda.");
   };
 
   if (!isAuthorized) {
@@ -205,7 +210,7 @@ function updateSheet(ss, sheetName, headers, rows) {
                <div className="pt-4 border-t border-slate-800 space-y-3">
                   <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Toolbox Pentadbir</p>
                   <Button onClick={copyGASCode} variant="secondary" className="w-full border-emerald-900/30 text-emerald-500">
-                     <Code2 className="w-4 h-4" /> {copiedScript ? 'Kod Script Disalin!' : 'Salin Kod Google Apps Script'}
+                     <Code2 className="w-4 h-4" /> {copiedScript ? 'Kod Script v3.2 Disalin!' : 'Salin Kod Apps Script v3.2'}
                   </Button>
                   <Button onClick={copyMasterLink} variant="secondary" className="w-full border-dashed border-slate-700">
                      <Share2 className="w-4 h-4" /> {copiedLink ? 'Pautan Master Disalin!' : 'Salin Pautan Master'}
@@ -220,7 +225,7 @@ function updateSheet(ss, sheetName, headers, rows) {
                <h3 className="font-black text-[10px] uppercase tracking-[0.2em]">Tips Profesional</h3>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Klik <b>Salin Kod Google Apps Script</b> dan tampal ke dalam Extensions > Apps Script pada Google Sheet anda. Pastikan anda "Deploy as Web App" dengan akses "Anyone" untuk fungsi Cloud Bridge berfungsi.
+              Pastikan anda <b>Redeploy</b> Web App anda di Google Sheets sebagai <b>New Version</b> setiap kali menukar kod di sana.
             </p>
           </div>
         </div>
