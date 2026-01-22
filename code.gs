@@ -1,9 +1,6 @@
 /**
- * SISTEM PENGURUSAN KADET BOMBA PROFESSIONAL - CLOUD BRIDGE v7.0
+ * SISTEM PENGURUSAN KADET BOMBA PROFESSIONAL - CLOUD BRIDGE v7.5
  * -----------------------------------------------------------------------------
- * 1. Tampal kod ini di Apps Script.
- * 2. Deploy sebagai Web App (Execute as: Me, Access: Anyone).
- * 3. Copy URL /exec dan tampal di dalam "Settings > Admin" di web app.
  */
 
 const DB_SHEET = "RAW_DATABASE";
@@ -25,17 +22,19 @@ function doPost(e) {
   try {
     if (!e.postData || !e.postData.contents) return ContentService.createTextOutput("NO_DATA");
     var contents = JSON.parse(e.postData.contents);
-    if (contents.test) return ContentService.createTextOutput("CONNECTED");
+    
+    // FUNGSI KHAS UNTUK BUTANG UJI SAMBUNGAN
+    if (contents.test) {
+      return ContentService.createTextOutput("CONNECTED");
+    }
 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var dbSheet = ss.getSheetByName(DB_SHEET) || ss.insertSheet(DB_SHEET);
     dbSheet.clear().getRange(1, 1).setValue(e.postData.contents);
-    dbSheet.getRange(1, 2).setValue("Kemaskini: " + new Date().toLocaleString());
-
-    // Kemaskini Tab Visual
+    
+    // Kemaskini Tab Visual untuk Guru & Ahli
     if (contents.students) updateSheet(ss, 'AHLI', ['NAMA', 'NO KP', 'TING.', 'KELAS', 'JANTINA', 'KAUM'], contents.students.map(s => [s.nama, s.noKP, s.tingkatan, s.kelas, s.jantina, s.kaum]));
     if (contents.teachers) updateSheet(ss, 'GURU', ['NAMA', 'JAWATAN', 'TEL'], contents.teachers.map(t => [t.nama, t.jawatan, t.telefon]));
-    if (contents.activities) updateSheet(ss, 'AKTIVITI', ['TARIKH', 'NAMA', 'TEMPAT', 'ULASAN'], contents.activities.map(a => [a.tarikh, a.nama, a.tempat, a.ulasan]));
 
     return ContentService.createTextOutput("SUCCESS");
   } catch (err) {

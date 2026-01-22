@@ -23,7 +23,6 @@ const App: React.FC = () => {
   const [data, setData] = useState<SystemData>(loadData());
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [isSidebarOpen, setSidebarOpen] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
   const [printConfig, setPrintConfig] = useState<{ isOpen: boolean; type: ReportType | null; targetId?: string }>({
     isOpen: false,
@@ -34,10 +33,7 @@ const App: React.FC = () => {
 
   const performSync = useCallback(async (isManual = false) => {
     const url = data.settings?.sheetUrl;
-    if (!url || !url.startsWith('https://script.google.com')) {
-      if (isManual) alert("Sila masukkan URL API di menu Admin terlebih dahulu.");
-      return;
-    }
+    if (!url || !url.startsWith('https://script.google.com')) return;
 
     setSyncStatus('syncing');
     try {
@@ -45,7 +41,7 @@ const App: React.FC = () => {
       if (cloudData) {
         setData(cloudData);
         setSyncStatus('idle');
-        if (isManual) alert("Data berjaya diselaraskan!");
+        if (isManual) alert("Data berjaya ditarik dari Google Sheets!");
       } else {
         setSyncStatus('error');
         setTimeout(() => setSyncStatus('idle'), 3000);
@@ -92,8 +88,9 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-slate-950 text-slate-200 overflow-hidden font-sans">
-      <aside className={`fixed md:static inset-y-0 left-0 z-30 w-72 bg-slate-900 border-r border-slate-800 transform transition-all duration-300 shadow-2xl ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0 md:w-24'}`}>
-        <div className="p-8 border-b border-slate-800/50 flex flex-col gap-4">
+      {/* SIDEBAR DENGAN FIX SCROLL */}
+      <aside className={`fixed md:static inset-y-0 left-0 z-30 w-72 bg-slate-900 border-r border-slate-800 flex flex-col transform transition-all duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0 md:w-24'}`}>
+        <div className="p-8 border-b border-slate-800 flex flex-col gap-4 shrink-0">
           <div className="flex items-center justify-between">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transition-colors ${syncStatus === 'error' ? 'bg-amber-600' : 'bg-red-600'}`}>
                <Wifi className={`w-5 h-5 text-white ${syncStatus === 'syncing' ? 'animate-pulse' : ''}`} />
@@ -106,7 +103,8 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        <nav className="p-4 space-y-1 overflow-y-auto">
+        {/* AREA NAVIGASI BOLEH SCROLL */}
+        <nav className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
           {menuItems.map(item => (
             <button 
               key={item.id} 
@@ -136,7 +134,7 @@ const App: React.FC = () => {
           
           <div className="flex items-center gap-4">
             <button onClick={() => performSync(true)} className="flex items-center gap-2 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl hover:border-red-600/40 transition-all">
-              <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest hidden sm:inline">Refresh Cloud</span>
+              <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest hidden sm:inline">Tarik Data Cloud</span>
               <RefreshCw className={`w-4 h-4 ${syncStatus === 'syncing' ? 'animate-spin text-red-500' : 'text-slate-400'}`} />
             </button>
           </div>
