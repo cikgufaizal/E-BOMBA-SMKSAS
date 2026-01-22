@@ -1,6 +1,11 @@
 import { SystemData } from '../types';
 
 const STORAGE_KEY = 'ekelab_data_v1';
+/**
+ * URL Google Apps Script Personal Pengguna.
+ * Ini membolehkan sistem auto-sync ke akaun anda tanpa perlu tampal URL berkali-kali.
+ */
+const USER_CLOUD_URL = 'https://script.google.com/macros/s/AKfycbzBUzC1FZEkSyEiyPuuwQYhzY38Ipt3_wvLZhd9UvzBD9QTgl_Z7o0C0JEMV7oq2TWEvA/exec';
 
 const createEmptyData = (): SystemData => ({
   teachers: [],
@@ -10,11 +15,11 @@ const createEmptyData = (): SystemData => ({
   activities: [],
   annualPlans: [],
   settings: {
-    sheetUrl: '',
-    autoSync: false,
-    schoolName: '',
-    clubName: '',
-    address: '',
+    sheetUrl: USER_CLOUD_URL, 
+    autoSync: true,
+    schoolName: 'SMK SULTAN AHMAD SHAH',
+    clubName: 'KADET BOMBA',
+    address: 'Jalan Sultan Ahmad Shah, 25200 Kuantan',
     logoUrl: ''
   }
 });
@@ -25,7 +30,12 @@ export const loadData = (): SystemData => {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     try {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      // Jika URL dalam storage kosong atau lama, gantikan dengan URL personal terbaru
+      if (parsed.settings && (!parsed.settings.sheetUrl || parsed.settings.sheetUrl.includes('AKfycbzB'))) {
+        parsed.settings.sheetUrl = USER_CLOUD_URL;
+      }
+      return parsed;
     } catch (e) {
       return createEmptyData();
     }
@@ -47,9 +57,8 @@ export const fetchDataFromCloud = async (url: string): Promise<SystemData | null
     
     const cloudData = await response.json();
     
-    // Jika respon dari v3.3 menyatakan sheet masih kosong
     if (cloudData.status === "EMPTY") {
-      console.log("Cloud sedia tetapi data masih kosong. Memerlukan 'Save' pertama.");
+      console.log("Cloud sedia tetapi data masih kosong.");
       return null;
     }
 
@@ -78,7 +87,7 @@ export const saveData = async (data: SystemData) => {
       });
       console.log("Sync Berjaya.");
     } catch (err) {
-      console.warn("Sync Gagal (Offline/CORS).");
+      console.warn("Sync Gagal.");
     }
   }
 };
