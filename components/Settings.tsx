@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Cloud, Save, Copy, CheckCircle2, AlertCircle, ExternalLink, RefreshCw, Terminal, BookOpen, ShieldCheck, HelpCircle, Activity } from 'lucide-react';
+import { Cloud, Save, Copy, CheckCircle2, RefreshCw, Activity, HelpCircle } from 'lucide-react';
 import { SystemData } from '../types';
 import { FormCard, Input, Button } from './CommonUI';
 import { testCloudConnection } from '../utils/storage';
@@ -156,7 +155,7 @@ function updateSheet(ss, sheetName, headers, rows) {
                </li>
                <li className="flex gap-3">
                   <span className="text-rose-500 font-bold">●</span>
-                  <span>Mesti klik <b>"Advanced"</b> -> <b>"Go to [Project] (unsafe)"</b> semasa pertama kali deploy untuk beri izin.</span>
+                  <span>Mesti klik <b>"Advanced"</b> &rarr; <b>"Go to [Project] (unsafe)"</b> semasa pertama kali deploy untuk beri izin.</span>
                </li>
                <li className="flex gap-3">
                   <span className="text-rose-500 font-bold">●</span>
