@@ -68,6 +68,7 @@ const AhliManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
     }));
     updateData({ students: [...data.students, ...imported] });
     setShowImport(false);
+    setCsvText('');
   };
 
   const deleteAhli = (id: string) => {
@@ -78,37 +79,38 @@ const AhliManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
 
   return (
     <div className="animate-in fade-in duration-500">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-bold text-slate-200 uppercase tracking-tighter">Pangkalan Data Ahli</h2>
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Pengurusan Keahlian</h2>
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Sistem Pangkalan Data Induk</p>
+        </div>
         {!editingId && (
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <Button variant="secondary" onClick={() => setShowImport(!showImport)}>
-              <Upload className="w-4 h-4" />
-              Import CSV
+              <Upload className="w-4 h-4" /> Import CSV
             </Button>
-            <Button onClick={onPrint} variant="success">
-              <Printer className="w-4 h-4" />
-              Cetak Senarai
+            <Button onClick={onPrint} variant="success" className="px-8 shadow-lg shadow-emerald-900/20">
+              <Printer className="w-4 h-4" /> Cetak Senarai
             </Button>
           </div>
         )}
       </div>
 
       {showImport && !editingId && (
-        <FormCard title="Import Data Ahli">
+        <FormCard title="Import Data Dari CSV / Paste">
           <div className="space-y-4">
-            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Format CSV: Nama, No KP, Tingkatan, Kelas, Jantina, Kaum</p>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Susunan Kolum: Nama, No KP, Tingkatan, Kelas, Jantina, Kaum</p>
             <textarea
-              className="w-full h-32 p-4 bg-slate-950 border border-slate-800 rounded-xl text-sm outline-none text-slate-200"
-              placeholder="Ali bin Abu, 080101-14-1234, 4, Murni, LELAKI, MELAYU"
+              className="w-full h-32 p-4 bg-slate-950 border border-slate-800 rounded-2xl text-sm outline-none text-slate-200 focus:border-red-600 transition-all font-mono"
+              placeholder="Ali bin Abu, 080101141234, 4, Murni, LELAKI, MELAYU"
               value={csvText}
               onChange={(e) => setCsvText(e.target.value)}
             />
-            <div className="flex gap-4">
-              <Button onClick={() => handleImport(parseCSV(csvText))} className="flex-1">Import Paste</Button>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button onClick={() => handleImport(parseCSV(csvText))} className="flex-1 h-12">Proses Data Paste</Button>
               <div className="flex-1">
                 <input type="file" accept=".csv" className="hidden" id="csv-student" onChange={(e) => e.target.files && handleFileUpload(e.target.files[0], handleImport)} />
-                <Button variant="secondary" className="w-full" onClick={() => document.getElementById('csv-student')?.click()}>Upload File</Button>
+                <Button variant="secondary" className="w-full h-12" onClick={() => document.getElementById('csv-student')?.click()}>Upload Fail .CSV</Button>
               </div>
             </div>
           </div>
@@ -116,22 +118,20 @@ const AhliManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
       )}
 
       {(!showImport || editingId) && (
-        <FormCard title={editingId ? "Kemaskini Profil Ahli" : "Tambah Ahli Baru"}>
+        <FormCard title={editingId ? "Kemaskini Maklumat Ahli" : "Pendaftaran Ahli Baharu"}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Input label="Nama Ahli" value={formData.nama} onChange={(e: any) => setFormData({...formData, nama: e.target.value})} />
+            <Input label="Nama Penuh (Huruf Besar)" value={formData.nama} onChange={(e: any) => setFormData({...formData, nama: e.target.value.toUpperCase()})} />
             <Input label="No. Kad Pengenalan" placeholder="000000-00-0000" value={formData.noKP} onChange={(e: any) => setFormData({...formData, noKP: e.target.value})} />
-            <Select label="Tingkatan" value={formData.tingkatan} onChange={(e: any) => setFormData({...formData, tingkatan: e.target.value})} options={FORMS.map(f => ({ value: f, label: f }))} />
-            <Input label="Kelas" value={formData.kelas} onChange={(e: any) => setFormData({...formData, kelas: e.target.value})} />
+            <Select label="Tingkatan" value={formData.tingkatan} onChange={(e: any) => setFormData({...formData, tingkatan: e.target.value})} options={FORMS.map(f => ({ value: f, label: `TINGKATAN ${f}` }))} />
+            <Input label="Nama Kelas" placeholder="Cth: MURNI" value={formData.kelas} onChange={(e: any) => setFormData({...formData, kelas: e.target.value.toUpperCase()})} />
             <Select label="Jantina" value={formData.jantina} onChange={(e: any) => setFormData({...formData, jantina: e.target.value})} options={Object.values(Jantina).map(j => ({ value: j, label: j }))} />
-            <Select label="Kaum" value={formData.kaum} onChange={(e: any) => setFormData({...formData, kaum: e.target.value})} options={Object.values(Kaum).map(k => ({ value: k, label: k }))} />
-            <div className="md:col-span-3 flex gap-3">
-              <Button onClick={saveAhli} className="flex-1">
-                {editingId ? <><Edit2 className="w-4 h-4" /> Simpan Perubahan</> : <><Plus className="w-4 h-4" /> Tambah Ahli</>}
+            <Select label="Etnik / Kaum" value={formData.kaum} onChange={(e: any) => setFormData({...formData, kaum: e.target.value})} options={Object.values(Kaum).map(k => ({ value: k, label: k }))} />
+            <div className="md:col-span-3 flex gap-4 pt-4">
+              <Button onClick={saveAhli} className="flex-1 h-14">
+                {editingId ? <><Edit2 className="w-5 h-5" /> Simpan Perubahan</> : <><Plus className="w-5 h-5" /> Daftar Ahli</>}
               </Button>
               {editingId && (
-                <Button variant="secondary" onClick={cancelEdit}>
-                  <X className="w-4 h-4" /> Batal
-                </Button>
+                <Button variant="secondary" onClick={cancelEdit} className="h-14 px-10">Batal</Button>
               )}
             </div>
           </div>
@@ -139,24 +139,32 @@ const AhliManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
       )}
 
       <Table
-        headers={['Bil', 'Nama', 'No. KP', 'Ting.', 'Kelas', 'Tindakan']}
-        data={data.students}
+        headers={['Bil', 'Profil Anggota', 'No. KP', 'Status Ting/Kelas', 'Kategori', 'Aksi']}
+        data={data.students.sort((a,b) => a.nama.localeCompare(b.nama))}
         renderRow={(student: Student, idx: number) => (
-          <tr key={student.id} className="hover:bg-slate-900/50">
-            <td className="px-6 py-4 text-xs font-bold text-slate-600">{idx + 1}</td>
-            <td className="px-6 py-4 text-sm font-bold text-slate-200 uppercase">{student.nama}</td>
-            <td className="px-6 py-4 text-sm text-slate-500">{student.noKP}</td>
-            <td className="px-6 py-4 text-sm font-black text-red-600 tracking-tighter">{student.tingkatan} {student.kelas}</td>
-            <td className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase">{student.jantina} • {student.kaum}</td>
-            <td className="px-6 py-4">
-              <div className="flex items-center gap-2">
-                <button onClick={() => startEdit(student)} className="p-2 text-slate-500 hover:text-emerald-500 transition-colors">
-                  <Edit2 className="w-5 h-5" />
+          <tr key={student.id} className="group hover:bg-slate-900/50 transition-all border-b border-slate-800/30 last:border-0">
+            <td className="px-6 py-5 text-xs font-black text-slate-600">{idx + 1}</td>
+            <td className="px-6 py-5">
+              <p className="text-sm font-black text-white uppercase tracking-tight">{student.nama}</p>
+            </td>
+            <td className="px-6 py-5 text-sm text-slate-500 font-mono">{student.noKP}</td>
+            <td className="px-6 py-5">
+              <span className="px-3 py-1 bg-red-600/10 text-red-500 text-[10px] font-black rounded-lg border border-red-600/20 uppercase">
+                {student.tingkatan} {student.kelas}
+              </span>
+            </td>
+            <td className="px-6 py-5">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{student.jantina} • {student.kaum}</p>
+            </td>
+            <td className="px-6 py-5">
+              <div className="flex items-center gap-3">
+                <button onClick={() => startEdit(student)} className="p-2.5 bg-slate-800/50 rounded-xl text-slate-500 hover:text-emerald-500 hover:bg-emerald-500/10 transition-all">
+                  <Edit2 className="w-4 h-4" />
                 </button>
                 {deletingId === student.id ? (
                   <InlineConfirm onConfirm={() => deleteAhli(student.id)} onCancel={() => setDeletingId(null)} />
                 ) : (
-                  <button onClick={() => setDeletingId(student.id)} className="text-slate-500 hover:text-red-500 transition-colors"><Trash2 className="w-5 h-5" /></button>
+                  <button onClick={() => setDeletingId(student.id)} className="p-2.5 bg-slate-800/50 rounded-xl text-slate-500 hover:text-red-500 hover:bg-red-500/10 transition-all"><Trash2 className="w-4 h-4" /></button>
                 )}
               </div>
             </td>
