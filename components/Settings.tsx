@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { CheckCircle2, RefreshCw, Lock, Shield, Link, AlertTriangle, Database, UploadCloud, DownloadCloud, FileDown, FileUp } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { CheckCircle2, RefreshCw, Lock, Shield, Link, AlertTriangle, Database, UploadCloud, DownloadCloud, FileDown, FileUp, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { SystemData } from '../types';
 import { FormCard, Input, Button } from './CommonUI';
 import { saveData, saveDataToCloud } from '../utils/storage';
@@ -14,16 +14,32 @@ interface Props {
 const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
   const [password, setPassword] = useState('');
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [sheetUrl, setSheetUrl] = useState(data.settings?.sheetUrl || '');
   const [schoolName, setSchoolName] = useState(data.settings?.schoolName || '');
   const [clubName, setClubName] = useState(data.settings?.clubName || '');
   const [address, setAddress] = useState(data.settings?.address || '');
+  const [logoUrl, setLogoUrl] = useState(data.settings?.logoUrl || '');
   const [isSaving, setIsSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (password === 'CEB1003') setIsAuthorized(true);
     else { alert("Akses Ditolak!"); setPassword(''); }
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 500000) { // Had 500KB untuk prestasi cloud
+        alert("Saiz fail terlalu besar! Sila gunakan imej bawah 500KB.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const exportData = () => {
@@ -103,13 +119,55 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
       </div>
 
       <FormCard title="Global Unit Profiles">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="md:col-span-2 space-y-4">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Logo Sekolah / Unit</label>
+            <div className="flex flex-col md:flex-row items-center gap-8 p-6 bg-slate-950/50 border border-white/[0.05] rounded-[2rem]">
+              <div className="w-32 h-32 bg-slate-900 rounded-2xl border-2 border-dashed border-slate-800 flex items-center justify-center overflow-hidden shrink-0 group relative">
+                {logoUrl ? (
+                  <>
+                    <img src={logoUrl} alt="Logo Preview" className="w-full h-full object-contain p-2" />
+                    <button 
+                      onClick={() => setLogoUrl('')}
+                      className="absolute inset-0 bg-red-600/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                    >
+                      <Trash2 className="w-6 h-6" />
+                    </button>
+                  </>
+                ) : (
+                  <ImageIcon className="w-8 h-8 text-slate-700" />
+                )}
+              </div>
+              <div className="flex-1 space-y-3">
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-tight">Resolusi disarankan: 512x512 (PNG/JPG)</p>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleLogoUpload} 
+                  accept="image/*" 
+                  className="hidden" 
+                />
+                <Button variant="secondary" onClick={() => fileInputRef.current?.click()} className="w-full h-12">
+                  Muat Naik Imej Logo
+                </Button>
+              </div>
+            </div>
+          </div>
+          
           <Input label="Nama Sekolah" value={schoolName} onChange={(e: any) => setSchoolName(e.target.value)} />
           <Input label="Nama Unit" value={clubName} onChange={(e: any) => setClubName(e.target.value)} />
           <div className="md:col-span-2">
             <Input label="Alamat Surat-Menyurat" value={address} onChange={(e: any) => setAddress(e.target.value)} />
           </div>
-          <Button onClick={() => { updateData({ settings: { ...data.settings, schoolName, clubName, address } as any }); alert("Profil dikemaskini."); }} className="md:col-span-2 h-14">Save Global Profile</Button>
+          <Button 
+            onClick={() => { 
+              updateData({ settings: { ...data.settings, schoolName, clubName, address, logoUrl, sheetUrl: data.settings?.sheetUrl || '' } as any }); 
+              alert("Profil dikemaskini."); 
+            }} 
+            className="md:col-span-2 h-14"
+          >
+            Kemaskini Profil Global
+          </Button>
         </div>
       </FormCard>
     </div>

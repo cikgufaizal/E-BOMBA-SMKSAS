@@ -125,11 +125,17 @@ const App: React.FC = () => {
         <div className="p-10 shrink-0">
           <div className="flex items-center justify-between mb-10">
             <div className="flex items-center gap-3">
-               <div className="relative">
-                 <div className="w-3 h-3 bg-red-600 rounded-full"></div>
-                 <div className="w-3 h-3 bg-red-600 rounded-full absolute inset-0 animate-ping opacity-75"></div>
-               </div>
-               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">System Online</span>
+               {data.settings?.logoUrl ? (
+                 <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/10 bg-white/5 p-1 shadow-lg">
+                   <img src={data.settings.logoUrl} alt="School Logo" className="w-full h-full object-contain" />
+                 </div>
+               ) : (
+                 <div className="relative">
+                   <div className="w-3 h-3 bg-red-600 rounded-full"></div>
+                   <div className="w-3 h-3 bg-red-600 rounded-full absolute inset-0 animate-ping opacity-75"></div>
+                 </div>
+               )}
+               <span className={`text-[10px] font-black text-slate-500 uppercase tracking-widest ${!isSidebarOpen && 'md:hidden'}`}>System Online</span>
             </div>
             <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="md:hidden text-slate-400 hover:text-white transition-colors"><X /></button>
           </div>
@@ -140,7 +146,7 @@ const App: React.FC = () => {
               E-KADET<br/><span className="text-red-600 not-italic">BOMBA</span>
             </h2>
             <div className="space-y-1 border-l-2 border-red-600/20 pl-4 py-1">
-              <p className="text-[10px] font-extrabold text-slate-300 uppercase tracking-tight">SMK SULTAN AHMAD SHAH</p>
+              <p className="text-[10px] font-extrabold text-slate-300 uppercase tracking-tight">{data.settings?.schoolName || 'SMK SULTAN AHMAD SHAH'}</p>
               <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Cameron Highlands</p>
             </div>
           </div>
