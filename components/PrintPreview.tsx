@@ -162,7 +162,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     );
   };
 
-  // FORMAT TEPAT MENGIKUT IMEJ PDF PENGGUNA
+  // FORMAT TEPAT MENGIKUT IMEJ PDF PENGGUNA DENGAN PENYELARASAN KOLON
   const renderAktivitiReport = () => {
     const act = data.activities.find(a => a.id === targetId);
     if (!act) return <div className="p-8 text-black">Laporan tidak ditemui.</div>;
@@ -173,85 +173,81 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     const yearFromDate = act.tarikh ? new Date(act.tarikh).getFullYear() : currentYear;
 
     return (
-      <div className="text-black leading-normal">
+      <div className="text-black leading-relaxed">
         <OfficialHeader />
         
-        <div className="flex justify-between items-baseline mb-6">
-          <h3 className="font-bold text-[14pt] uppercase italic">LAPORAN PERJUMPAAN MINGGUAN</h3>
-          <p className="font-normal text-[12pt]">Tahun : <span className="ml-2 border-b border-black inline-block w-20 text-center">{yearFromDate}</span></p>
+        <div className="flex justify-between items-baseline mb-8">
+          <h3 className="font-bold text-[14pt] uppercase tracking-tight">LAPORAN PERJUMPAAN MINGGUAN</h3>
+          <p className="font-bold text-[12pt]">Tahun : <span className="ml-2 border-b-2 border-black inline-block w-24 text-center pb-0.5">{yearFromDate}</span></p>
         </div>
 
-        <div className="space-y-4 text-[11pt]">
-          <div className="flex gap-2">
-            <p className="whitespace-nowrap font-bold">Kelab / Persatuan / Badan Beruniform* :</p>
-            <p className="uppercase font-bold underline underline-offset-2">{clubName}</p>
-          </div>
-
-          <div className="flex gap-2">
-            <p className="whitespace-nowrap font-bold">Tarikh Aktiviti dijalankan</p>
-            <p className="font-bold">:</p>
-            <p className="font-bold border-b border-dotted border-black px-4">{act.tarikh} ({act.masa})</p>
-          </div>
-
-          <div className="flex gap-2">
-            <p className="whitespace-nowrap font-bold">Aktiviti</p>
-            <p className="font-bold ml-[73px]">:</p>
-            <p className="font-bold uppercase border-b border-dotted border-black flex-1">{act.nama}</p>
-          </div>
-
-          <div className="pt-10 space-y-4">
-            <div className="flex gap-2">
-              <p className="whitespace-nowrap">Bilangan Sebenar ahli</p>
-              <p className="font-bold ml-11">:</p>
-              <p className="font-bold">{totalCount}</p>
-            </div>
+        <div className="space-y-6 text-[11pt]">
+          {/* Section 1: Info Kelab & Tarikh */}
+          <div className="grid grid-cols-[300px_auto] gap-2 items-baseline">
+            <div className="font-bold">Kelab / Persatuan / Badan Beruniform* :</div>
+            <div className="uppercase font-bold underline decoration-2 underline-offset-4">{clubName}</div>
             
-            <div className="flex gap-2">
-              <p className="whitespace-nowrap">Bilangan Ahli yang Hadir</p>
-              <p className="font-bold ml-[38px]">:</p>
-              <p className="font-bold">{presentCount}</p>
-            </div>
+            <div className="font-bold">Tarikh Aktiviti dijalankan :</div>
+            <div className="font-bold border-b border-black flex-1 pb-1">{act.tarikh} ({act.masa})</div>
+            
+            <div className="font-bold">Aktiviti :</div>
+            <div className="font-bold uppercase border-b border-black flex-1 pb-1">{act.nama}</div>
+          </div>
 
-            <div className="flex gap-2">
-              <p className="whitespace-nowrap">Peratus Kehadiran</p>
-              <p className="font-bold ml-[54px]">:</p>
-              <p className="font-bold">{percent}%</p>
-            </div>
+          {/* Section 2: Statistik Kehadiran - SELARI KOLON */}
+          <div className="mt-12 space-y-4">
+            <div className="grid grid-cols-[250px_20px_auto] items-baseline">
+               <div>Bilangan Sebenar ahli</div>
+               <div>:</div>
+               <div className="font-bold">{totalCount}</div>
 
-            <div className="flex gap-2">
-              <p className="whitespace-nowrap">Guru Penasihat yang Hadir</p>
-              <p className="font-bold ml-4">:</p>
-              <p className="font-bold uppercase border-b border-dotted border-black flex-1">
-                {data.teachers.map(t => t.nama).join(', ')}
-              </p>
+               <div>Bilangan Ahli yang Hadir</div>
+               <div>:</div>
+               <div className="font-bold">{presentCount}</div>
+
+               <div>Peratus Kehadiran</div>
+               <div>:</div>
+               <div className="font-bold">{percent}%</div>
+
+               <div>Guru Penasihat yang Hadir</div>
+               <div>:</div>
+               <div className="font-bold uppercase border-b border-black flex-1 pb-1">
+                 {data.teachers.map(t => t.nama).join(', ')}
+               </div>
             </div>
           </div>
 
+          {/* Section 3: Ulasan */}
           <div className="mt-12">
-            <p className="font-bold mb-2">Ulasan :</p>
-            <div className="min-h-[250px] p-2 whitespace-pre-wrap italic">
+            <p className="font-bold mb-3 uppercase">Ulasan :</p>
+            <div className="min-h-[300px] p-4 whitespace-pre-wrap italic leading-relaxed border border-black/10 bg-slate-50/30">
               {act.ulasan || 'Tiada maklumat laporan dimasukkan.'}
             </div>
           </div>
 
+          {/* Section 4: Tandatangan */}
           <div className="mt-20 grid grid-cols-2">
-            <div className="space-y-4">
-              <p>Tarikh : <span className="border-b border-dotted border-black inline-block w-48 ml-2">{act.tarikh}</span></p>
+            <div className="flex items-end h-full">
+              <p className="font-bold">Tarikh : <span className="border-b border-black inline-block w-56 ml-2 text-center">{act.tarikh}</span></p>
             </div>
             <div className="space-y-4 text-left pl-20">
-              <p>Tandatangan,</p>
-              <div className="pt-10 border-b border-dotted border-black w-64"></div>
-              <p className="font-normal text-[10pt] relative">
-                ( <span className="inline-block w-56"></span> )
-                <span className="absolute left-4 top-0 font-bold uppercase text-center w-full">{data.teachers[0]?.nama || 'GURU PENASIHAT'}</span>
-              </p>
-              <p className="text-[10pt]">Guru Penasihat.</p>
+              <p className="font-bold">Tandatangan,</p>
+              <div className="pt-12 border-b border-black w-72 mb-1"></div>
+              <div className="relative">
+                <span className="text-[11pt]">(</span>
+                <span className="inline-block w-[260px] text-center font-bold uppercase underline underline-offset-2">
+                  {data.teachers[0]?.nama || 'ZAIDATONAKMA BINTI ABD HAMID'}
+                </span>
+                <span className="text-[11pt]">)</span>
+              </div>
+              <p className="text-[10pt] font-bold">Guru Penasihat.</p>
             </div>
           </div>
 
+          {/* Section 5: Peringatan */}
           <div className="mt-16 text-[9pt] space-y-1">
             <p><span className="font-bold">Peringatan :</span> Sila isikan maklumat dengan tepat.</p>
-            <p className="pl-20 text-[8pt]">* - SILA POTONG YANG TIDAK BERKENAAN</p>
+            <p className="pl-20 text-[8pt] italic">* - SILA POTONG YANG TIDAK BERKENAAN</p>
           </div>
         </div>
         <FooterInfo />
