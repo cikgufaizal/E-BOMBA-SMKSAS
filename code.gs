@@ -1,115 +1,126 @@
 /**
- * SISTEM PENGURUSAN KADET BOMBA PROFESSIONAL - CLOUD BRIDGE v3.3 (PERSONAL)
- * -----------------------------------------------------------------------
- * 1. Simpan kod ini di Google Sheets (Extensions > Apps Script).
- * 2. Deploy sebagai Web App.
- * 3. Execute as: ME.
- * 4. Who has access: ANYONE.
+ * SISTEM PENGURUSAN KADET BOMBA PROFESSIONAL - CLOUD BRIDGE v6.0
+ * -----------------------------------------------------------------------------
+ * Menyokong Penyelarasan Penuh & Visualisasi Data Automatik
  */
 
-const SHEET_BACKUP = "DB_BACKUP";
+const DB_SHEET = "RAW_DATABASE";
 
-/**
- * FUNGSI GET: Digunakan untuk tarik data dari Sheets ke App.
- */
 function doGet(e) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheetByName(SHEET_BACKUP);
+    var sheet = ss.getSheetByName(DB_SHEET);
     
-    // Jika sheet backup belum ada, beritahu App untuk buat 'initial save'
-    if (!sheet || sheet.getRange(1, 1).getValue() === "") {
-      return createJsonResponse({ 
-        status: "EMPTY", 
-        message: "Sheet sedia, tetapi belum ada data. Sila klik 'Simpan' di dalam App dahulu." 
-      });
+    if (!sheet) {
+      return createJsonResponse({ status: "EMPTY", message: "Database belum diwujudkan." });
     }
     
     var data = sheet.getRange(1, 1).getValue();
+    if (!data || data === "") return createJsonResponse({ status: "EMPTY", message: "Tiada data." });
+
     return ContentService.createTextOutput(data)
       .setMimeType(ContentService.MimeType.JSON);
       
   } catch (err) {
-    return createJsonResponse({ status: "ERROR", message: err.message });
+    return createJsonResponse({ status: "ERROR", message: err.toString() });
   }
 }
 
-/**
- * FUNGSI POST: Digunakan untuk hantar data dari App ke Sheets.
- */
 function doPost(e) {
   try {
-    var contents = JSON.parse(e.postData.contents);
+    if (!e.postData || !e.postData.contents) return ContentService.createTextOutput("NO_DATA");
+
+    var postData = e.postData.contents;
+    var contents = JSON.parse(postData);
+    
+    // Test connection pulse
+    if (contents.test) return ContentService.createTextOutput("CONNECTED");
+
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     
-    // 1. Simpan Data JSON Penuh (Master Backup)
-    var backupSheet = ss.getSheetByName(SHEET_BACKUP) || ss.insertSheet(SHEET_BACKUP);
-    backupSheet.clear();
-    backupSheet.getRange(1, 1).setValue(JSON.stringify(contents));
-    backupSheet.getRange(1, 2).setValue("Last Sync: " + new Date().toLocaleString());
-    backupSheet.getRange(1, 2).setFontWeight("bold");
+    // 1. Simpan Data Mentah (JSON Sync)
+    var dbSheet = ss.getSheetByName(DB_SHEET) || ss.insertSheet(DB_SHEET);
+    dbSheet.clear();
+    dbSheet.getRange(1, 1).setValue(postData);
+    dbSheet.getRange(1, 2).setValue("Kemaskini Terakhir: " + new Date().toLocaleString());
 
-    // 2. Kemaskini Tab-Tab Visual (Human Readable)
-    
-    // TAB: DATA AHLI
-    updateSheet(ss, 'DATA_AHLI', ['ID', 'Nama', 'No KP', 'Tingkatan', 'Kelas', 'Jantina', 'Kaum'], (contents.students || []).map(s => [
-      s.id, s.nama, s.noKP, s.tingkatan, s.kelas, s.jantina, s.kaum
-    ]));
-    
-    // TAB: DATA GURU
-    updateSheet(ss, 'DATA_GURU', ['ID', 'Nama', 'Jawatan', 'Telefon'], (contents.teachers || []).map(t => [
-      t.id, t.nama, t.jawatan, t.telefon
-    ]));
+    // 2. Tab Visual: AHLI
+    if (contents.students) {
+      updateSheet(ss, 'AHLI', ['NAMA', 'NO KP', 'TINGKATAN', 'KELAS', 'JANTINA', 'KAUM'], contents.students.map(s => [
+        s.nama, s.noKP, s.tingkatan, s.kelas, s.jantina, s.kaum
+      ]));
+    }
 
-    // TAB: DATA AKTIVITI
-    updateSheet(ss, 'DATA_AKTIVITI', ['Tarikh', 'Masa', 'Aktiviti', 'Tempat', 'Ulasan'], (contents.activities || []).map(a => [
-      a.tarikh, a.masa, a.nama, a.tempat, a.ulasan
-    ]));
+    // 3. Tab Visual: GURU
+    if (contents.teachers) {
+      updateSheet(ss, 'GURU', ['NAMA', 'JAWATAN', 'TELEFON'], contents.teachers.map(t => [
+        t.nama, t.jawatan, t.telefon
+      ]));
+    }
 
-    // TAB: STRUKTUR ORGANISASI
-    var ajkRows = (contents.committees || []).map(c => {
-      var student = (contents.students || []).find(s => s.id === c.studentId);
-      return [c.jawatan, student ? student.nama : 'N/A', student ? student.tingkatan : '-', student ? student.kelas : '-'];
-    });
-    updateSheet(ss, 'STRUKTUR_ORGANISASI', ['Jawatan', 'Nama Ahli', 'Tingkatan', 'Kelas'], ajkRows);
+    // 4. Tab Visual: AJK (Struktur Organisasi)
+    if (contents.committees && contents.students) {
+      var ajkRows = contents.committees.map(ajk => {
+        var student = contents.students.find(s => s.id === ajk.studentId);
+        return [ajk.jawatan, student ? student.nama : 'N/A', student ? student.tingkatan + " " + student.kelas : 'N/A'];
+      });
+      updateSheet(ss, 'CARTA_ORGANISASI', ['JAWATAN', 'NAMA PENUH', 'TINGKATAN/KELAS'], ajkRows);
+    }
 
-    // TAB: LOG KEHADIRAN
-    var attRows = (contents.attendances || []).map(a => [
-      a.tarikh, a.presents ? a.presents.length : 0, contents.students ? contents.students.length : 0
-    ]);
-    updateSheet(ss, 'LOG_KEHADIRAN', ['Tarikh', 'Bil Hadir', 'Jumlah Ahli'], attRows);
+    // 5. Tab Visual: AKTIVITI (Log)
+    if (contents.activities) {
+      updateSheet(ss, 'LOG_AKTIVITI', ['TARIKH', 'MASA', 'NAMA AKTIVITI', 'TEMPAT', 'ULASAN'], contents.activities.map(a => [
+        a.tarikh, a.masa, a.nama, a.tempat, a.ulasan
+      ]));
+    }
 
-    return ContentService.createTextOutput("SUCCESS").setMimeType(ContentService.MimeType.TEXT);
+    // 6. Tab Visual: RANCANGAN_TAHUNAN
+    if (contents.annualPlans) {
+      updateSheet(ss, 'RANCANGAN_TAHUNAN', ['BULAN', 'PROGRAM', 'TEMPAT', 'CATATAN'], contents.annualPlans.map(p => [
+        p.bulan, p.program, p.tempat, p.catatan
+      ]));
+    }
+
+    // 7. Tab Visual: KEHADIRAN (Rumusan)
+    if (contents.attendances && contents.students) {
+      updateSheet(ss, 'RUMUSAN_KEHADIRAN', ['TARIKH', 'JUMLAH HADIR', 'JUMLAH AHLI', 'PERATUS (%)'], contents.attendances.map(att => {
+        var pct = contents.students.length ? Math.round((att.presents.length / contents.students.length) * 100) : 0;
+        return [att.tarikh, att.presents.length, contents.students.length, pct + "%"];
+      }));
+    }
+
+    return ContentService.createTextOutput("SUCCESS");
 
   } catch (err) {
-    return ContentService.createTextOutput("ERROR: " + err.message).setMimeType(ContentService.MimeType.TEXT);
+    return ContentService.createTextOutput("ERROR: " + err.toString());
   }
 }
 
-/**
- * UTILITY: Fungsi untuk kemaskini helaian secara sistematik.
- */
-function updateSheet(ss, sheetName, headers, rows) {
-  var sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
+function updateSheet(ss, name, headers, rows) {
+  var sheet = ss.getSheetByName(name) || ss.insertSheet(name);
   sheet.clear();
   
-  // Design Header
-  sheet.getRange(1, 1, 1, headers.length)
-    .setValues([headers])
+  // Header Style
+  var headerRange = sheet.getRange(1, 1, 1, headers.length);
+  headerRange.setValues([headers])
+    .setBackground('#1e293b') // Slate 800
+    .setFontColor('white')
     .setFontWeight('bold')
-    .setBackground('#dc2626') // Warna Merah Bomba
-    .setFontColor('#ffffff')
-    .setHorizontalAlignment('center')
-    .setVerticalAlignment('middle');
+    .setHorizontalAlignment('center');
     
   if (rows && rows.length > 0) {
-    sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
-    sheet.getRange(2, 1, rows.length, headers.length).setVerticalAlignment('middle');
+    // Susun mengikut kolum pertama (A-Z) kecuali untuk Rancangan & Kehadiran
+    if (name === 'AHLI' || name === 'GURU') {
+      rows.sort((a, b) => a[0].localeCompare(b[0]));
+    }
+    
+    sheet.getRange(2, 1, rows.length, headers.length)
+      .setValues(rows)
+      .setBorder(true, true, true, true, true, true, '#cbd5e1', SpreadsheetApp.BorderStyle.SOLID);
   }
   
   sheet.setFrozenRows(1);
   sheet.autoResizeColumns(1, headers.length);
-  sheet.setRowHeight(1, 30);
 }
 
 function createJsonResponse(obj) {

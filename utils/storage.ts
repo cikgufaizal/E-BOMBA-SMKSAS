@@ -1,11 +1,13 @@
 import { SystemData } from '../types';
 
 const STORAGE_KEY = 'ekelab_data_v1';
+
 /**
- * URL Google Apps Script Personal Pengguna.
- * Ini membolehkan sistem auto-sync ke akaun anda tanpa perlu tampal URL berkali-kali.
+ * ARAHAN UNTUK CIKGU:
+ * Selepas cikgu Deploy Google Apps Script baru, 
+ * copy pautan Web App tersebut dan ganti di bawah.
  */
-const USER_CLOUD_URL = 'https://script.google.com/macros/s/AKfycbzBUzC1FZEkSyEiyPuuwQYhzY38Ipt3_wvLZhd9UvzBD9QTgl_Z7o0C0JEMV7oq2TWEvA/exec';
+const MASTER_CLOUD_URL = 'https://script.google.com/macros/s/AKfycbzBUzC1FZEkSyEiyPuuwQYhzY38Ipt3_wvLZhd9UvzBD9QTgl_Z7o0C0JEMV7oq2TWEvA/exec';
 
 const createEmptyData = (): SystemData => ({
   teachers: [],
@@ -15,7 +17,7 @@ const createEmptyData = (): SystemData => ({
   activities: [],
   annualPlans: [],
   settings: {
-    sheetUrl: USER_CLOUD_URL, 
+    sheetUrl: MASTER_CLOUD_URL, 
     autoSync: true,
     schoolName: 'SMK SULTAN AHMAD SHAH',
     clubName: 'KADET BOMBA',
@@ -31,65 +33,72 @@ export const loadData = (): SystemData => {
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      // Jika URL dalam storage kosong atau lama, gantikan dengan URL personal terbaru
-      if (parsed.settings && (!parsed.settings.sheetUrl || parsed.settings.sheetUrl.includes('AKfycbzB'))) {
-        parsed.settings.sheetUrl = USER_CLOUD_URL;
-      }
+      // Sentiasa paksa guna MASTER_CLOUD_URL yang terkini
+      parsed.settings = { 
+        ...createEmptyData().settings, 
+        ...parsed.settings,
+        sheetUrl: MASTER_CLOUD_URL 
+      };
       return parsed;
     } catch (e) {
       return createEmptyData();
     }
   }
+
   return createEmptyData();
 };
 
 export const fetchDataFromCloud = async (url: string): Promise<SystemData | null> => {
-  if (!url) return null;
+  if (!url || !url.startsWith('https://script.google.com')) return null;
   try {
-    const syncUrl = `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
-    
-    const response = await fetch(syncUrl, {
+    const response = await fetch(`${url}?t=${Date.now()}`, {
       method: 'GET',
-      headers: { 'Accept': 'application/json' },
+      mode: 'cors',
+      cache: 'no-store'
     });
     
-    if (!response.ok) throw new Error("Cloud Down");
-    
-    const cloudData = await response.json();
-    
-    if (cloudData.status === "EMPTY") {
-      console.log("Cloud sedia tetapi data masih kosong.");
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
       return null;
     }
 
-    if (cloudData && (Array.isArray(cloudData.students) || cloudData.settings)) {
+    const cloudData = await response.json();
+    if (cloudData && (Array.isArray(cloudData.students) || Array.isArray(cloudData.teachers))) {
+      cloudData.settings = { ...cloudData.settings, sheetUrl: MASTER_CLOUD_URL };
       return cloudData as SystemData;
     }
     return null;
   } catch (err) {
-    console.error("Gagal tarik data dari cloud:", err);
+    console.error("Cloud fetch failed:", err);
     return null;
   }
 };
 
-export const saveData = async (data: SystemData) => {
-  if (typeof window === 'undefined') return;
+export const saveData = async (data: SystemData): Promise<boolean> => {
+  if (typeof window === 'undefined') return false;
   
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  const dataToSave = {
+    ...data,
+    settings: { ...data.settings, sheetUrl: MASTER_CLOUD_URL }
+  };
   
-  if (data.settings?.sheetUrl) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+  
+  if (MASTER_CLOUD_URL) {
     try {
-      await fetch(data.settings.sheetUrl, {
+      await fetch(MASTER_CLOUD_URL, {
         method: 'POST',
         mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(dataToSave)
       });
-      console.log("Sync Berjaya.");
+      return true;
     } catch (err) {
-      console.warn("Sync Gagal.");
+      console.error("Save to cloud failed:", err);
+      return false;
     }
   }
+  return false;
 };
 
 export const testCloudConnection = async (url: string): Promise<boolean> => {
@@ -98,6 +107,7 @@ export const testCloudConnection = async (url: string): Promise<boolean> => {
     await fetch(url, {
       method: 'POST',
       mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ test: true })
     });
     return true; 

@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Calendar, Trash2, Printer, CheckCircle, RotateCcw, Save } from 'lucide-react';
+import { Calendar, Trash2, Printer, CheckCircle, RotateCcw, Save, Users } from 'lucide-react';
 import { SystemData, Student, Attendance } from '../types';
 import { FormCard, Input, Button, Table, InlineConfirm } from './CommonUI';
 
@@ -58,43 +57,53 @@ const KehadiranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
 
   return (
     <div className="animate-in fade-in duration-500">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-bold text-slate-800">Log Kehadiran</h2>
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-xl font-black text-white uppercase tracking-tighter">Sistem Kehadiran Digital</h2>
         <Button onClick={onPrint} variant="success">
-          <Printer className="w-4 h-4" /> Cetak Rumusan 12 Bulan
+          <Printer className="w-4 h-4" /> Rumusan 12 Bulan
         </Button>
       </div>
 
       {!isTakingAttendance ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <FormCard title="Ambil Kehadiran Baharu">
-            <div className="space-y-4">
-              <Input type="date" label="Pilih Tarikh" value={tarikh} onChange={(e: any) => setTarikh(e.target.value)} />
-              <Button onClick={startAttendance} className="w-full">
-                <Calendar className="w-4 h-4" /> Mula Sesi Kehadiran
-              </Button>
-            </div>
-          </FormCard>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-1">
+            <FormCard title="Sesi Kehadiran Baru">
+              <div className="space-y-6">
+                <Input type="date" label="Pilih Tarikh" value={tarikh} onChange={(e: any) => setTarikh(e.target.value)} />
+                <Button onClick={startAttendance} className="w-full h-14">
+                  <Calendar className="w-5 h-5" /> Mula Menanda
+                </Button>
+              </div>
+            </FormCard>
+          </div>
 
-          <div className="space-y-4">
-            <h3 className="font-bold text-slate-700">Rumusan Rekod</h3>
+          <div className="lg:col-span-2 space-y-4">
+            <div className="flex items-center gap-3 mb-2 px-2">
+               <div className="w-1 h-4 bg-red-600 rounded-full"></div>
+               <h3 className="font-black text-xs text-slate-400 uppercase tracking-[0.2em]">Arkib Rekod Kehadiran</h3>
+            </div>
             <Table
-              headers={['Tarikh', 'Hadir', '%', 'Tindakan']}
+              headers={['Tarikh Aktiviti', 'Hadir', 'Peratus', 'Tindakan']}
               data={data.attendances.sort((a,b) => b.tarikh.localeCompare(a.tarikh))}
               renderRow={(att: Attendance) => (
-                <tr key={att.id}>
-                  <td className="px-6 py-3 text-sm font-bold text-slate-700">{att.tarikh}</td>
-                  <td className="px-6 py-3 text-sm">{att.presents.length}/{data.students.length}</td>
-                  <td className="px-6 py-3">
-                    <span className="font-bold text-blue-600">
+                <tr key={att.id} className="hover:bg-slate-900/50 transition-colors">
+                  <td className="px-6 py-4 text-sm font-bold text-slate-200 uppercase tracking-tighter">{att.tarikh}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-slate-400">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-3 h-3 text-red-500" />
+                      {att.presents.length} / {data.students.length}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="font-black text-emerald-500 text-xs">
                       {data.students.length ? Math.round((att.presents.length / data.students.length) * 100) : 0}%
                     </span>
                   </td>
-                  <td className="px-6 py-3">
+                  <td className="px-6 py-4">
                     {deletingId === att.id ? (
                       <InlineConfirm onConfirm={() => deleteRecord(att.id)} onCancel={() => setDeletingId(null)} />
                     ) : (
-                      <button onClick={() => setDeletingId(att.id)} className="text-slate-300 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
+                      <button onClick={() => setDeletingId(att.id)} className="text-slate-600 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
                     )}
                   </td>
                 </tr>
@@ -103,35 +112,42 @@ const KehadiranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-in zoom-in-95">
-          <div className="p-6 bg-slate-50 border-b flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-slate-800">Menanda Kehadiran</h3>
-              <p className="text-sm text-slate-500">Tarikh: {tarikh} • Hadir: {attendanceList.length}/{data.students.length}</p>
+        <div className="bg-slate-900 rounded-[2.5rem] shadow-2xl border border-slate-800 overflow-hidden animate-in zoom-in-95 duration-500">
+          <div className="p-8 bg-slate-950 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center gap-5">
+               <div className="w-12 h-12 bg-red-600/10 border border-red-600/20 rounded-2xl flex items-center justify-center">
+                  <Calendar className="w-6 h-6 text-red-600" />
+               </div>
+               <div>
+                  <h3 className="font-black text-xl text-white uppercase tracking-tighter italic">Menanda Kehadiran</h3>
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-0.5">Tarikh: {tarikh} • Status: {attendanceList.length}/{data.students.length}</p>
+               </div>
             </div>
-            <div className="flex gap-2">
-              <Button onClick={markAll} variant="secondary"><CheckCircle className="w-4 h-4" /> Hadir Semua</Button>
-              <Button onClick={resetAll} variant="secondary"><RotateCcw className="w-4 h-4" /> Reset</Button>
-              <Button onClick={saveAttendance} variant="primary"><Save className="w-4 h-4" /> Simpan Log</Button>
+            <div className="flex flex-wrap gap-3">
+              <Button onClick={markAll} variant="secondary" className="h-12"><CheckCircle className="w-4 h-4" /> Hadir Semua</Button>
+              <Button onClick={resetAll} variant="secondary" className="h-12"><RotateCcw className="w-4 h-4" /> Reset</Button>
+              <Button onClick={saveAttendance} variant="primary" className="h-12"><Save className="w-4 h-4" /> Simpan Log</Button>
             </div>
           </div>
-          <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+          <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 bg-slate-900/50">
             {data.students.sort((a,b) => a.nama.localeCompare(b.nama)).map(s => {
               const isPresent = attendanceList.includes(s.id);
               return (
                 <button
                   key={s.id}
                   onClick={() => toggleAttendance(s.id)}
-                  className={`flex items-center justify-between p-3 rounded-xl border transition-all text-left ${
-                    isPresent ? 'bg-emerald-50 border-emerald-500 shadow-sm' : 'bg-white border-slate-200'
+                  className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 text-left group ${
+                    isPresent 
+                      ? 'bg-red-600/10 border-red-600 shadow-[0_0_20px_rgba(220,38,38,0.1)]' 
+                      : 'bg-slate-950/40 border-slate-800 hover:border-slate-700'
                   }`}
                 >
-                  <div>
-                    <p className={`text-sm font-bold ${isPresent ? 'text-emerald-800' : 'text-slate-800'}`}>{s.nama}</p>
-                    <p className="text-[10px] text-slate-500 uppercase">{s.tingkatan} {s.kelas}</p>
+                  <div className="min-w-0 pr-2">
+                    <p className={`text-[11px] font-black uppercase truncate ${isPresent ? 'text-red-500' : 'text-slate-300'}`}>{s.nama}</p>
+                    <p className="text-[9px] text-slate-500 font-bold mt-0.5">{s.tingkatan} {s.kelas}</p>
                   </div>
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                    isPresent ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-500 ${
+                    isPresent ? 'bg-red-600 border-red-600 scale-110' : 'border-slate-800 group-hover:border-slate-600'
                   }`}>
                     {isPresent && <CheckCircle className="w-4 h-4 text-white" />}
                   </div>
