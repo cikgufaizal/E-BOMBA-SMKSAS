@@ -1,11 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="ms">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Kadet Bomba Professional</title>
-    <!-- Tailwind CDN dikekalkan untuk penggayaan pantas -->
+    <!-- Tailwind CSS melalui CDN untuk kelajuan render awal -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -66,7 +65,7 @@
 </head>
 <body>
     <div id="root"></div>
-    <!-- Vite akan memproses fail index.tsx ini dan membungkus semua dependencies dari package.json -->
-    <script type="module" src="./index.tsx"></script>
+    <!-- Entry point untuk aplikasi React. Vite akan menguruskan bundling fail ini -->
+    <script type="module" src="/index.tsx"></script>
 </body>
 </html>
