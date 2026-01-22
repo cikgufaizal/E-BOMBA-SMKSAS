@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Printer, ArrowLeft } from 'lucide-react';
-import { SystemData, ReportType, JawatanAJK } from '../types';
+import { SystemData, ReportType, JawatanAJK, Jantina } from '../types';
 import { SCHOOL_INFO, MONTHS } from '../constants';
 
 interface PrintProps {
@@ -51,6 +52,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
             <th className="border border-black p-2 text-center w-12">BIL</th>
             <th className="border border-black p-2 text-left uppercase">NAMA PENUH</th>
             <th className="border border-black p-2 text-center w-32">NO. KP</th>
+            <th className="border border-black p-2 text-center w-20">JANTINA</th>
             <th className="border border-black p-2 text-center w-32">TINGKATAN / KELAS</th>
           </tr>
         </thead>
@@ -59,7 +61,10 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
             <tr key={s.id}>
               <td className="border border-black p-2 text-center text-xs">{idx + 1}</td>
               <td className="border border-black p-2 font-bold text-xs uppercase">{s.nama}</td>
-              <td className="border border-black p-2 text-center text-xs">{s.noKP}</td>
+              <td className="border border-black p-2 text-center text-xs font-mono">{s.noKP}</td>
+              <td className="border border-black p-2 text-center text-[10px] font-black uppercase">
+                {s.jantina === Jantina.Perempuan ? 'P' : 'L'}
+              </td>
               <td className="border border-black p-2 text-center text-xs uppercase font-bold">{s.tingkatan} {s.kelas}</td>
             </tr>
           ))}
