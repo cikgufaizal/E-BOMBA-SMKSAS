@@ -97,6 +97,7 @@ export interface SystemData {
   activities: Activity[];
   annualPlans: AnnualPlan[];
   settings?: CloudSettings;
+  lastUpdated?: number; // Unix timestamp untuk elak overwrite data lama
 }
 
 export type ReportType = 'AHLI' | 'AJK' | 'KEHADIRAN' | 'AKTIVITI';

@@ -1,6 +1,8 @@
+
 /**
  * SISTEM PENGURUSAN KADET BOMBA PROFESSIONAL - CLOUD BRIDGE v7.5
  * -----------------------------------------------------------------------------
+ * UPDATED: Menambah sokongan lastUpdated timestamp.
  */
 
 const DB_SHEET = "RAW_DATABASE";
@@ -30,9 +32,11 @@ function doPost(e) {
 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var dbSheet = ss.getSheetByName(DB_SHEET) || ss.insertSheet(DB_SHEET);
+    
+    // Simpan semua data JSON ke cell A1
     dbSheet.clear().getRange(1, 1).setValue(e.postData.contents);
     
-    // Kemaskini Tab Visual untuk Guru & Ahli
+    // Kemaskini Tab Visual untuk Guru & Ahli supaya cikgu nampak data live di sheet
     if (contents.students) updateSheet(ss, 'AHLI', ['NAMA', 'NO KP', 'TING.', 'KELAS', 'JANTINA', 'KAUM'], contents.students.map(s => [s.nama, s.noKP, s.tingkatan, s.kelas, s.jantina, s.kaum]));
     if (contents.teachers) updateSheet(ss, 'GURU', ['NAMA', 'JAWATAN', 'TEL'], contents.teachers.map(t => [t.nama, t.jawatan, t.telefon]));
 
@@ -46,7 +50,9 @@ function updateSheet(ss, name, headers, rows) {
   var sheet = ss.getSheetByName(name) || ss.insertSheet(name);
   sheet.clear();
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setBackground('#b91c1c').setFontColor('white').setFontWeight('bold');
-  if (rows.length > 0) sheet.getRange(2, 1, rows.length, headers.length).setValues(rows).setBorder(true, true, true, true, true, true);
+  if (rows && rows.length > 0) {
+    sheet.getRange(2, 1, rows.length, headers.length).setValues(rows).setBorder(true, true, true, true, true, true);
+  }
   sheet.autoResizeColumns(1, headers.length);
 }
 
