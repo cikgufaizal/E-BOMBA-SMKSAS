@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Cloud, Copy, CheckCircle2, RefreshCw, Activity, HelpCircle, Lock, ShieldCheck, Share2, Image as ImageIcon, School, Code2 } from 'lucide-react';
 import { SystemData } from '../types';
@@ -63,7 +62,7 @@ const Settings: React.FC<Props> = ({ data, updateData }) => {
     navigator.clipboard.writeText(masterLink);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
-    alert("Pautan Master disalin!");
+    alert("Pautan Master disalin! Gunakan pautan ini di peranti lain untuk sync automatik.");
   };
 
   const copyGASCode = () => {
@@ -116,7 +115,7 @@ function doPost(e) {
 function updateSheet(ss, sheetName, headers, rows) {
   var sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
   sheet.clear();
-  sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold').setBackground('#b91c1c').setFontColor('#ffffff');
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold').setBackground('#b91c1c').setFontColor('#ffffff').setHorizontalAlignment('center');
   if (rows && rows.length > 0) sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
   sheet.setFrozenRows(1);
   sheet.autoResizeColumns(1, headers.length);
@@ -124,7 +123,7 @@ function updateSheet(ss, sheetName, headers, rows) {
     navigator.clipboard.writeText(scriptCode);
     setCopiedScript(true);
     setTimeout(() => setCopiedScript(false), 2000);
-    alert("Kod v3.2 Disalin! Paste dalam Apps Script Google Sheet anda.");
+    alert("Kod v3.2 Disalin! Paste dalam Apps Script Google Sheet anda dan 'Deploy as Web App'.");
   };
 
   if (!isAuthorized) {
@@ -225,7 +224,7 @@ function updateSheet(ss, sheetName, headers, rows) {
                <h3 className="font-black text-[10px] uppercase tracking-[0.2em]">Tips Profesional</h3>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Pastikan anda <b>Redeploy</b> Web App anda di Google Sheets sebagai <b>New Version</b> setiap kali menukar kod di sana.
+              Setiap kali anda menukar kod di Google Sheets, pastikan anda buat <b>New Deployment</b> sebagai <b>Web App</b> dengan akses <b>Anyone</b>. Tanpa akses ini, aplikasi tidak boleh menyimpan data.
             </p>
           </div>
         </div>
