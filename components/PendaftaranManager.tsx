@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { 
   UserPlus, ShieldAlert, Heart, Phone, Printer, 
   FileStack, FileText, Users, FileCheck, Search,
-  ClipboardList, CheckCircle2, Info, LayoutList
+  ClipboardList, CheckCircle2, Info, LayoutList, Save
 } from 'lucide-react';
 import { SystemData, Student, Jantina, Kaum, HealthStatus } from '../types';
 import { FormCard, Input, Select, Button, Table } from './CommonUI';
@@ -43,7 +43,7 @@ const PendaftaranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
       id: crypto.randomUUID(),
       nama: formData.nama.toUpperCase().trim(),
       noKP: cleanKP,
-      noKeahlian: '', // Sentiasa kosong untuk pendaftaran baru mengikut arahan
+      noKeahlian: formData.noKeahlian?.toUpperCase().trim() || '',
       tingkatan: formData.tingkatan!,
       kelas: formData.kelas?.toUpperCase().trim() || '-',
       jantina: formData.jantina as Jantina,
@@ -76,6 +76,13 @@ const PendaftaranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
         });
         setCurrentView('LAMPIRAN_A');
     }, 1500);
+  };
+
+  const updateNoKeahlian = (studentId: string, val: string) => {
+    const updatedStudents = data.students.map(s => 
+      s.id === studentId ? { ...s, noKeahlian: val.toUpperCase() } : s
+    );
+    updateData({ students: updatedStudents });
   };
 
   const menuButtons = [
@@ -118,7 +125,7 @@ const PendaftaranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
         </div>
       </div>
 
-      {/* VIEW: LAMPIRAN A (TABEL NAMA PELAJAR & BUTANG PRINT) */}
+      {/* VIEW: LAMPIRAN A */}
       {currentView === 'LAMPIRAN_A' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -181,8 +188,8 @@ const PendaftaranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
                    <LayoutList className="text-white w-8 h-8" />
                 </div>
                 <div>
-                   <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">Pendaftaran Kolektif (Lampiran F)</h3>
-                   <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-2">Senarai induk anggota untuk pengesahan Jabatan Bomba.</p>
+                   <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-tight">Pendaftaran Kolektif (Lampiran F)</h3>
+                   <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-2">Isi No. Keahlian di bawah untuk paparan automatik dalam cetakan.</p>
                 </div>
               </div>
               <Button 
@@ -194,16 +201,23 @@ const PendaftaranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
            </div>
 
            <Table
-            headers={['Bil', 'Nama Penuh Calon', 'No. Kad Pengenalan', 'No. Keahlian (BOMBA)', 'Ting/Kelas']}
+            headers={['Bil', 'Nama Penuh Calon', 'No. Kad Pengenalan', 'Input No. Keahlian (BOMBA)', 'Ting/Kelas']}
             data={data.students.sort((a,b) => a.nama.localeCompare(b.nama))}
             renderRow={(s: Student, idx: number) => (
               <tr key={s.id} className="hover:bg-slate-900/50 transition-colors border-b border-white/[0.02]">
                 <td className="px-8 py-5 text-xs font-black text-slate-600">{idx + 1}</td>
                 <td className="px-8 py-5 font-black text-white uppercase text-xs">{s.nama}</td>
                 <td className="px-8 py-5 text-xs font-mono text-slate-400">{s.noKP}</td>
-                <td className="px-8 py-5">
-                   <div className="w-24 h-8 bg-slate-950/50 border border-dashed border-slate-800 rounded flex items-center justify-center">
-                      <span className="text-[8px] text-slate-700 font-black italic uppercase">Bomba Only</span>
+                <td className="px-8 py-3">
+                   <div className="relative group">
+                      <input 
+                        type="text"
+                        placeholder="MASUKKAN NO..."
+                        value={s.noKeahlian || ''}
+                        onChange={(e) => updateNoKeahlian(s.id, e.target.value)}
+                        className="w-full h-10 px-4 bg-slate-950 border border-slate-800 rounded-lg text-[10px] font-black uppercase text-red-500 focus:border-red-600 outline-none transition-all placeholder:text-slate-800"
+                      />
+                      <Save className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-800 group-focus-within:text-red-600" />
                    </div>
                 </td>
                 <td className="px-8 py-5 text-xs font-black text-slate-500 uppercase">{s.tingkatan} {s.kelas}</td>
@@ -221,6 +235,7 @@ const PendaftaranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Input label="Nama Penuh" value={formData.nama} onChange={(e: any) => setFormData({...formData, nama: e.target.value})} />
                 <Input label="No. KP" placeholder="000000-00-0000" value={formData.noKP} onChange={(e: any) => setFormData({...formData, noKP: e.target.value})} />
+                <Input label="No. Keahlian (Jika Sudah Ada)" placeholder="Contoh: KB-001/2026" value={formData.noKeahlian} onChange={(e: any) => setFormData({...formData, noKeahlian: e.target.value})} />
                 <div className="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
                   <Input label="Umur" type="number" value={formData.umur} onChange={(e: any) => setFormData({...formData, umur: e.target.value})} />
                   <Select label="Tingkatan" value={formData.tingkatan} onChange={(e: any) => setFormData({...formData, tingkatan: e.target.value})} options={FORMS.map(f => ({ value: f, label: `TINGKATAN ${f}` }))} />

@@ -83,7 +83,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         </div>
 
         <div className="mt-10 text-justify italic text-[10pt] leading-relaxed">
-          Saya dengan ini mengaku bahawa segala maklumat yang diberikan di atas adalah benar dan saya berada dalam keadaan sihat untuk menyertai segala aktiviti fizikal Pasukan Kadet Bomba dan Penyelamat Malaysia.
+          Saya dengan ini mengaku bahawa segala maklumat yang diberikan di atas adalah benar and saya berada dalam keadaan sihat untuk menyertai segala aktiviti fizikal Pasukan Kadet Bomba dan Penyelamat Malaysia.
         </div>
 
         <div className="mt-16 grid grid-cols-[auto_250px] gap-10">
@@ -139,8 +139,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
                 <td className="border border-black p-1.5 text-center">{idx + 1}</td>
                 <td className="border border-black p-1.5 uppercase font-bold">{s.nama}</td>
                 <td className="border border-black p-1.5 text-center font-mono">{s.noKP}</td>
-                {/* Kolum No. Keahlian dikosongkan mengikut arahan Cikgu (Bomba Fill) */}
-                <td className="border border-black p-1.5 text-center"></td>
+                <td className="border border-black p-1.5 text-center font-bold">{s.noKeahlian || ''}</td>
               </tr>
             ))}
             {/* Mengisi baris kosong untuk estetika jika data sedikit */}
