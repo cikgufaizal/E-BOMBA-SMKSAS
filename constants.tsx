@@ -3,7 +3,7 @@ import React from 'react';
 
 export const SCHOOL_INFO = {
   name: "SMK SULTAN AHMAD SHAH, CAMERON HIGHLANDS",
-  address: "Tanah Rata, 39000 Cameron Highlands",
+  address: "JALAN DAYANG ENDAH, 39000 TANAH RATA, CAMERON HIGHLANDS PAHANG",
   postcode: "Pahang Darul Makmur",
   clubName: "KADET BOMBA"
 };

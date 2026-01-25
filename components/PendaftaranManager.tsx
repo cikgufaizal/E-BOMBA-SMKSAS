@@ -1,8 +1,12 @@
 
 import React, { useState } from 'react';
-import { UserPlus, ShieldAlert, Heart, Phone, Printer, Info, CheckCircle2, History, FileStack, FileText, Users, FileCheck } from 'lucide-react';
+import { 
+  UserPlus, ShieldAlert, Heart, Phone, Printer, 
+  FileStack, FileText, Users, FileCheck, Search,
+  ClipboardList, ChevronRight, CheckCircle2
+} from 'lucide-react';
 import { SystemData, Student, Jantina, Kaum, HealthStatus } from '../types';
-import { FormCard, Input, Select, Button } from './CommonUI';
+import { FormCard, Input, Select, Button, Table } from './CommonUI';
 import { FORMS } from '../constants';
 
 interface Props {
@@ -11,36 +15,22 @@ interface Props {
   onPrint: (id: string, type?: any) => void;
 }
 
+type SubModule = 'DAFTAR' | 'LAMPIRAN_A' | 'LAMPIRAN_B' | 'LAMPIRAN_D' | 'LAMPIRAN_E' | 'LAMPIRAN_F';
+
 const PendaftaranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
+  const [currentView, setCurrentView] = useState<SubModule>('DAFTAR');
+  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState<Partial<Student>>({
-    nama: '',
-    noKP: '',
-    noKeahlian: '',
-    tingkatan: '1',
-    kelas: '',
-    umur: '',
-    tahap: '1',
-    jantina: Jantina.Lelaki,
-    kaum: Kaum.Melayu,
-    kumpulanDarah: 'A+',
-    alamat: '',
-    namaWaris: '',
-    noKPWaris: '',
-    telefonWaris: '',
-    alamatWaris: '',
+    nama: '', noKP: '', noKeahlian: '', tingkatan: '1', kelas: '', umur: '', tahap: '1',
+    jantina: Jantina.Lelaki, kaum: Kaum.Melayu, kumpulanDarah: 'A+', alamat: '',
+    namaWaris: '', noKPWaris: '', telefonWaris: '', alamatWaris: '',
     health: {
-      asma: false,
-      lelahTB: false,
-      kencingManis: false,
-      darahTinggi: false,
-      penglihatan: false,
-      pendengaran: false,
-      kronikLain: false,
-      kecacatan: ''
+      asma: false, lelahTB: false, kencingManis: false, darahTinggi: false,
+      penglihatan: false, pendengaran: false, kronikLain: false, kecacatan: ''
     }
   });
 
-  const [activeStep, setActiveStep] = useState(1);
+  const [activeRegStep, setActiveRegStep] = useState(1);
   const [successMessage, setSuccessMessage] = useState(false);
 
   const handleRegister = () => {
@@ -92,212 +82,134 @@ const PendaftaranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
               kronikLain: false, kecacatan: ''
             }
         });
-        setActiveStep(1);
-    }, 3000);
+        setActiveRegStep(1);
+        setCurrentView('LAMPIRAN_A'); // Terus ke senarai untuk cetak
+    }, 2000);
   };
 
-  const toggleHealth = (key: keyof HealthStatus) => {
-    setFormData({
-      ...formData,
-      health: {
-        ...(formData.health as HealthStatus),
-        [key]: !formData.health?.[key as keyof typeof formData.health]
-      }
-    });
-  };
-
-  const steps = [
-    { id: 1, label: 'Lampiran A (Biodata)', icon: UserPlus },
-    { id: 2, label: 'Lampiran A (Kesihatan)', icon: Heart },
-    { id: 3, label: 'Lampiran B (Waris)', icon: Phone }
+  const menuButtons = [
+    { id: 'DAFTAR', label: 'Daftar Ahli', icon: UserPlus, color: 'bg-red-600' },
+    { id: 'LAMPIRAN_A', label: 'Lampiran A', icon: FileText, color: 'bg-slate-800' },
+    { id: 'LAMPIRAN_B', label: 'Lampiran B', icon: Heart, color: 'bg-slate-800' },
+    { id: 'LAMPIRAN_D', label: 'Lampiran D', icon: FileCheck, color: 'bg-slate-800' },
+    { id: 'LAMPIRAN_E', label: 'Lampiran E', icon: Users, color: 'bg-slate-800' },
+    { id: 'LAMPIRAN_F', label: 'Lampiran F', icon: FileStack, color: 'bg-slate-800' },
   ];
 
-  const officialDocs = [
-    { id: 'LAMPIRAN_D', label: 'Lampiran D', desc: 'Permohonan Pendaftaran Pasukan', icon: FileCheck },
-    { id: 'LAMPIRAN_E', label: 'Lampiran E', desc: 'Senarai Guru Penasihat', icon: Users },
-    { id: 'LAMPIRAN_F', label: 'Lampiran F', desc: 'Senarai Ahli Kolektif', icon: FileStack },
-  ];
+  const filteredStudents = data.students.filter(s => 
+    s.nama.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    s.noKP.includes(searchTerm)
+  );
 
   return (
     <div className="animate-in fade-in duration-700">
-      <div className="flex flex-col lg:flex-row justify-between lg:items-center mb-10 gap-6">
-        <div>
-          <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">Hub Dokumentasi & Pendaftaran</h2>
-          <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Sistem Pengurusan Lampiran Rasmi JBPM (A, B, D, E, F)</p>
-        </div>
-        <div className="bg-red-600/10 border border-red-600/20 px-6 py-3 rounded-2xl flex items-center gap-4">
-           <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
-           <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Format Terkini JBPM 2026</span>
+      {/* HEADER & NAVIGASI */}
+      <div className="mb-10">
+        <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-6">Hub Dokumentasi Bomba</h2>
+        <div className="flex flex-wrap gap-3">
+          {menuButtons.map((btn) => (
+            <button
+              key={btn.id}
+              onClick={() => setCurrentView(btn.id as SubModule)}
+              className={`flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
+                currentView === btn.id 
+                ? 'bg-red-600 text-white shadow-[0_10px_20px_rgba(239,68,68,0.3)] scale-105' 
+                : 'bg-slate-900/50 text-slate-500 border border-white/[0.05] hover:bg-slate-800 hover:text-slate-300'
+              }`}
+            >
+              <btn.icon className="w-4 h-4" />
+              {btn.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        {/* KIRI: BORANG PENDAFTARAN */}
-        <div className="lg:col-span-8 space-y-6">
-            <div className="flex items-center gap-4 mb-8">
-                {steps.map((step) => (
-                    <button 
-                        key={step.id}
-                        onClick={() => setActiveStep(step.id)}
-                        className={`flex-1 flex flex-col md:flex-row items-center justify-center gap-3 p-5 rounded-3xl border transition-all duration-500 ${activeStep === step.id ? 'bg-red-600 border-red-600 text-white shadow-[0_15px_30px_rgba(239,68,68,0.25)] scale-[1.02]' : 'bg-slate-900/50 border-white/[0.05] text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
-                    >
-                        <step.icon className={`w-5 h-5 ${activeStep === step.id ? 'animate-bounce' : ''}`} />
-                        <span className="text-[9px] font-black uppercase tracking-[0.2em] hidden md:block">{step.label}</span>
-                    </button>
-                ))}
+      {/* VIEW: DAFTAR AHLI */}
+      {currentView === 'DAFTAR' && (
+        <div className="max-w-4xl mx-auto">
+          <FormCard title="Pendaftaran Ahli Baru (Kemasukan Data Lampiran A & B)">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <Input label="Nama Penuh" value={formData.nama} onChange={(e: any) => setFormData({...formData, nama: e.target.value})} />
+              <Input label="No. KP" placeholder="000000-00-0000" value={formData.noKP} onChange={(e: any) => setFormData({...formData, noKP: e.target.value})} />
+              <Input label="No. Keahlian" placeholder="KB-001/2026" value={formData.noKeahlian} onChange={(e: any) => setFormData({...formData, noKeahlian: e.target.value})} />
+              <Input label="Umur" type="number" value={formData.umur} onChange={(e: any) => setFormData({...formData, umur: e.target.value})} />
+              <Select label="Tingkatan" value={formData.tingkatan} onChange={(e: any) => setFormData({...formData, tingkatan: e.target.value})} options={FORMS.map(f => ({ value: f, label: `TINGKATAN ${f}` }))} />
+              <Input label="Kelas" value={formData.kelas} onChange={(e: any) => setFormData({...formData, kelas: e.target.value})} />
+              <div className="md:col-span-2">
+                <Input label="Alamat Tetap Ahli" value={formData.alamat} onChange={(e: any) => setFormData({...formData, alamat: e.target.value})} />
+              </div>
+              <div className="md:col-span-2 pt-6">
+                 <Button onClick={handleRegister} className="w-full h-16 text-xs shadow-2xl">Daftar & Jana Rekod</Button>
+              </div>
             </div>
+          </FormCard>
+          {successMessage && (
+            <div className="bg-emerald-600 text-white p-6 rounded-3xl flex items-center gap-4 animate-in zoom-in">
+              {/* Added missing CheckCircle2 component */}
+              <CheckCircle2 />
+              <span className="font-black uppercase text-xs tracking-widest">Berjaya! Membuka senarai Lampiran A...</span>
+            </div>
+          )}
+        </div>
+      )}
 
-            {successMessage && (
-                <div className="bg-emerald-600 text-white p-6 rounded-[2.5rem] flex items-center gap-6 animate-in zoom-in duration-300 shadow-2xl mb-8">
-                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                        <CheckCircle2 className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <p className="font-black uppercase text-sm tracking-widest">Ahli Berjaya Didaftarkan!</p>
-                        <p className="text-[10px] font-bold opacity-80 uppercase tracking-tight">Maklumat kini sedia untuk dijana ke dalam Lampiran A, B dan F.</p>
-                    </div>
-                </div>
+      {/* VIEW: LAMPIRAN A (TABEL NAMA PELAJAR) */}
+      {currentView === 'LAMPIRAN_A' && (
+        <div className="space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-900/40 p-8 rounded-[2.5rem] border border-white/[0.05]">
+            <div>
+              <h3 className="font-black text-white uppercase tracking-tighter text-xl italic">Pengurusan Lampiran A</h3>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Borang Maklumat Peribadi Individu</p>
+            </div>
+            <div className="relative group w-full md:w-96">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-red-500 transition-colors" />
+              <input 
+                type="text" 
+                placeholder="CARI NAMA / NO KP..."
+                className="w-full pl-12 pr-6 py-4 bg-slate-950 border border-white/[0.05] rounded-2xl text-xs font-black uppercase tracking-widest outline-none focus:border-red-600 transition-all"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <Table
+            headers={['Bil', 'Nama Ahli (Lampiran A)', 'No. KP', 'Ting/Kelas', 'Aksi Cetak']}
+            data={filteredStudents.sort((a,b) => a.nama.localeCompare(b.nama))}
+            renderRow={(s: Student, idx: number) => (
+              <tr key={s.id} className="hover:bg-slate-900/50 transition-colors border-b border-white/[0.02]">
+                <td className="px-8 py-5 text-xs font-black text-slate-600">{idx + 1}</td>
+                <td className="px-8 py-5">
+                  <div className="font-black text-white uppercase text-xs tracking-tight">{s.nama}</div>
+                  <div className="text-[9px] text-slate-500 font-bold uppercase mt-0.5">Ahli Aktif</div>
+                </td>
+                <td className="px-8 py-5 text-xs font-mono text-slate-400">{s.noKP}</td>
+                <td className="px-8 py-5">
+                  <span className="px-3 py-1 bg-slate-800 text-slate-400 text-[9px] font-black rounded-lg border border-white/[0.05]">{s.tingkatan} {s.kelas}</span>
+                </td>
+                <td className="px-8 py-5">
+                  <button 
+                    onClick={() => onPrint(s.id, 'PENDAFTARAN')}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 transition-all shadow-lg active:scale-95"
+                  >
+                    <Printer className="w-4 h-4" />
+                    Cetak Lampiran A
+                  </button>
+                </td>
+              </tr>
             )}
-
-            <FormCard title={steps[activeStep-1].label}>
-                {activeStep === 1 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <Input label="Nama Penuh Calon" value={formData.nama} onChange={(e: any) => setFormData({...formData, nama: e.target.value})} />
-                        <Input label="No. Kad Pengenalan" placeholder="000000-00-0000" value={formData.noKP} onChange={(e: any) => setFormData({...formData, noKP: e.target.value})} />
-                        <Input label="No. Keahlian (Untuk Lampiran F)" placeholder="Cth: KB-001/2026" value={formData.noKeahlian} onChange={(e: any) => setFormData({...formData, noKeahlian: e.target.value})} />
-                        <Input label="Umur" type="number" value={formData.umur} onChange={(e: any) => setFormData({...formData, umur: e.target.value})} />
-                        <Select label="Tahap Pendaftaran" value={formData.tahap} onChange={(e: any) => setFormData({...formData, tahap: e.target.value})} options={['1', '2', '3'].map(t => ({ value: t, label: `TAHAP ${t}` }))} />
-                        <Select label="Tingkatan" value={formData.tingkatan} onChange={(e: any) => setFormData({...formData, tingkatan: e.target.value})} options={FORMS.map(f => ({ value: f, label: `TINGKATAN ${f}` }))} />
-                        <Input label="Kelas" value={formData.kelas} onChange={(e: any) => setFormData({...formData, kelas: e.target.value})} />
-                        <Select label="Jantina" value={formData.jantina} onChange={(e: any) => setFormData({...formData, jantina: e.target.value})} options={Object.values(Jantina).map(j => ({ value: j, label: j }))} />
-                        <div className="md:col-span-2">
-                            <Input label="Alamat Tetap Kediaman" value={formData.alamat} onChange={(e: any) => setFormData({...formData, alamat: e.target.value})} />
-                        </div>
-                    </div>
-                )}
-
-                {activeStep === 2 && (
-                    <div className="space-y-8">
-                        <div className="flex items-center gap-3 p-4 bg-red-600/10 border border-red-600/20 rounded-2xl">
-                             <ShieldAlert className="w-5 h-5 text-red-500" />
-                             <p className="text-[10px] font-black text-red-500 uppercase tracking-widest">PENGAKUAN KESIHATAN (LAMPIRAN A)</p>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {[
-                                { key: 'asma', label: 'Asma' },
-                                { key: 'lelahTB', label: 'Lelah / Batuk Kering / TB' },
-                                { key: 'kencingManis', label: 'Kencing Manis' },
-                                { key: 'darahTinggi', label: 'Darah Tinggi' },
-                                { key: 'penglihatan', label: 'Masalah Penglihatan' },
-                                { key: 'pendengaran', label: 'Masalah Pendengaran' },
-                                { key: 'kronikLain', label: 'Penyakit Kronik Lain' }
-                            ].map((item) => (
-                                <button
-                                    key={item.key}
-                                    onClick={() => toggleHealth(item.key as keyof HealthStatus)}
-                                    className={`flex items-center justify-between p-5 rounded-2xl border transition-all duration-300 ${formData.health?.[item.key as keyof HealthStatus] ? 'bg-red-600 border-red-600 text-white shadow-lg' : 'bg-slate-950/40 border-white/[0.05] text-slate-400 hover:border-red-600/30'}`}
-                                >
-                                    <span className="text-xs font-bold uppercase">{item.label}</span>
-                                    {formData.health?.[item.key as keyof HealthStatus] && <CheckCircle2 className="w-5 h-5" />}
-                                </button>
-                            ))}
-                        </div>
-                        <Input 
-                            label="Nyatakan Kecacatan / Lain-lain (Jika ada)" 
-                            value={formData.health?.kecacatan} 
-                            onChange={(e: any) => setFormData({
-                                ...formData, 
-                                health: { ...(formData.health as HealthStatus), kecacatan: e.target.value }
-                            })} 
-                        />
-                    </div>
-                )}
-
-                {activeStep === 3 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <Input label="Nama Ibu / Bapa / Penjaga" value={formData.namaWaris} onChange={(e: any) => setFormData({...formData, namaWaris: e.target.value})} />
-                        <Input label="No. Kad Pengenalan Waris" placeholder="000000-00-0000" value={formData.noKPWaris} onChange={(e: any) => setFormData({...formData, noKPWaris: e.target.value})} />
-                        <Input label="No. Telefon Waris" value={formData.telefonWaris} onChange={(e: any) => setFormData({...formData, telefonWaris: e.target.value})} />
-                        <div className="md:col-span-2">
-                             <Input label="Alamat Waris (Jika berbeza)" value={formData.alamatWaris} onChange={(e: any) => setFormData({...formData, alamatWaris: e.target.value})} />
-                        </div>
-                        <div className="md:col-span-2 pt-8 flex gap-6">
-                            <Button variant="secondary" onClick={() => setActiveStep(2)} className="flex-1 h-16 uppercase tracking-widest">Kembali</Button>
-                            <Button onClick={handleRegister} className="flex-1 h-16 uppercase tracking-widest shadow-2xl">Simpan & Selesai</Button>
-                        </div>
-                    </div>
-                )}
-
-                {activeStep < 3 && (
-                    <div className="flex justify-end mt-12">
-                        <Button onClick={() => setActiveStep(prev => prev + 1)} className="px-16 h-16 uppercase tracking-widest">Seterusnya</Button>
-                    </div>
-                )}
-            </FormCard>
+          />
         </div>
+      )}
 
-        {/* KANAN: DOKUMENTASI UNIT */}
-        <div className="lg:col-span-4 space-y-8">
-            {/* ZON DOKUMEN PASUKAN (D, E, F) */}
-            <div className="bg-slate-900 border border-white/[0.05] rounded-[2.5rem] p-8 shadow-2xl">
-                <div className="flex items-center gap-3 mb-8">
-                    <FileText className="w-5 h-5 text-red-600" />
-                    <h3 className="font-black text-xs text-white uppercase tracking-widest">Dokumen Pasukan</h3>
-                </div>
-                <div className="space-y-4">
-                    {officialDocs.map(doc => (
-                        <button 
-                            key={doc.id}
-                            onClick={() => onPrint('', doc.id)}
-                            className="w-full p-5 bg-slate-950 border border-white/[0.03] rounded-2xl flex items-center gap-4 group hover:border-red-600/50 hover:bg-red-600/5 transition-all text-left"
-                        >
-                            <div className="w-10 h-10 bg-red-600/10 text-red-500 rounded-xl flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition-all">
-                                <doc.icon className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-black text-white uppercase tracking-wider">{doc.label}</p>
-                                <p className="text-[9px] text-slate-500 font-bold uppercase">{doc.desc}</p>
-                            </div>
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* ZON DOKUMEN INDIVIDU (A, B) */}
-            <div className="bg-slate-900 border border-white/[0.05] rounded-[2.5rem] p-8 shadow-2xl">
-                <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center gap-3">
-                        <History className="w-5 h-5 text-red-600" />
-                        <h3 className="font-black text-xs text-white uppercase tracking-widest">Ahli Baru</h3>
-                    </div>
-                    <span className="text-[9px] font-black text-slate-500 uppercase">Terkini</span>
-                </div>
-                <div className="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
-                    {data.students.length === 0 && (
-                        <div className="text-center py-10 opacity-30">
-                            <Users className="w-8 h-8 mx-auto mb-3" />
-                            <p className="text-[9px] font-bold uppercase tracking-widest">Tiada Pendaftaran</p>
-                        </div>
-                    )}
-                    {data.students.slice(-5).reverse().map(student => (
-                        <div key={student.id} className="p-4 bg-slate-950 border border-white/[0.03] rounded-2xl flex items-center justify-between group animate-in slide-in-from-right duration-500">
-                            <div className="min-w-0 pr-4">
-                                <p className="text-[10px] font-black text-white uppercase truncate">{student.nama}</p>
-                                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-tighter">KP: {student.noKP}</p>
-                            </div>
-                            <button 
-                                onClick={() => onPrint(student.id, 'PENDAFTARAN')}
-                                className="p-2.5 bg-red-600/10 text-red-500 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-lg"
-                                title="Cetak Lampiran A & B"
-                            >
-                                <Printer className="w-4 h-4" />
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            </div>
+      {/* PLACEHOLDERS UNTUK LAMPIRAN LAIN (DEBUG 1-1 SETERUSNYA) */}
+      {['LAMPIRAN_B', 'LAMPIRAN_D', 'LAMPIRAN_E', 'LAMPIRAN_F'].includes(currentView) && (
+        <div className="flex flex-col items-center justify-center py-24 bg-slate-900/40 rounded-[3rem] border-2 border-dashed border-white/[0.05]">
+          <ClipboardList className="w-16 h-16 text-slate-700 mb-6" />
+          <h3 className="text-xl font-black text-slate-500 uppercase tracking-widest">Modul {currentView.replace('_', ' ')}</h3>
+          <p className="text-xs text-slate-600 font-bold uppercase mt-2">Sedia untuk debug 1-1 selepas Lampiran A selesai.</p>
         </div>
-      </div>
+      )}
     </div>
   );
 };
