@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 import { 
   UserPlus, ShieldAlert, Heart, Phone, Printer, 
   FileStack, FileText, Users, FileCheck, Search,
-  ClipboardList, CheckCircle2, Info, LayoutList, Save
+  ClipboardList, CheckCircle2, Info, LayoutList, Save,
+  Building2, GraduationCap, MapPin, Landmark
 } from 'lucide-react';
-import { SystemData, Student, Jantina, Kaum, HealthStatus } from '../types';
+import { SystemData, Student, Jantina, Kaum, HealthStatus, JawatanGuru } from '../types';
 import { FormCard, Input, Select, Button, Table } from './CommonUI';
 import { FORMS } from '../constants';
 
@@ -31,6 +32,10 @@ const PendaftaranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
   });
 
   const [successMessage, setSuccessMessage] = useState(false);
+
+  // Auto-detect Pengetua dan Penasihat untuk Lampiran E
+  const pengetua = data.teachers.find(t => t.jawatan.toUpperCase().includes('PENGETUA') || t.jawatan.toUpperCase().includes('BESAR'));
+  const penasihat = data.teachers.find(t => t.jawatan === JawatanGuru.Penasihat);
 
   const handleRegister = () => {
     if (!formData.nama || !formData.noKP) {
@@ -87,17 +92,12 @@ const PendaftaranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
 
   const menuButtons = [
     { id: 'LAMPIRAN_A', label: 'Lampiran A', icon: FileText },
+    { id: 'LAMPIRAN_E', label: 'Lampiran E', icon: Landmark },
     { id: 'LAMPIRAN_F', label: 'Lampiran F', icon: FileStack },
     { id: 'DAFTAR', label: 'Daftar Ahli', icon: UserPlus },
     { id: 'LAMPIRAN_B', label: 'Lampiran B', icon: Heart },
     { id: 'LAMPIRAN_D', label: 'Lampiran D', icon: FileCheck },
-    { id: 'LAMPIRAN_E', label: 'Lampiran E', icon: Users },
   ];
-
-  const filteredStudents = data.students.filter(s => 
-    s.nama.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    s.noKP.includes(searchTerm)
-  );
 
   return (
     <div className="animate-in fade-in duration-700">
@@ -155,7 +155,7 @@ const PendaftaranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
 
           <Table
             headers={['Bil', 'Nama Ahli', 'No. KP', 'Ting/Kelas', 'Tindakan Cetak']}
-            data={filteredStudents.sort((a,b) => a.nama.localeCompare(b.nama))}
+            data={data.students.filter(s => s.nama.toLowerCase().includes(searchTerm.toLowerCase())).sort((a,b) => a.nama.localeCompare(b.nama))}
             renderRow={(s: Student, idx: number) => (
               <tr key={s.id} className="hover:bg-slate-900/50 transition-colors border-b border-white/[0.02] group">
                 <td className="px-8 py-6 text-xs font-black text-slate-600">{idx + 1}</td>
@@ -176,6 +176,77 @@ const PendaftaranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
               </tr>
             )}
           />
+        </div>
+      )}
+
+      {/* VIEW: LAMPIRAN E (PERMOHONAN PENUBUHAN) */}
+      {currentView === 'LAMPIRAN_E' && (
+        <div className="space-y-8 animate-slide-up">
+           <div className="bg-slate-900/40 p-10 rounded-[3rem] border border-white/[0.05] flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="flex items-center gap-6">
+                <div className="w-20 h-20 bg-red-600 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-red-900/20">
+                   <Landmark className="text-white w-10 h-10" />
+                </div>
+                <div>
+                   <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none">Lampiran E</h3>
+                   <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-2">Permohonan Penubuhan Pasukan Kadet Bomba</p>
+                </div>
+              </div>
+              <Button 
+                onClick={() => onPrint(undefined, 'LAMPIRAN_E')} 
+                className="h-16 px-12 shadow-2xl text-[12px]"
+              >
+                 <Printer className="w-5 h-5" /> Cetak Borang Permohonan
+              </Button>
+           </div>
+
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="bg-slate-900/40 p-10 rounded-[3rem] border border-white/[0.05]">
+                 <div className="flex items-center gap-4 mb-8">
+                    <Building2 className="w-6 h-6 text-red-600" />
+                    <h4 className="text-xs font-black text-slate-300 uppercase tracking-widest">Maklumat Institusi</h4>
+                 </div>
+                 <div className="space-y-6">
+                    <div>
+                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Nama Sekolah</p>
+                      <p className="text-sm font-black text-white uppercase">{data.settings?.schoolName || 'SILA KEMASKINI DI TETAPAN'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Alamat Surat-Menyurat</p>
+                      <p className="text-xs font-bold text-slate-300 uppercase leading-relaxed">{data.settings?.address || 'SILA KEMASKINI DI TETAPAN'}</p>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="bg-slate-900/40 p-10 rounded-[3rem] border border-white/[0.05]">
+                 <div className="flex items-center gap-4 mb-8">
+                    <GraduationCap className="w-6 h-6 text-red-600" />
+                    <h4 className="text-xs font-black text-slate-300 uppercase tracking-widest">Pihak Bertanggungjawab</h4>
+                 </div>
+                 <div className="space-y-6">
+                    <div>
+                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Pengetua / Guru Besar</p>
+                      <p className="text-sm font-black text-white uppercase">{pengetua?.nama || 'SILA LANTIK DI MODUL GURU'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Guru Penasihat Utama</p>
+                      <p className="text-sm font-black text-white uppercase">{penasihat?.nama || 'SILA LANTIK DI MODUL GURU'}</p>
+                    </div>
+                 </div>
+              </div>
+           </div>
+
+           <div className="bg-emerald-600/5 border border-emerald-600/10 p-8 rounded-[2.5rem] flex items-start gap-5">
+              <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shrink-0">
+                 <CheckCircle2 className="text-white w-6 h-6" />
+              </div>
+              <div>
+                 <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">Status Kesediaan</p>
+                 <p className="text-[11px] text-slate-400 font-bold uppercase leading-relaxed">
+                   Sistem telah mengesan {data.students.length} orang calon anggota dan {data.teachers.length} orang guru pembimbing. Borang permohonan sedia untuk dicetak dan dihantar ke balai berhampiran.
+                 </p>
+              </div>
+           </div>
         </div>
       )}
 
@@ -251,7 +322,7 @@ const PendaftaranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
       )}
 
       {/* VIEW PLACEHOLDERS */}
-      {['LAMPIRAN_B', 'LAMPIRAN_D', 'LAMPIRAN_E'].includes(currentView) && (
+      {['LAMPIRAN_B', 'LAMPIRAN_D'].includes(currentView) && (
         <div className="flex flex-col items-center justify-center py-24 bg-slate-900/40 rounded-[3rem] border-2 border-dashed border-white/[0.05]">
           <ClipboardList className="w-16 h-16 text-slate-700 mb-6" />
           <h3 className="text-xl font-black text-slate-500 uppercase tracking-widest">Modul {currentView.replace('_', ' ')}</h3>

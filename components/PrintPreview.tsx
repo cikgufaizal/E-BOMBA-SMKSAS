@@ -14,17 +14,92 @@ interface PrintProps {
 const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) => {
   const currentYear = new Date().getFullYear();
 
-  // ALAMAT RASMI SEKOLAH (HARDCODED SESUAI ARAHAN)
-  const schoolName = "SMK SULTAN AHMAD SHAH, CAMERON HIGHLANDS";
-  const address = "JALAN DAYANG ENDAH, 39000 TANAH RATA, CAMERON HIGHLANDS PAHANG";
+  // ALAMAT RASMI SEKOLAH
+  const schoolName = data.settings?.schoolName || "SMK SULTAN AHMAD SHAH, CAMERON HIGHLANDS";
+  const address = data.settings?.address || "JALAN DAYANG ENDAH, 39000 TANAH RATA, CAMERON HIGHLANDS PAHANG";
 
-  // Header Rasmi JBPM
   const JBPMHeader = () => (
     <div className="flex flex-col items-center text-center mb-6 text-black border-b-[1.5pt] border-black pb-4">
       <h2 className="text-[12pt] font-bold uppercase">JABATAN BOMBA DAN PENYELAMAT MALAYSIA</h2>
       <p className="text-[10pt] font-bold uppercase">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA</p>
     </div>
   );
+
+  const renderLampiranE = () => {
+    const pengetua = data.teachers.find(t => t.jawatan.toUpperCase().includes('PENGETUA') || t.jawatan.toUpperCase().includes('BESAR'));
+    const penasihat = data.teachers.find(t => t.jawatan === JawatanGuru.Penasihat);
+
+    return (
+      <div className="text-black leading-snug text-[10.5pt] min-h-[280mm] font-serif">
+        <div className="flex justify-end mb-2">
+          <span className="font-bold text-[11pt]">Lampiran E</span>
+        </div>
+        <JBPMHeader />
+        
+        <div className="text-center mb-10">
+          <h3 className="font-bold text-[13pt] uppercase underline">BORANG PERMOHONAN PENUBUHAN</h3>
+          <p className="text-[10.5pt] font-bold uppercase mt-1">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA</p>
+        </div>
+
+        <div className="space-y-8 px-6">
+          <section>
+            <h4 className="font-bold border-b border-black mb-4 uppercase text-[11pt]">Bahagian A: Maklumat Sekolah / Institusi</h4>
+            <div className="grid grid-cols-[180px_auto] gap-y-3">
+              <div className="font-bold">Nama Sekolah</div><div className="uppercase font-bold">: {schoolName}</div>
+              <div className="font-bold">Alamat Sekolah</div><div className="uppercase leading-tight">: {address}</div>
+              <div className="font-bold">No. Telefon</div><div className="">: {data.teachers[0]?.telefon || '................................'}</div>
+              <div className="font-bold">Kod Sekolah</div><div className="">: {data.settings?.clubName?.includes('CEB') ? 'CEB1003' : '................................'}</div>
+            </div>
+          </section>
+
+          <section>
+            <h4 className="font-bold border-b border-black mb-4 uppercase text-[11pt]">Bahagian B: Maklumat Komander (Pengetua/Guru Besar)</h4>
+            <div className="grid grid-cols-[180px_auto] gap-y-3">
+              <div className="font-bold">Nama Penuh</div><div className="uppercase font-bold">: {pengetua?.nama || '................................................................'}</div>
+              <div className="font-bold">No. Kad Pengenalan</div><div className="font-mono">: {pengetua?.noKP || '................................'}</div>
+              <div className="font-bold">Jawatan Hakiki</div><div className="uppercase">: {pengetua?.jawatan || 'PENGETUA / GURU BESAR'}</div>
+            </div>
+          </section>
+
+          <section>
+            <h4 className="font-bold border-b border-black mb-4 uppercase text-[11pt]">Bahagian C: Maklumat Guru Penasihat Utama</h4>
+            <div className="grid grid-cols-[180px_auto] gap-y-3">
+              <div className="font-bold">Nama Penuh</div><div className="uppercase font-bold">: {penasihat?.nama || '................................................................'}</div>
+              <div className="font-bold">No. Kad Pengenalan</div><div className="font-mono">: {penasihat?.noKP || '................................'}</div>
+              <div className="font-bold">No. Telefon (H/P)</div><div className="">: {penasihat?.telefon || '................................'}</div>
+            </div>
+          </section>
+
+          <section className="mt-12">
+             <h4 className="font-bold uppercase text-[11pt] mb-4">Pengesahan Dan Perakuan Institusi</h4>
+             <p className="text-justify leading-relaxed">
+               Saya dengan ini memohon untuk menubuhkan Pasukan Kadet Bomba dan Penyelamat Malaysia di institusi ini. Saya berjanji akan memastikan segala aktiviti yang dijalankan adalah selaras dengan perlembagaan dan arahan Jabatan Bomba dan Penyelamat Malaysia dari semasa ke semasa.
+             </p>
+             
+             <div className="mt-20 grid grid-cols-[250px_auto_250px] gap-4">
+                <div className="text-center">
+                   <div className="border-b border-black h-12"></div>
+                   <p className="mt-2 font-bold uppercase text-[9pt]">Tarikh</p>
+                </div>
+                <div></div>
+                <div className="text-center">
+                   <div className="border-b border-black h-12"></div>
+                   <p className="mt-2 font-bold uppercase text-[9pt]">Tandatangan & Cop Rasmi</p>
+                   <p className="text-[8pt] uppercase">Komander Institusi</p>
+                </div>
+             </div>
+          </section>
+        </div>
+
+        <div className="mt-24 border-t-2 border-dashed border-black pt-4">
+           <p className="text-[9pt] font-bold italic uppercase">Untuk Kegunaan Jabatan Bomba Dan Penyelamat Malaysia (JBPM) Sahaja</p>
+           <div className="mt-4 border border-black p-4 h-32">
+              <p className="text-[9pt]">Catatan / Ulasan Pegawai Penyelaras:</p>
+           </div>
+        </div>
+      </div>
+    );
+  };
 
   const renderLampiranA = (s: Student) => (
     <div className="text-black leading-tight text-[10.5pt] min-h-[280mm] font-serif">
@@ -183,6 +258,8 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         return renderLampiranA(s);
       case 'LAMPIRAN_F': 
         return renderLampiranF();
+      case 'LAMPIRAN_E':
+        return renderLampiranE();
       default: return <div className="p-20 text-center font-bold uppercase tracking-widest">Modul Cetakan {type} Sedang Menunggu Arahan Debug</div>;
     }
   };
@@ -193,7 +270,9 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         <div className="flex items-center gap-4">
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><ArrowLeft className="w-6 h-6 text-red-600" /></button>
           <h2 className="font-black text-lg uppercase tracking-tighter text-black">
-             {type === 'LAMPIRAN_F' ? 'Cetak Lampiran F (Kolektif)' : 'Cetak Lampiran A (Kesihatan)'}
+             {type === 'LAMPIRAN_F' ? 'Cetak Lampiran F (Kolektif)' : 
+              type === 'LAMPIRAN_E' ? 'Cetak Lampiran E (Permohonan)' :
+              'Cetak Lampiran A (Kesihatan)'}
           </h2>
         </div>
         <button onClick={() => window.print()} className="flex items-center gap-3 px-10 py-3 bg-red-700 text-white font-black rounded-xl hover:bg-red-800 transition-all shadow-xl uppercase text-xs tracking-widest">
