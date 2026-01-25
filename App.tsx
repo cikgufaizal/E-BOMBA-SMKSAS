@@ -215,7 +215,7 @@ const App: React.FC = () => {
         <div className="flex-1 overflow-y-auto p-10 custom-scrollbar scroll-smooth">
           <div className="max-w-7xl mx-auto pb-20 animate-slide-up">
             {activeTab === 'dashboard' && <Dashboard data={data} />}
-            {activeTab === 'pendaftaran' && <PendaftaranManager data={data} updateData={handleUpdateData} onPrint={(id) => setPrintConfig({ isOpen: true, type: 'PENDAFTARAN', targetId: id })} />}
+            {activeTab === 'pendaftaran' && <PendaftaranManager data={data} updateData={handleUpdateData} onPrint={(id, type = 'PENDAFTARAN') => setPrintConfig({ isOpen: true, type: type as ReportType, targetId: id })} />}
             {activeTab === 'guru' && <GuruManager data={data} updateData={handleUpdateData} />}
             {activeTab === 'ahli' && <AhliManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'AHLI' })} />}
             {activeTab === 'ajk' && <AJKManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'AJK' })} />}

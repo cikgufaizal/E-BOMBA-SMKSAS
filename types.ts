@@ -61,6 +61,7 @@ export interface Student {
   kaum: Kaum;
   umur?: string;
   tahap?: string;
+  noKeahlian?: string;
   kumpulanDarah?: string;
   alamat?: string;
   namaWaris?: string;
@@ -68,7 +69,7 @@ export interface Student {
   telefonWaris?: string;
   alamatWaris?: string;
   health?: HealthStatus;
-  masalahKesihatan?: string; // Generic note
+  masalahKesihatan?: string;
 }
 
 export interface CommitteeMember {
@@ -121,4 +122,4 @@ export interface SystemData {
   lastUpdated?: number; 
 }
 
-export type ReportType = 'AHLI' | 'AJK' | 'KEHADIRAN' | 'AKTIVITI' | 'PENDAFTARAN';
+export type ReportType = 'AHLI' | 'AJK' | 'KEHADIRAN' | 'AKTIVITI' | 'PENDAFTARAN' | 'LAMPIRAN_F' | 'LAMPIRAN_D' | 'LAMPIRAN_E';

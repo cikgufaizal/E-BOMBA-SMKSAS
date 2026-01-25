@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Printer, ArrowLeft } from 'lucide-react';
-import { SystemData, ReportType, JawatanAJK, Jantina, Student } from '../types';
+import { SystemData, ReportType, JawatanAJK, Jantina, Student, JawatanGuru } from '../types';
 import { SCHOOL_INFO, MONTHS } from '../constants';
 
 interface PrintProps {
@@ -21,7 +21,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
 
   // Header Rasmi JBPM
   const JBPMHeader = () => (
-    <div className="flex flex-col items-center text-center mb-6 text-black border-b border-black pb-4">
+    <div className="flex flex-col items-center text-center mb-6 text-black border-b-[1.5pt] border-black pb-4">
       {data.settings?.logoUrl && <img src={data.settings.logoUrl} alt="Logo" className="w-16 h-16 object-contain mb-2" />}
       <h2 className="text-[12pt] font-bold uppercase">JABATAN BOMBA DAN PENYELAMAT MALAYSIA</h2>
       <p className="text-[10pt] font-bold uppercase">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA</p>
@@ -30,7 +30,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
 
   const FooterInfo = () => (
     <div className="mt-8 pt-1 border-t border-black/10 text-[7px] text-slate-400 flex justify-between uppercase no-print">
-      <span>E-Kadet Bomba Professional • Generated from JBPM Digital Core</span>
+      <span>E-Kadet Bomba Professional • Sistem Pengurusan Dokumentasi Rasmi JBPM</span>
       <span>{printTime}</span>
     </div>
   );
@@ -48,17 +48,17 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
 
       <div className="space-y-4 px-4">
         <div className="grid grid-cols-[180px_auto] gap-2">
-          <div>1. Nama</div><div className="uppercase">: {s.nama}</div>
+          <div>1. Nama</div><div className="uppercase font-bold">: {s.nama}</div>
           <div>2. No. K/P</div><div className="font-mono">: {s.noKP}</div>
           <div>3. Nama Sekolah</div><div className="uppercase">: {schoolName}</div>
           <div>4. Alamat</div><div className="uppercase">: {s.alamat || '-'}</div>
-          <div>5. Umur</div><div>: {s.umur || '-'}</div>
-          <div>6. Tahap</div><div>: {s.tahap || '-'}</div>
-          <div>7. Tingkatan</div><div>: {s.tingkatan}</div>
+          <div>5. Umur</div><div>: {s.umur || '-'} Tahun</div>
+          <div>6. Tahap</div><div>: TAHAP {s.tahap || '-'}</div>
+          <div>7. Tingkatan</div><div>: TINGKATAN {s.tingkatan}</div>
         </div>
 
         <div className="mt-6">
-          <p>8. Adakah anda mempunyai penyakit: - (Tandakan / Pada yang berkenaan)</p>
+          <p className="font-bold">8. Adakah anda mempunyai penyakit: - (Tandakan / Pada yang berkenaan)</p>
           <div className="mt-4 grid grid-cols-[auto_100px_100px] gap-x-2 border border-black text-center font-bold text-[9pt]">
             <div className="border-b border-r border-black p-1 text-left">JENIS PENYAKIT</div>
             <div className="border-b border-r border-black p-1">ADA</div>
@@ -80,15 +80,13 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
               </React.Fragment>
             ))}
           </div>
-          <div className="mt-4 grid grid-cols-[100px_auto] gap-2 items-baseline">
-            <div className="font-bold">Nyatakan:</div>
-            <div className="border-b border-black flex-1 min-h-[20px]">{s.health?.kecacatan || '-'}</div>
-            <div className="font-bold">h. Kecacatan dan Lain-lain:</div>
-            <div className="border-b border-black flex-1 min-h-[20px]">{s.health?.kecacatan ? (s.health.kronikLain ? '/' : '') : ''}</div>
+          <div className="mt-4 grid grid-cols-[180px_auto] gap-2 items-baseline">
+            <div className="font-bold text-[9pt]">h. Kecacatan dan Lain-lain:</div>
+            <div className="border-b border-black flex-1 min-h-[20px] text-[9pt]">{s.health?.kecacatan || '-'}</div>
           </div>
         </div>
 
-        <div className="mt-8 text-justify italic">
+        <div className="mt-8 text-justify italic text-[10pt]">
           Saya mengaku bahawa saya sihat dan berminat menyertai Pasukan Kadet Bomba dan Penyelamat Malaysia.
         </div>
 
@@ -96,11 +94,10 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
           <div>Tarikh: ..............................</div>
           <div className="text-center">
             <div className="border-b border-black h-12"></div>
-            <p className="mt-2 font-bold uppercase">Tandatangan / Nama Kadet</p>
+            <p className="mt-2 font-bold uppercase text-[9pt]">Tandatangan / Nama Kadet</p>
           </div>
         </div>
       </div>
-      <FooterInfo />
     </div>
   );
 
@@ -119,7 +116,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         
         <p>(Nama ibu bapa/penjaga) beralamat <span className="font-bold uppercase border-b border-black inline-block w-full">{s.alamatWaris || s.alamat || '....................................................................................................'}</span></p>
         
-        <p>dengan ini membenarkan <span className="font-bold uppercase border-b border-black inline-block px-2 min-w-[200px]">{s.nama}</span> menyertai:</p>
+        <p>dengan ini membenarkan <span className="font-bold uppercase border-b border-black inline-block px-2 min-w-[200px] font-mono">{s.nama}</span> menyertai:</p>
 
         <div className="text-center font-bold text-[12pt] my-6">
           PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA DI
@@ -142,22 +139,205 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
           <div>Tarikh: ..............................</div>
           <div className="text-center">
             <div className="border-b border-black h-12"></div>
-            <p className="mt-2 font-bold uppercase">( Ibu / Bapa / Penjaga )</p>
+            <p className="mt-2 font-bold uppercase text-[9pt]">( Ibu / Bapa / Penjaga )</p>
           </div>
         </div>
       </div>
-      <FooterInfo />
     </div>
   );
 
+  const renderLampiranD = () => {
+    const maleCount = data.students.filter(s => s.jantina === Jantina.Lelaki).length;
+    const femaleCount = data.students.filter(s => s.jantina === Jantina.Perempuan).length;
+    const penasihat = data.teachers.find(t => t.jawatan === JawatanGuru.Penasihat)?.nama || '................................';
+
+    return (
+      <div className="text-black leading-tight text-[11pt] min-h-[297mm]">
+        <div className="flex justify-end mb-2">
+          <span className="font-bold text-[11pt]">Lampiran D</span>
+        </div>
+        <JBPMHeader />
+        <div className="text-center mb-10">
+          <h3 className="font-bold text-[12pt] uppercase underline">BORANG PERMOHONAN PENDAFTARAN PASUKAN</h3>
+        </div>
+
+        <div className="space-y-6 px-4">
+          <div className="grid grid-cols-[180px_auto] gap-2">
+            <div className="font-bold">1. Nama Sekolah</div><div className="uppercase">: {schoolName}</div>
+            <div className="font-bold">2. Alamat Sekolah</div><div className="uppercase">: {address}</div>
+            <div className="font-bold">3. No. Telefon / Faks</div><div>: {data.teachers[0]?.telefon || '................................'}</div>
+          </div>
+
+          <p className="font-bold mt-4">4. Jumlah Keahlian Pelajar:</p>
+          <div className="grid grid-cols-2 gap-4 border border-black p-4 text-center">
+            <div className="border-r border-black">
+              <p className="font-bold uppercase text-[9pt]">Lelaki</p>
+              <p className="text-xl font-bold">{maleCount}</p>
+            </div>
+            <div>
+              <p className="font-bold uppercase text-[9pt]">Perempuan</p>
+              <p className="text-xl font-bold">{femaleCount}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-[180px_auto] gap-2 mt-4">
+            <div className="font-bold">5. Nama Guru Penasihat</div><div className="uppercase">: {penasihat}</div>
+            <div className="font-bold">6. Tahun Pendaftaran</div><div className="font-bold">: {currentYear}</div>
+          </div>
+
+          <p className="mt-10 text-justify">
+            Dengan ini pihak sekolah memohon untuk mendaftarkan Pasukan Kadet Bomba dan Penyelamat Malaysia sekolah ini bagi tahun <span className="font-bold">{currentYear}</span>. Kami berjanji akan mematuhi segala peraturan dan arahan yang dikeluarkan oleh pihak Jabatan Bomba dan Penyelamat Malaysia.
+          </p>
+
+          <div className="mt-20 grid grid-cols-1 gap-10">
+            <div>
+              <div className="border-b border-black w-[300px] mb-2"></div>
+              <p className="font-bold uppercase text-[10pt]">( ........................................................... )</p>
+              <p className="text-[9pt] font-bold">Cop & Tandatangan Pengetua / Guru Besar</p>
+              <p className="text-[9pt]">Tarikh: ..............................</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderLampiranE = () => (
+    <div className="text-black leading-tight text-[10pt] min-h-[297mm]">
+      <div className="flex justify-end mb-2">
+        <span className="font-bold text-[11pt]">Lampiran E</span>
+      </div>
+      <JBPMHeader />
+      <div className="text-center mb-8">
+        <h3 className="font-bold text-[11pt] uppercase">BORANG PENDAFTARAN</h3>
+        <p className="text-[10pt] font-bold uppercase">SENARAI GURU PENASIHAT KADET BOMBA</p>
+      </div>
+
+      <div className="px-2 mb-6">
+        <p className="font-bold">Sekolah: <span className="uppercase">{schoolName}</span></p>
+      </div>
+
+      <table className="w-full border-collapse border border-black text-[9pt]">
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="border border-black p-2 text-center w-[40px]">Bil.</th>
+            <th className="border border-black p-2 text-left">Nama Guru Penasihat</th>
+            <th className="border border-black p-2 text-center w-[150px]">Jawatan Dalam Pasukan</th>
+            <th className="border border-black p-2 text-center w-[120px]">No. Telefon</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.teachers.map((t, idx) => (
+            <tr key={t.id}>
+              <td className="border border-black p-2 text-center">{idx + 1}</td>
+              <td className="border border-black p-2 uppercase font-bold">{t.nama}</td>
+              <td className="border border-black p-2 text-center uppercase">{t.jawatan}</td>
+              <td className="border border-black p-2 text-center">{t.telefon}</td>
+            </tr>
+          ))}
+          {data.teachers.length < 5 && Array.from({ length: 5 - data.teachers.length }).map((_, i) => (
+            <tr key={`empty-${i}`} className="h-10">
+              <td className="border border-black p-2 text-center">{data.teachers.length + i + 1}</td>
+              <td className="border border-black p-2"></td>
+              <td className="border border-black p-2"></td>
+              <td className="border border-black p-2"></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="mt-20">
+        <div className="border-b border-black w-[250px] mb-2"></div>
+        <p className="font-bold text-[10pt] uppercase">( ........................................................... )</p>
+        <p className="text-[9pt] font-bold">Pengesahan Pengetua / Guru Besar</p>
+      </div>
+    </div>
+  );
+
+  const renderLampiranF = () => {
+    const sortedStudents = [...data.students].sort((a,b) => a.nama.localeCompare(b.nama));
+    const penasihat = data.teachers.find(t => t.jawatan === JawatanGuru.Penasihat)?.nama || '................................';
+
+    return (
+      <div className="text-black leading-tight text-[10pt] min-h-[297mm]">
+        <div className="flex justify-end mb-2">
+          <span className="font-bold text-[11pt]">Lampiran F</span>
+        </div>
+        <JBPMHeader />
+        <div className="text-center mb-8">
+          <h3 className="font-bold text-[11pt] uppercase">BORANG PENDAFTARAN</h3>
+          <p className="text-[10pt] font-bold uppercase">AHLI KADET BOMBA DAN PENYELAMAT MALAYSIA (KOLEKTIF)</p>
+        </div>
+
+        <div className="space-y-3 mb-6 px-2 text-[9pt]">
+          <div className="grid grid-cols-[150px_auto] gap-1">
+            <div className="font-bold">Nama Sekolah</div><div className="uppercase">: {schoolName}</div>
+            <div className="font-bold">Alamat Sekolah</div><div className="uppercase">: {address}</div>
+            <div className="font-bold">Guru Penasihat</div><div className="uppercase">: {penasihat}</div>
+            <div className="font-bold">No. Telefon</div><div>: {data.teachers[0]?.telefon || '................................'}</div>
+          </div>
+        </div>
+
+        <table className="w-full border-collapse border border-black text-[8.5pt]">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border border-black p-2 text-center w-[35px]">Bil.</th>
+              <th className="border border-black p-2 text-left">Nama Penuh Calon</th>
+              <th className="border border-black p-2 text-center w-[140px]">No. Kad Pengenalan</th>
+              <th className="border border-black p-2 text-center w-[100px]">No. Keahlian</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedStudents.map((s, idx) => (
+              <tr key={s.id}>
+                <td className="border border-black p-1.5 text-center">{idx + 1}</td>
+                <td className="border border-black p-1.5 uppercase font-bold">{s.nama}</td>
+                <td className="border border-black p-1.5 text-center font-mono">{s.noKP}</td>
+                <td className="border border-black p-1.5 text-center uppercase">{s.noKeahlian || '-'}</td>
+              </tr>
+            ))}
+            {sortedStudents.length < 20 && Array.from({ length: 20 - sortedStudents.length }).map((_, i) => (
+               <tr key={`empty-${i}`} className="h-8">
+                 <td className="border border-black p-1.5 text-center">{sortedStudents.length + i + 1}</td>
+                 <td className="border border-black p-1.5"></td>
+                 <td className="border border-black p-1.5"></td>
+                 <td className="border border-black p-1.5"></td>
+               </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div className="mt-12 px-4">
+          <p className="font-bold">Disahkan oleh:</p>
+          <div className="pt-10">
+            <div className="border-b border-black w-[250px] mb-2"></div>
+            <p className="font-bold text-[10pt] uppercase">( ........................................................... )</p>
+            <p className="text-[9pt] font-bold">Pengetua / Guru Besar / Penyelia</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const getReportContent = () => {
-    const s = targetId ? data.students.find(x => x.id === targetId) : null;
-    
     switch(type) {
+      case 'PENDAFTARAN': 
+        const s = targetId ? data.students.find(x => x.id === targetId) : null;
+        if (!s) return null;
+        return (
+          <div className="space-y-[10mm]">
+            {renderLampiranA(s)}
+            <div className="page-break h-10"></div>
+            {renderLampiranB(s)}
+          </div>
+        );
+      case 'LAMPIRAN_D': return renderLampiranD();
+      case 'LAMPIRAN_E': return renderLampiranE();
+      case 'LAMPIRAN_F': return renderLampiranF();
       case 'AHLI': 
         return (
           <div className="text-black">
-            <div className="mb-4 text-black flex items-start gap-6 border-b-[1.5pt] border-black pb-2">
+             <div className="mb-4 text-black flex items-start gap-6 border-b-[1.5pt] border-black pb-2">
               {data.settings?.logoUrl && <img src={data.settings.logoUrl} alt="Logo" className="w-16 h-16 object-contain" />}
               <div className="text-left pt-1">
                 <h1 className="text-[11pt] font-bold uppercase leading-tight">{schoolName}</h1>
@@ -169,15 +349,6 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
               <thead><tr className="bg-gray-100 font-bold"><th className="border border-black p-2">BIL</th><th className="border border-black p-2 text-left">NAMA PENUH</th><th className="border border-black p-2">NO. KP</th><th className="border border-black p-2">TING/KELAS</th></tr></thead>
               <tbody>{data.students.sort((a,b)=>a.nama.localeCompare(b.nama)).map((s,i)=>(<tr key={s.id}><td className="border border-black p-2 text-center">{i+1}</td><td className="border border-black p-2 font-bold uppercase">{s.nama}</td><td className="border border-black p-2 text-center font-mono">{s.noKP}</td><td className="border border-black p-2 text-center uppercase">{s.tingkatan} {s.kelas}</td></tr>))}</tbody>
             </table>
-          </div>
-        );
-      case 'PENDAFTARAN': 
-        if (!s) return null;
-        return (
-          <div className="space-y-[20mm]">
-            {renderLampiranA(s)}
-            <div className="page-break h-0"></div>
-            {renderLampiranB(s)}
           </div>
         );
       case 'AKTIVITI': 
@@ -197,35 +368,42 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
             </div>
           </div>
         );
-      default: return <div>Report type not implemented.</div>;
+      default: return <div>Laporan ini belum tersedia atau sedang dibangunkan.</div>;
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-900 overflow-y-auto">
-      <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b-2 border-slate-200 z-[100] flex items-center justify-between px-8 text-black no-print shadow-md">
+      <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b-2 border-slate-200 z-[100] flex items-center justify-between px-8 text-black no-print shadow-xl">
         <div className="flex items-center gap-4">
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><ArrowLeft className="w-6 h-6" /></button>
-          <h2 className="font-black text-lg uppercase tracking-tighter">PRATONTON DOKUMEN RASMI</h2>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><ArrowLeft className="w-6 h-6 text-red-600" /></button>
+          <div>
+             <h2 className="font-black text-xs uppercase tracking-[0.2em] text-slate-500">Pratonton Rasmi</h2>
+             <h2 className="font-black text-lg uppercase tracking-tighter text-black">
+                {type.replace('_', ' ')}
+             </h2>
+          </div>
         </div>
-        <button onClick={() => window.print()} className="flex items-center gap-2 px-8 py-2.5 bg-red-700 text-white font-black rounded-lg hover:bg-red-800 transition-all shadow-xl uppercase text-sm tracking-widest">
-          <Printer className="w-5 h-5" /> CETAK (A4)
+        <button onClick={() => window.print()} className="flex items-center gap-3 px-10 py-3 bg-red-700 text-white font-black rounded-xl hover:bg-red-800 transition-all shadow-xl uppercase text-xs tracking-widest active:scale-95">
+          <Printer className="w-5 h-5" /> CETAK SEKARANG
         </button>
       </div>
 
       <div className="pt-24 pb-20 flex justify-center bg-slate-900 min-h-screen no-print">
-        <div className="bg-white shadow-2xl w-[210mm] p-[15mm] print-area border border-slate-300">
+        <div className="bg-white shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] w-[210mm] p-[15mm] print-area border border-slate-300 rounded-sm">
           {getReportContent()}
         </div>
       </div>
 
-      <div className="hidden print:block print-area">
+      <div className="hidden print:block">
           {getReportContent()}
       </div>
       
       <style>{`
         @media print {
-          .page-break { page-break-before: always; }
+          @page { size: A4; margin: 15mm; }
+          .page-break { page-break-before: always; height: 1px; }
+          body { background: white !important; }
         }
       `}</style>
     </div>
