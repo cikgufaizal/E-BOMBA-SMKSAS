@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   LayoutDashboard, Users, UserSquare2, GraduationCap, CalendarCheck, 
   Activity as ActivityIcon, ClipboardList, Settings as SettingsIcon,
-  Menu, X, RefreshCw, ShieldCheck, Loader2, Circle
+  Menu, X, RefreshCw, ShieldCheck, Loader2, Circle, FileText
 } from 'lucide-react';
 import { loadData, saveData, fetchDataFromCloud, saveDataToCloud } from './utils/storage';
 import { SystemData, ReportType } from './types';
@@ -16,10 +16,11 @@ import AJKManager from './components/AJKManager';
 import KehadiranManager from './components/KehadiranManager';
 import AktivitiManager from './components/AktivitiManager';
 import RancanganManager from './components/RancanganManager';
+import PendaftaranManager from './components/PendaftaranManager';
 import PrintPreview from './components/PrintPreview';
 import Settings from './components/Settings';
 
-type Tab = 'dashboard' | 'guru' | 'ahli' | 'ajk' | 'kehadiran' | 'aktiviti' | 'rancangan' | 'settings';
+type Tab = 'dashboard' | 'guru' | 'ahli' | 'ajk' | 'kehadiran' | 'aktiviti' | 'rancangan' | 'settings' | 'pendaftaran';
 
 const App: React.FC = () => {
   const [data, setData] = useState<SystemData>(loadData());
@@ -80,6 +81,7 @@ const App: React.FC = () => {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'pendaftaran', label: 'Pendaftaran Bomba', icon: FileText },
     { id: 'guru', label: 'Guru Pembimbing', icon: GraduationCap },
     { id: 'ahli', label: 'Pangkalan Ahli', icon: Users },
     { id: 'ajk', label: 'Struktur AJK', icon: UserSquare2 },
@@ -213,6 +215,7 @@ const App: React.FC = () => {
         <div className="flex-1 overflow-y-auto p-10 custom-scrollbar scroll-smooth">
           <div className="max-w-7xl mx-auto pb-20 animate-slide-up">
             {activeTab === 'dashboard' && <Dashboard data={data} />}
+            {activeTab === 'pendaftaran' && <PendaftaranManager data={data} updateData={handleUpdateData} onPrint={(id) => setPrintConfig({ isOpen: true, type: 'PENDAFTARAN', targetId: id })} />}
             {activeTab === 'guru' && <GuruManager data={data} updateData={handleUpdateData} />}
             {activeTab === 'ahli' && <AhliManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'AHLI' })} />}
             {activeTab === 'ajk' && <AJKManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'AJK' })} />}

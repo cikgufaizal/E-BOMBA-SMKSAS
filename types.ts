@@ -33,6 +33,17 @@ export enum JawatanAJK {
   AJKT5 = 'AJK Tingkatan 5'
 }
 
+export interface HealthStatus {
+  asma: boolean;
+  lelahTB: boolean;
+  kencingManis: boolean;
+  darahTinggi: boolean;
+  penglihatan: boolean;
+  pendengaran: boolean;
+  kronikLain: boolean;
+  kecacatan: string;
+}
+
 export interface Teacher {
   id: string;
   nama: string;
@@ -48,6 +59,16 @@ export interface Student {
   kelas: string;
   jantina: Jantina;
   kaum: Kaum;
+  umur?: string;
+  tahap?: string;
+  kumpulanDarah?: string;
+  alamat?: string;
+  namaWaris?: string;
+  noKPWaris?: string;
+  telefonWaris?: string;
+  alamatWaris?: string;
+  health?: HealthStatus;
+  masalahKesihatan?: string; // Generic note
 }
 
 export interface CommitteeMember {
@@ -97,7 +118,7 @@ export interface SystemData {
   activities: Activity[];
   annualPlans: AnnualPlan[];
   settings?: CloudSettings;
-  lastUpdated?: number; // Unix timestamp untuk elak overwrite data lama
+  lastUpdated?: number; 
 }
 
-export type ReportType = 'AHLI' | 'AJK' | 'KEHADIRAN' | 'AKTIVITI';
+export type ReportType = 'AHLI' | 'AJK' | 'KEHADIRAN' | 'AKTIVITI' | 'PENDAFTARAN';
