@@ -3,8 +3,20 @@
 <html lang="ms">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>E-Kadet Bomba Professional | SMKSAS</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#020617">
+    <meta name="description" content="Sistem Pengurusan Unit Beruniform Kadet Bomba SMKSAS">
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- iOS Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="E-Bomba">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/9101/9101314.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
@@ -17,14 +29,12 @@
             background-color: var(--brand-dark);
             color: #f8fafc;
             overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
         .glass-panel {
             background: rgba(15, 23, 42, 0.6);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .text-glow {
-            text-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
         }
         @media print {
             @page { size: A4; margin: 0; }
@@ -43,15 +53,6 @@
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
-        }
-        .shimmer {
-            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 100%);
-            background-size: 200% 100%;
-            animation: shimmer 2s infinite linear;
-        }
-        @keyframes shimmer {
-            from { background-position: -200% 0; }
-            to { background-position: 200% 0; }
         }
     </style>
     <script>
