@@ -13,7 +13,6 @@ interface PrintProps {
 
 const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) => {
   const currentYear = new Date().getFullYear();
-  const printTime = new Date().toLocaleString('ms-MY');
 
   // ALAMAT RASMI SEKOLAH (HARDCODED SESUAI ARAHAN)
   const schoolName = "SMK SULTAN AHMAD SHAH, CAMERON HIGHLANDS";
@@ -101,13 +100,90 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     </div>
   );
 
+  const renderLampiranF = () => {
+    const sortedStudents = [...data.students].sort((a,b) => a.nama.localeCompare(b.nama));
+    const penasihat = data.teachers.find(t => t.jawatan === JawatanGuru.Penasihat)?.nama || '................................';
+
+    return (
+      <div className="text-black leading-tight text-[10pt] min-h-[297mm] font-serif">
+        <div className="flex justify-end mb-2">
+          <span className="font-bold text-[11pt]">Lampiran F</span>
+        </div>
+        <JBPMHeader />
+        <div className="text-center mb-8">
+          <h3 className="font-bold text-[11.5pt] uppercase underline">BORANG PENDAFTARAN KOLEKTIF</h3>
+          <p className="text-[10pt] font-bold uppercase mt-1">AHLI PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA</p>
+        </div>
+
+        <div className="space-y-3 mb-6 px-4 text-[9.5pt]">
+          <div className="grid grid-cols-[160px_auto] gap-1">
+            <div className="font-bold uppercase">Nama Sekolah</div><div className="uppercase font-bold border-b border-black/10">: {schoolName}</div>
+            <div className="font-bold uppercase">Alamat Sekolah</div><div className="uppercase border-b border-black/10">: {address}</div>
+            <div className="font-bold uppercase">Guru Penasihat</div><div className="uppercase border-b border-black/10">: {penasihat}</div>
+            <div className="font-bold uppercase">Tahun Pendaftaran</div><div className="font-bold border-b border-black/10">: {currentYear}</div>
+          </div>
+        </div>
+
+        <table className="w-full border-collapse border border-black text-[9pt]">
+          <thead>
+            <tr className="bg-gray-100 font-bold">
+              <th className="border border-black p-2 text-center w-[40px]">Bil.</th>
+              <th className="border border-black p-2 text-left">Nama Penuh Calon</th>
+              <th className="border border-black p-2 text-center w-[140px]">No. Kad Pengenalan</th>
+              <th className="border border-black p-2 text-center w-[120px]">No. Keahlian</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedStudents.map((s, idx) => (
+              <tr key={s.id}>
+                <td className="border border-black p-1.5 text-center">{idx + 1}</td>
+                <td className="border border-black p-1.5 uppercase font-bold">{s.nama}</td>
+                <td className="border border-black p-1.5 text-center font-mono">{s.noKP}</td>
+                {/* Kolum No. Keahlian dikosongkan mengikut arahan Cikgu (Bomba Fill) */}
+                <td className="border border-black p-1.5 text-center"></td>
+              </tr>
+            ))}
+            {/* Mengisi baris kosong untuk estetika jika data sedikit */}
+            {sortedStudents.length < 15 && Array.from({ length: 15 - sortedStudents.length }).map((_, i) => (
+               <tr key={`empty-${i}`} className="h-10">
+                 <td className="border border-black p-1.5 text-center">{sortedStudents.length + i + 1}</td>
+                 <td className="border border-black p-1.5"></td>
+                 <td className="border border-black p-1.5"></td>
+                 <td className="border border-black p-1.5"></td>
+               </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div className="mt-12 px-6 flex justify-between items-start">
+          <div className="space-y-12">
+            <p className="font-bold uppercase text-[9pt]">Disediakan Oleh:</p>
+            <div className="pt-8">
+              <div className="border-b border-black w-[200px] mb-2"></div>
+              <p className="text-[8pt] font-bold uppercase">( Guru Penasihat )</p>
+            </div>
+          </div>
+          <div className="space-y-12 text-center">
+            <p className="font-bold uppercase text-[9pt]">Disahkan Oleh:</p>
+            <div className="pt-8">
+              <div className="border-b border-black w-[250px] mb-2"></div>
+              <p className="text-[8pt] font-bold uppercase">( Pengetua / Guru Besar / Cop Rasmi )</p>
+              <p className="text-[8pt]">Tarikh: ..............................</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const getReportContent = () => {
     switch(type) {
       case 'PENDAFTARAN': 
         const s = targetId ? data.students.find(x => x.id === targetId) : null;
         if (!s) return <div className="p-20 text-center font-bold">RALAT: Data Pelajar Tidak Dijumpai</div>;
         return renderLampiranA(s);
-      // Case lain akan ditambah semasa debug Lampiran berkaitan
+      case 'LAMPIRAN_F': 
+        return renderLampiranF();
       default: return <div className="p-20 text-center font-bold uppercase tracking-widest">Modul Cetakan {type} Sedang Menunggu Arahan Debug</div>;
     }
   };
@@ -117,7 +193,9 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
       <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b-2 border-slate-200 z-[100] flex items-center justify-between px-8 text-black no-print shadow-xl">
         <div className="flex items-center gap-4">
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><ArrowLeft className="w-6 h-6 text-red-600" /></button>
-          <h2 className="font-black text-lg uppercase tracking-tighter text-black">Cetak Borang Lampiran A</h2>
+          <h2 className="font-black text-lg uppercase tracking-tighter text-black">
+             {type === 'LAMPIRAN_F' ? 'Cetak Lampiran F (Kolektif)' : 'Cetak Lampiran A (Kesihatan)'}
+          </h2>
         </div>
         <button onClick={() => window.print()} className="flex items-center gap-3 px-10 py-3 bg-red-700 text-white font-black rounded-xl hover:bg-red-800 transition-all shadow-xl uppercase text-xs tracking-widest">
           <Printer className="w-5 h-5" /> CETAK SEKARANG
