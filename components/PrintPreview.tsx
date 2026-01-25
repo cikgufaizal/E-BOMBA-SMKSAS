@@ -19,24 +19,24 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
   const clubName = data.settings?.clubName || SCHOOL_INFO.clubName;
   const address = data.settings?.address || SCHOOL_INFO.address;
 
-  // Header Rasmi: Logo di sebelah KIRI mengikut permintaan pengguna
+  // Header Rasmi: Logo di sebelah KIRI
   const OfficialHeader = () => (
-    <div className="mb-6 text-black">
+    <div className="mb-4 text-black">
       <div className="flex items-start gap-6">
         {data.settings?.logoUrl && (
-          <img src={data.settings.logoUrl} alt="Logo" className="w-24 h-24 object-contain shrink-0" />
+          <img src={data.settings.logoUrl} alt="Logo" className="w-20 h-20 object-contain shrink-0" />
         )}
-        <div className="text-left space-y-0.5 pt-2">
-          <h1 className="text-[12pt] font-bold uppercase leading-tight">{schoolName}</h1>
-          <p className="text-[10pt] font-normal whitespace-pre-wrap max-w-2xl">{address}</p>
+        <div className="text-left space-y-0.5 pt-1">
+          <h1 className="text-[11pt] font-bold uppercase leading-tight">{schoolName}</h1>
+          <p className="text-[9pt] font-normal whitespace-pre-wrap max-w-2xl">{address}</p>
         </div>
       </div>
-      <div className="mt-4 border-b-[2pt] border-black w-full"></div>
+      <div className="mt-2 border-b-[1.5pt] border-black w-full"></div>
     </div>
   );
 
   const FooterInfo = () => (
-    <div className="mt-16 pt-2 border-t border-black/10 text-[8px] text-slate-400 flex justify-between uppercase no-print">
+    <div className="mt-8 pt-1 border-t border-black/10 text-[7px] text-slate-400 flex justify-between uppercase no-print">
       <span>E-Kadet Bomba Professional • {clubName}</span>
       <span>Masa Cetakan: {printTime}</span>
     </div>
@@ -45,7 +45,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
   const renderAhli = () => (
     <div className="text-black">
       <OfficialHeader />
-      <h3 className="text-center font-bold text-lg mb-8 uppercase underline underline-offset-4">SENARAI INDUK AHLI {clubName}</h3>
+      <h3 className="text-center font-bold text-lg mb-6 uppercase underline underline-offset-4">SENARAI INDUK AHLI {clubName}</h3>
       <table className="w-full border-collapse border border-black text-sm">
         <thead>
           <tr className="bg-gray-100 font-bold">
@@ -70,7 +70,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
           ))}
         </tbody>
       </table>
-      <div className="mt-20 grid grid-cols-2 gap-20">
+      <div className="mt-12 grid grid-cols-2 gap-20">
         <div className="border-t border-black pt-2 text-center text-xs font-bold">Tandatangan Guru Penasihat</div>
         <div className="border-t border-black pt-2 text-center text-xs font-bold">Tandatangan Pengetua/GPK</div>
       </div>
@@ -86,7 +86,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     return (
       <div className="text-black">
         <OfficialHeader />
-        <h3 className="text-center font-bold text-lg mb-8 uppercase underline underline-offset-4">CARTA ORGANISASI AHLI JAWATANKUASA</h3>
+        <h3 className="text-center font-bold text-lg mb-6 uppercase underline underline-offset-4">CARTA ORGANISASI AHLI JAWATANKUASA</h3>
         <table className="w-full border-collapse border border-black text-sm">
           <thead>
             <tr className="bg-gray-100 font-bold">
@@ -112,7 +112,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
             })}
           </tbody>
         </table>
-        <div className="mt-20 grid grid-cols-2 gap-20">
+        <div className="mt-12 grid grid-cols-2 gap-20">
           <div className="border-t border-black pt-2 text-center text-xs font-bold uppercase">Disediakan Oleh</div>
           <div className="border-t border-black pt-2 text-center text-xs font-bold uppercase">Disahkan Oleh</div>
         </div>
@@ -126,7 +126,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     return (
       <div className="text-black">
         <OfficialHeader />
-        <h3 className="text-center font-bold text-lg mb-8 uppercase underline underline-offset-4">RUMUSAN KEHADIRAN AKTIVITI ({currentYear})</h3>
+        <h3 className="text-center font-bold text-lg mb-6 uppercase underline underline-offset-4">RUMUSAN KEHADIRAN AKTIVITI ({currentYear})</h3>
         <table className="w-full border-collapse border border-black text-[7pt]">
           <thead>
             <tr className="bg-gray-100 font-bold">
@@ -167,7 +167,6 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     );
   };
 
-  // FORMAT TEPAT MENGIKUT IMEJ PDF PENGGUNA DENGAN PENYELARASAN KOLON
   const renderAktivitiReport = () => {
     const act = data.activities.find(a => a.id === targetId);
     if (!act) return <div className="p-8 text-black">Laporan tidak ditemui.</div>;
@@ -177,31 +176,37 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     const percent = totalCount ? Math.round((presentCount / totalCount) * 100) : 0;
     const yearFromDate = act.tarikh ? new Date(act.tarikh).getFullYear() : currentYear;
 
+    // Hadkan ulasan supaya muat 1 page (sekitar 750 aksara)
+    const MAX_CHARS = 750;
+    const truncatedUlasan = act.ulasan.length > MAX_CHARS 
+      ? act.ulasan.substring(0, MAX_CHARS) + "..." 
+      : act.ulasan;
+
     return (
-      <div className="text-black leading-relaxed">
+      <div className="text-black leading-snug text-[10pt]">
         <OfficialHeader />
         
-        <div className="flex justify-between items-baseline mb-8">
-          <h3 className="font-bold text-[14pt] uppercase tracking-tight">LAPORAN PERJUMPAAN MINGGUAN</h3>
-          <p className="font-bold text-[12pt]">Tahun : <span className="ml-2 border-b-2 border-black inline-block w-24 text-center pb-0.5">{yearFromDate}</span></p>
+        <div className="flex justify-between items-baseline mb-4">
+          <h3 className="font-bold text-[13pt] uppercase tracking-tight">LAPORAN PERJUMPAAN MINGGUAN</h3>
+          <p className="font-bold text-[11pt]">Tahun : <span className="ml-2 border-b-2 border-black inline-block w-20 text-center pb-0.5">{yearFromDate}</span></p>
         </div>
 
-        <div className="space-y-6 text-[11pt]">
+        <div className="space-y-4">
           {/* Section 1: Info Kelab & Tarikh */}
-          <div className="grid grid-cols-[300px_auto] gap-2 items-baseline">
-            <div className="font-bold">Kelab / Persatuan / Badan Beruniform* :</div>
-            <div className="uppercase font-bold underline decoration-2 underline-offset-4">{clubName}</div>
+          <div className="grid grid-cols-[250px_auto] gap-1 items-baseline">
+            <div className="font-bold">Kelab / Persatuan / Unit Uniform* :</div>
+            <div className="uppercase font-bold underline decoration-1 underline-offset-2">{clubName}</div>
             
             <div className="font-bold">Tarikh Aktiviti dijalankan :</div>
-            <div className="font-bold border-b border-black flex-1 pb-1">{act.tarikh} ({act.masa})</div>
+            <div className="font-bold border-b border-black flex-1 pb-0.5">{act.tarikh} ({act.masa})</div>
             
             <div className="font-bold">Aktiviti :</div>
-            <div className="font-bold uppercase border-b border-black flex-1 pb-1">{act.nama}</div>
+            <div className="font-bold uppercase border-b border-black flex-1 pb-0.5">{act.nama}</div>
           </div>
 
-          {/* Section 2: Statistik Kehadiran - SELARI KOLON */}
-          <div className="mt-12 space-y-4">
-            <div className="grid grid-cols-[250px_20px_auto] items-baseline">
+          {/* Section 2: Statistik Kehadiran */}
+          <div className="mt-4 space-y-2">
+            <div className="grid grid-cols-[220px_15px_auto] items-baseline">
                <div>Bilangan Sebenar ahli</div>
                <div>:</div>
                <div className="font-bold">{totalCount}</div>
@@ -216,43 +221,45 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
 
                <div>Guru Penasihat yang Hadir</div>
                <div>:</div>
-               <div className="font-bold uppercase border-b border-black flex-1 pb-1">
+               <div className="font-bold uppercase border-b border-black flex-1 pb-0.5">
                  {data.teachers.map(t => t.nama).join(', ')}
                </div>
             </div>
           </div>
 
-          {/* Section 3: Ulasan */}
-          <div className="mt-12">
-            <p className="font-bold mb-3 uppercase">Ulasan :</p>
-            <div className="min-h-[300px] p-4 whitespace-pre-wrap italic leading-relaxed border border-black/10 bg-slate-50/30">
-              {act.ulasan || 'Tiada maklumat laporan dimasukkan.'}
+          {/* Section 3: Ulasan - Hadkan Ketinggian */}
+          <div className="mt-6">
+            <p className="font-bold mb-2 uppercase text-[10pt]">Ulasan Aktiviti :</p>
+            <div className="min-h-[150px] max-h-[380px] p-3 border border-black/20 bg-gray-50/50 rounded flex flex-col overflow-hidden">
+              <div className="whitespace-pre-wrap italic leading-relaxed text-[9.5pt]">
+                {truncatedUlasan || 'Tiada laporan aktiviti dimasukkan.'}
+              </div>
             </div>
           </div>
 
-          {/* Section 4: Tandatangan */}
-          <div className="mt-20 grid grid-cols-2">
+          {/* Section 4: Tandatangan - Jarak Dikecilkan */}
+          <div className="mt-8 grid grid-cols-2">
             <div className="flex items-end h-full">
-              <p className="font-bold">Tarikh : <span className="border-b border-black inline-block w-56 ml-2 text-center">{act.tarikh}</span></p>
+              <p className="font-bold">Tarikh : <span className="border-b border-black inline-block w-48 ml-2 text-center">{act.tarikh}</span></p>
             </div>
-            <div className="space-y-4 text-left pl-20">
-              <p className="font-bold">Tandatangan,</p>
-              <div className="pt-12 border-b border-black w-72 mb-1"></div>
+            <div className="space-y-3 text-left pl-10">
+              <p className="font-bold">Disediakan Oleh,</p>
+              <div className="pt-8 border-b border-black w-64 mb-1"></div>
               <div className="relative">
-                <span className="text-[11pt]">(</span>
-                <span className="inline-block w-[260px] text-center font-bold uppercase underline underline-offset-2">
-                  {data.teachers[0]?.nama || 'ZAIDATONAKMA BINTI ABD HAMID'}
+                <span className="text-[10pt]">(</span>
+                <span className="inline-block w-[230px] text-center font-bold uppercase underline underline-offset-2 text-[9pt] truncate">
+                  {data.teachers[0]?.nama || 'GURU PENASIHAT'}
                 </span>
-                <span className="text-[11pt]">)</span>
+                <span className="text-[10pt]">)</span>
               </div>
-              <p className="text-[10pt] font-bold">Guru Penasihat.</p>
+              <p className="text-[9pt] font-bold">Guru Penasihat.</p>
             </div>
           </div>
 
           {/* Section 5: Peringatan */}
-          <div className="mt-16 text-[9pt] space-y-1">
+          <div className="mt-6 text-[8pt] space-y-0.5">
             <p><span className="font-bold">Peringatan :</span> Sila isikan maklumat dengan tepat.</p>
-            <p className="pl-20 text-[8pt] italic">* - SILA POTONG YANG TIDAK BERKENAAN</p>
+            <p className="pl-16 text-[7pt] italic">* - SILA POTONG YANG TIDAK BERKENAAN</p>
           </div>
         </div>
         <FooterInfo />
@@ -272,13 +279,12 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
 
   return (
     <div className="min-h-screen bg-slate-900 overflow-y-auto">
-      {/* Navigation Bar (no-print) */}
       <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b-2 border-slate-200 z-[100] flex items-center justify-between px-8 text-black no-print shadow-md">
         <div className="flex items-center gap-4">
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
             <ArrowLeft className="w-6 h-6" />
           </button>
-          <h2 className="font-black text-lg uppercase tracking-tighter">PRATONTON LAPORAN RASMI</h2>
+          <h2 className="font-black text-lg uppercase tracking-tighter">PRATONTON LAPORAN</h2>
         </div>
         <button 
           onClick={() => window.print()} 
@@ -288,14 +294,12 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         </button>
       </div>
 
-      {/* Preview Wrapper */}
       <div className="pt-24 pb-20 flex justify-center bg-slate-900 min-h-screen no-print">
-        <div className="bg-white shadow-[0_0_100px_rgba(0,0,0,0.5)] w-[210mm] min-h-[297mm] p-[20mm] print-area border border-slate-300">
+        <div className="bg-white shadow-2xl w-[210mm] min-h-[297mm] p-[15mm] print-area border border-slate-300">
           {getReportContent()}
         </div>
       </div>
 
-      {/* Render elemen khas untuk print sahaja */}
       <div className="hidden print:block print-area">
           {getReportContent()}
       </div>
