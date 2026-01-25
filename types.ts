@@ -47,6 +47,7 @@ export interface HealthStatus {
 export interface Teacher {
   id: string;
   nama: string;
+  noKP: string;
   jawatan: JawatanGuru;
   telefon: string;
 }

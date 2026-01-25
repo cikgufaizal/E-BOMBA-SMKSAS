@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Printer, ArrowLeft } from 'lucide-react';
-import { SystemData, ReportType, JawatanAJK, Jantina, Student, JawatanGuru } from '../types';
+import { SystemData, ReportType, JawatanAJK, Jantina, Student, JawatanGuru, Teacher } from '../types';
 import { SCHOOL_INFO, MONTHS } from '../constants';
 
 interface PrintProps {
@@ -210,37 +210,43 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
       <JBPMHeader />
       <div className="text-center mb-8">
         <h3 className="font-bold text-[11pt] uppercase">BORANG PENDAFTARAN</h3>
-        <p className="text-[10pt] font-bold uppercase">SENARAI GURU PENASIHAT KADET BOMBA</p>
+        <p className="text-[10pt] font-bold uppercase">SENARAI GURU PENASIHAT PASUKAN KADET BOMBA</p>
       </div>
 
-      <div className="px-2 mb-6">
-        <p className="font-bold">Sekolah: <span className="uppercase">{schoolName}</span></p>
+      <div className="px-2 mb-6 text-[9pt]">
+        <div className="grid grid-cols-[150px_auto] gap-1">
+          <div className="font-bold">Nama Sekolah</div><div className="uppercase">: {schoolName}</div>
+          <div className="font-bold">Kod Sekolah</div><div className="uppercase">: ................................</div>
+        </div>
       </div>
 
-      <table className="w-full border-collapse border border-black text-[9pt]">
+      <table className="w-full border-collapse border border-black text-[8.5pt]">
         <thead>
           <tr className="bg-gray-100">
-            <th className="border border-black p-2 text-center w-[40px]">Bil.</th>
-            <th className="border border-black p-2 text-left">Nama Guru Penasihat</th>
-            <th className="border border-black p-2 text-center w-[150px]">Jawatan Dalam Pasukan</th>
-            <th className="border border-black p-2 text-center w-[120px]">No. Telefon</th>
+            <th className="border border-black p-2 text-center w-[35px]">Bil.</th>
+            <th className="border border-black p-2 text-left">Nama Penuh Guru Penasihat</th>
+            <th className="border border-black p-2 text-center w-[130px]">No. Kad Pengenalan</th>
+            <th className="border border-black p-2 text-center w-[140px]">Jawatan Dalam Pasukan</th>
+            <th className="border border-black p-2 text-center w-[100px]">No. Telefon</th>
           </tr>
         </thead>
         <tbody>
           {data.teachers.map((t, idx) => (
             <tr key={t.id}>
-              <td className="border border-black p-2 text-center">{idx + 1}</td>
-              <td className="border border-black p-2 uppercase font-bold">{t.nama}</td>
-              <td className="border border-black p-2 text-center uppercase">{t.jawatan}</td>
-              <td className="border border-black p-2 text-center">{t.telefon}</td>
+              <td className="border border-black p-1.5 text-center">{idx + 1}</td>
+              <td className="border border-black p-1.5 uppercase font-bold">{t.nama}</td>
+              <td className="border border-black p-1.5 text-center font-mono">{t.noKP || '-'}</td>
+              <td className="border border-black p-1.5 text-center uppercase">{t.jawatan}</td>
+              <td className="border border-black p-1.5 text-center">{t.telefon}</td>
             </tr>
           ))}
           {data.teachers.length < 5 && Array.from({ length: 5 - data.teachers.length }).map((_, i) => (
             <tr key={`empty-${i}`} className="h-10">
-              <td className="border border-black p-2 text-center">{data.teachers.length + i + 1}</td>
-              <td className="border border-black p-2"></td>
-              <td className="border border-black p-2"></td>
-              <td className="border border-black p-2"></td>
+              <td className="border border-black p-1.5 text-center">{data.teachers.length + i + 1}</td>
+              <td className="border border-black p-1.5"></td>
+              <td className="border border-black p-1.5"></td>
+              <td className="border border-black p-1.5"></td>
+              <td className="border border-black p-1.5"></td>
             </tr>
           ))}
         </tbody>
@@ -249,7 +255,8 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
       <div className="mt-20">
         <div className="border-b border-black w-[250px] mb-2"></div>
         <p className="font-bold text-[10pt] uppercase">( ........................................................... )</p>
-        <p className="text-[9pt] font-bold">Pengesahan Pengetua / Guru Besar</p>
+        <p className="text-[9pt] font-bold">Pengesahan Pengetua / Guru Besar & Cop Rasmi</p>
+        <p className="text-[9pt]">Tarikh: ..............................</p>
       </div>
     </div>
   );
