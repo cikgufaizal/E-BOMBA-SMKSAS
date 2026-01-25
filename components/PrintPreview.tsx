@@ -15,8 +15,9 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
   const currentYear = new Date().getFullYear();
 
   // ALAMAT RASMI SEKOLAH
-  const schoolName = data.settings?.schoolName || "SMK SULTAN AHMAD SHAH, CAMERON HIGHLANDS";
-  const address = data.settings?.address || "JALAN DAYANG ENDAH, 39000 TANAH RATA, CAMERON HIGHLANDS PAHANG";
+  const schoolName = data.settings?.schoolName || SCHOOL_INFO.name;
+  const address = data.settings?.address || SCHOOL_INFO.address;
+  const principalName = SCHOOL_INFO.principal;
 
   const JBPMHeader = () => (
     <div className="flex flex-col items-center text-center mb-6 text-black border-b-[1.5pt] border-black pb-4">
@@ -26,7 +27,6 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
   );
 
   const renderLampiranE = () => {
-    const pengetua = data.teachers.find(t => t.jawatan.toUpperCase().includes('PENGETUA') || t.jawatan.toUpperCase().includes('BESAR'));
     const penasihat = data.teachers.find(t => t.jawatan === JawatanGuru.Penasihat);
 
     return (
@@ -47,17 +47,17 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
             <div className="grid grid-cols-[180px_auto] gap-y-3">
               <div className="font-bold">Nama Sekolah</div><div className="uppercase font-bold">: {schoolName}</div>
               <div className="font-bold">Alamat Sekolah</div><div className="uppercase leading-tight">: {address}</div>
-              <div className="font-bold">No. Telefon</div><div className="">: {data.teachers[0]?.telefon || '................................'}</div>
-              <div className="font-bold">Kod Sekolah</div><div className="">: {data.settings?.clubName?.includes('CEB') ? 'CEB1003' : '................................'}</div>
+              <div className="font-bold">No. Telefon</div><div className="">: {data.teachers[0]?.telefon || '05-491 1000'}</div>
+              <div className="font-bold">Kod Sekolah</div><div className="">: CEB1003</div>
             </div>
           </section>
 
           <section>
             <h4 className="font-bold border-b border-black mb-4 uppercase text-[11pt]">Bahagian B: Maklumat Komander (Pengetua/Guru Besar)</h4>
             <div className="grid grid-cols-[180px_auto] gap-y-3">
-              <div className="font-bold">Nama Penuh</div><div className="uppercase font-bold">: {pengetua?.nama || '................................................................'}</div>
-              <div className="font-bold">No. Kad Pengenalan</div><div className="font-mono">: {pengetua?.noKP || '................................'}</div>
-              <div className="font-bold">Jawatan Hakiki</div><div className="uppercase">: {pengetua?.jawatan || 'PENGETUA / GURU BESAR'}</div>
+              <div className="font-bold">Nama Penuh</div><div className="uppercase font-bold">: {principalName}</div>
+              <div className="font-bold">No. Kad Pengenalan</div><div className="font-mono">: ................................</div>
+              <div className="font-bold">Jawatan Hakiki</div><div className="uppercase">: PENGETUA</div>
             </div>
           </section>
 
@@ -177,7 +177,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
 
   const renderLampiranF = () => {
     const sortedStudents = [...data.students].sort((a,b) => a.nama.localeCompare(b.nama));
-    const penasihat = data.teachers.find(t => t.jawatan === JawatanGuru.Penasihat)?.nama || '................................';
+    const penasihat = data.teachers.find(t => t.jawatan === JawatanGuru.Penasihat)?.nama || principalName;
 
     return (
       <div className="text-black leading-tight text-[10pt] min-h-[297mm] font-serif">
