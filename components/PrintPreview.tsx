@@ -246,7 +246,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     return (
       <div className="text-black leading-relaxed text-[11pt] min-h-[297mm] font-serif">
          <JBPMHeader />
-         <div className="text-center mb-10 border-b-2 border-black pb-4">
+         <div className="text-center mb-8 border-b-2 border-black pb-4">
             <h3 className="font-bold text-[14pt] uppercase">LAPORAN AKTIVITI MINGGUAN</h3>
          </div>
 
@@ -270,12 +270,26 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
 
             <div className="pt-6">
                <div className="font-bold uppercase mb-2 border-b border-black w-fit">Laporan / Ulasan Aktiviti:</div>
-               <div className="border border-black p-6 min-h-[300px] text-justify whitespace-pre-wrap leading-relaxed">
+               <div className="border border-black p-6 min-h-[200px] text-justify whitespace-pre-wrap leading-relaxed">
                   {act.ulasan || "Tiada ulasan disediakan."}
                </div>
             </div>
 
-            <div className="mt-16 grid grid-cols-2 gap-20">
+            {/* GAMBAR LAPORAN */}
+            {act.photos && act.photos.length > 0 && (
+              <div className="pt-2">
+                 <div className="font-bold uppercase mb-4 border-b border-black w-fit">Dokumentasi Bergambar:</div>
+                 <div className="grid grid-cols-2 gap-4">
+                    {act.photos.map((photo, i) => (
+                      <div key={i} className="aspect-[4/3] border border-black overflow-hidden flex items-center justify-center bg-gray-50">
+                         <img src={photo} alt={`Gambar ${i+1}`} className="max-w-full max-h-full object-contain" />
+                      </div>
+                    ))}
+                 </div>
+              </div>
+            )}
+
+            <div className="mt-12 grid grid-cols-2 gap-20">
                <div className="space-y-16 text-center">
                   <p className="font-bold uppercase text-[9pt]">Disediakan Oleh:</p>
                   <div>

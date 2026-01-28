@@ -1,3 +1,4 @@
+
 /**
  * SISTEM PENGURUSAN KADET BOMBA - CLOUD CORE v10.0
  * -----------------------------------------------------------------------------
@@ -53,8 +54,8 @@ function doPost(e) {
     }
     
     if (contents.activities) {
-      updateRows(ss, 'AKTIVITI', ['ID', 'TARIKH', 'NAMA', 'TEMPAT', 'MASA', 'ULASAN'], 
-        contents.activities.map(a => [a.id, a.tarikh, a.nama, a.tempat, a.masa, a.ulasan]));
+      updateRows(ss, 'AKTIVITI', ['ID', 'TARIKH', 'NAMA', 'TEMPAT', 'MASA', 'ULASAN', 'GAMBAR_RAW'], 
+        contents.activities.map(a => [a.id, a.tarikh, a.nama, a.tempat, a.masa, a.ulasan, JSON.stringify(a.photos || [])]));
     }
 
     if (contents.attendances) {

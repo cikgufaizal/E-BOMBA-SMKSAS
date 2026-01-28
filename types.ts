@@ -92,6 +92,7 @@ export interface Activity {
   nama: string;
   tempat: string;
   ulasan: string;
+  photos?: string[]; // Array base64 strings (Max 2)
 }
 
 export interface AnnualPlan {
