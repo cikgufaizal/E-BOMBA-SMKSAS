@@ -123,4 +123,4 @@ export interface SystemData {
   lastUpdated?: number; 
 }
 
-export type ReportType = 'AHLI' | 'AJK' | 'KEHADIRAN' | 'AKTIVITI' | 'PENDAFTARAN' | 'LAMPIRAN_F' | 'LAMPIRAN_D' | 'LAMPIRAN_E';
+export type ReportType = 'AHLI' | 'AJK' | 'KEHADIRAN' | 'AKTIVITI' | 'PENDAFTARAN' | 'LAMPIRAN_F' | 'LAMPIRAN_D' | 'LAMPIRAN_E' | 'LAMPIRAN_B';

@@ -4,7 +4,7 @@ import {
   UserPlus, ShieldAlert, Heart, Phone, Printer, 
   FileStack, FileText, Users, FileCheck, Search,
   ClipboardList, CheckCircle2, Info, LayoutList, Save,
-  Building2, GraduationCap, MapPin, Landmark
+  Building2, GraduationCap, MapPin, Landmark, ShieldHalf
 } from 'lucide-react';
 import { SystemData, Student, Jantina, Kaum, HealthStatus, JawatanGuru } from '../types';
 import { FormCard, Input, Select, Button, Table } from './CommonUI';
@@ -92,12 +92,17 @@ const PendaftaranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
 
   const menuButtons = [
     { id: 'LAMPIRAN_A', label: 'Lampiran A', icon: FileText },
+    { id: 'LAMPIRAN_B', label: 'Lampiran B', icon: ShieldHalf },
     { id: 'LAMPIRAN_E', label: 'Lampiran E', icon: Landmark },
     { id: 'LAMPIRAN_F', label: 'Lampiran F', icon: FileStack },
     { id: 'DAFTAR', label: 'Daftar Ahli', icon: UserPlus },
-    { id: 'LAMPIRAN_B', label: 'Lampiran B', icon: Heart },
     { id: 'LAMPIRAN_D', label: 'Lampiran D', icon: FileCheck },
   ];
+
+  const filteredStudents = data.students.filter(s => 
+    s.nama.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    s.noKP.includes(searchTerm)
+  );
 
   return (
     <div className="animate-in fade-in duration-700">
@@ -155,7 +160,7 @@ const PendaftaranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
 
           <Table
             headers={['Bil', 'Nama Ahli', 'No. KP', 'Ting/Kelas', 'Tindakan Cetak']}
-            data={data.students.filter(s => s.nama.toLowerCase().includes(searchTerm.toLowerCase())).sort((a,b) => a.nama.localeCompare(b.nama))}
+            data={filteredStudents.sort((a,b) => a.nama.localeCompare(b.nama))}
             renderRow={(s: Student, idx: number) => (
               <tr key={s.id} className="hover:bg-slate-900/50 transition-colors border-b border-white/[0.02] group">
                 <td className="px-8 py-6 text-xs font-black text-slate-600">{idx + 1}</td>
@@ -179,7 +184,62 @@ const PendaftaranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
         </div>
       )}
 
-      {/* VIEW: LAMPIRAN E (PERMOHONAN PENUBUHAN) */}
+      {/* VIEW: LAMPIRAN B (PELEPASAN TANGGUNGJAWAB) */}
+      {currentView === 'LAMPIRAN_B' && (
+        <div className="space-y-6">
+          <div className="bg-slate-900/40 p-10 rounded-[3rem] border border-white/[0.05] flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="flex items-center gap-6">
+              <div className="w-16 h-16 bg-red-600 rounded-3xl flex items-center justify-center shadow-xl">
+                 <ShieldHalf className="text-white w-8 h-8" />
+              </div>
+              <div>
+                 <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">Borang Pelepasan (Lampiran B)</h3>
+                 <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-2">Borang kebenaran waris dan pelepasan tanggungjawab.</p>
+              </div>
+            </div>
+            <div className="relative group w-full md:w-80">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-red-500 transition-colors" />
+              <input 
+                type="text" 
+                placeholder="CARI NAMA / NO KP..."
+                className="w-full pl-12 pr-6 py-4 bg-slate-950 border border-white/[0.05] rounded-2xl text-xs font-black uppercase tracking-widest outline-none focus:border-red-600 transition-all"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <Table
+            headers={['Bil', 'Nama Ahli', 'No. KP', 'Waris', 'Tindakan Cetak']}
+            data={filteredStudents.sort((a,b) => a.nama.localeCompare(b.nama))}
+            renderRow={(s: Student, idx: number) => (
+              <tr key={s.id} className="hover:bg-slate-900/50 transition-colors border-b border-white/[0.02] group">
+                <td className="px-8 py-6 text-xs font-black text-slate-600">{idx + 1}</td>
+                <td className="px-8 py-6">
+                  <div className="font-black text-white uppercase text-xs tracking-tight group-hover:text-red-500 transition-colors">{s.nama}</div>
+                  <div className="text-[9px] text-slate-500 font-bold uppercase">{s.tingkatan} {s.kelas}</div>
+                </td>
+                <td className="px-8 py-6 text-xs font-mono text-slate-400">{s.noKP}</td>
+                <td className="px-8 py-6">
+                   <div className="text-[10px] font-black text-slate-300 uppercase">{s.namaWaris || '-'}</div>
+                   <div className="text-[9px] text-slate-600 font-bold">{s.telefonWaris || '-'}</div>
+                </td>
+                <td className="px-8 py-6">
+                  <button 
+                    onClick={() => onPrint(s.id, 'LAMPIRAN_B')}
+                    className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-orange-500 transition-all shadow-lg active:scale-95"
+                  >
+                    <Printer className="w-4 h-4" />
+                    Print Lampiran B
+                  </button>
+                </td>
+              </tr>
+            )}
+          />
+        </div>
+      )}
+
+      {/* VIEW: LAMPIRAN E */}
       {currentView === 'LAMPIRAN_E' && (
         <div className="space-y-8 animate-slide-up">
            <div className="bg-slate-900/40 p-10 rounded-[3rem] border border-white/[0.05] flex flex-col md:flex-row items-center justify-between gap-8">
@@ -250,7 +310,7 @@ const PendaftaranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
         </div>
       )}
 
-      {/* VIEW: LAMPIRAN F (SENARAI KOLEKTIF) */}
+      {/* VIEW: LAMPIRAN F */}
       {currentView === 'LAMPIRAN_F' && (
         <div className="space-y-6">
            <div className="bg-slate-900/40 p-10 rounded-[3rem] border border-white/[0.05] flex flex-col md:flex-row items-center justify-between gap-8">
@@ -313,6 +373,14 @@ const PendaftaranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
                   <Input label="Kelas" value={formData.kelas} onChange={(e: any) => setFormData({...formData, kelas: e.target.value})} />
                   <Select label="Tahap" value={formData.tahap} onChange={(e: any) => setFormData({...formData, tahap: e.target.value})} options={['1','2','3'].map(t => ({ value: t, label: `TAHAP ${t}` }))} />
                 </div>
+                <div className="md:col-span-2 space-y-4 pt-4 border-t border-slate-800/50">
+                   <p className="text-[10px] font-black text-red-600 uppercase tracking-widest">Maklumat Penjaga / Waris</p>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <Input label="Nama Waris" value={formData.namaWaris} onChange={(e: any) => setFormData({...formData, namaWaris: e.target.value})} />
+                     <Input label="No. KP Waris" value={formData.noKPWaris} onChange={(e: any) => setFormData({...formData, noKPWaris: e.target.value})} />
+                     <Input label="No. Telefon Waris" value={formData.telefonWaris} onChange={(e: any) => setFormData({...formData, telefonWaris: e.target.value})} />
+                   </div>
+                </div>
                 <div className="md:col-span-2 pt-6">
                    <Button onClick={handleRegister} className="w-full h-16 text-xs shadow-2xl">Daftar & Masuk Senarai Lampiran</Button>
                 </div>
@@ -322,7 +390,7 @@ const PendaftaranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
       )}
 
       {/* VIEW PLACEHOLDERS */}
-      {['LAMPIRAN_B', 'LAMPIRAN_D'].includes(currentView) && (
+      {['LAMPIRAN_D'].includes(currentView) && (
         <div className="flex flex-col items-center justify-center py-24 bg-slate-900/40 rounded-[3rem] border-2 border-dashed border-white/[0.05]">
           <ClipboardList className="w-16 h-16 text-slate-700 mb-6" />
           <h3 className="text-xl font-black text-slate-500 uppercase tracking-widest">Modul {currentView.replace('_', ' ')}</h3>
