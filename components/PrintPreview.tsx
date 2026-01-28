@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Printer, ArrowLeft } from 'lucide-react';
-import { SystemData, ReportType, JawatanAJK, Jantina, Student, JawatanGuru, Teacher } from '../types';
-import { SCHOOL_INFO, MONTHS } from '../constants';
+import { SystemData, ReportType, JawatanAJK, Jantina, Student, JawatanGuru } from '../types';
+import { SCHOOL_INFO } from '../constants';
 
 interface PrintProps {
   type: ReportType;
@@ -26,9 +26,152 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     </div>
   );
 
+  // --- RENDER MODUL: SENARAI AHLI ---
+  const renderAhli = () => {
+    const sortedStudents = [...data.students].sort((a, b) => a.nama.localeCompare(b.nama));
+    
+    return (
+      <div className="text-black leading-tight text-[10.5pt] min-h-[297mm] font-serif">
+        <div className="flex justify-end mb-2">
+          <span className="font-bold text-[11pt]">Senarai Keahlian</span>
+        </div>
+        <JBPMHeader />
+        <div className="text-center mb-8">
+          <h3 className="font-bold text-[13pt] uppercase underline">SENARAI KEAHLIAN PASUKAN</h3>
+          <p className="text-[10pt] font-bold uppercase mt-1">TAHUN {currentYear}</p>
+          <p className="text-[9pt] font-bold uppercase mt-1">{schoolName}</p>
+        </div>
+
+        <div className="mb-4">
+           <p className="font-bold uppercase text-[9pt]">JUMLAH KEAHLIAN: {sortedStudents.length} ORANG</p>
+        </div>
+
+        <table className="w-full border-collapse border border-black text-[9pt]">
+          <thead>
+            <tr className="bg-gray-100 font-bold">
+              <th className="border border-black p-2 text-center w-[40px]">BIL</th>
+              <th className="border border-black p-2 text-left">NAMA PENUH</th>
+              <th className="border border-black p-2 text-center w-[100px]">NO. KP</th>
+              <th className="border border-black p-2 text-center w-[90px]">NO. AHLI</th>
+              <th className="border border-black p-2 text-center w-[40px]">JANTINA</th>
+              <th className="border border-black p-2 text-center w-[80px]">TING/KELAS</th>
+              <th className="border border-black p-2 text-center w-[80px]">CATATAN</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedStudents.map((s, idx) => (
+              <tr key={s.id}>
+                <td className="border border-black p-1.5 text-center">{idx + 1}</td>
+                <td className="border border-black p-1.5 uppercase font-bold">{s.nama}</td>
+                <td className="border border-black p-1.5 text-center font-mono">{s.noKP}</td>
+                <td className="border border-black p-1.5 text-center font-bold">{s.noKeahlian || '-'}</td>
+                <td className="border border-black p-1.5 text-center">{s.jantina === Jantina.Lelaki ? 'L' : 'P'}</td>
+                <td className="border border-black p-1.5 text-center uppercase">{s.tingkatan} {s.kelas}</td>
+                <td className="border border-black p-1.5"></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div className="mt-12 flex justify-end">
+           <div className="text-center w-[200px]">
+              <p className="font-bold uppercase text-[9pt]">Disahkan Oleh:</p>
+              <div className="h-16 border-b border-black"></div>
+              <p className="text-[9pt] font-bold uppercase mt-2">( GURU PENASIHAT )</p>
+           </div>
+        </div>
+      </div>
+    );
+  };
+
+  // --- RENDER MODUL: KEHADIRAN (FORMAT MATRIKS 12 KOLUM) ---
+  const renderKehadiran = () => {
+    const sortedStudents = [...data.students].sort((a, b) => a.nama.localeCompare(b.nama));
+    const sortedAttendance = [...data.attendances]
+      .sort((a, b) => new Date(a.tarikh).getTime() - new Date(b.tarikh).getTime())
+      .slice(0, 12);
+
+    const meetingSlots = Array.from({ length: 12 }, (_, i) => sortedAttendance[i] || null);
+
+    return (
+      <div className="text-black leading-tight text-[9pt] min-h-[297mm] font-serif">
+        <JBPMHeader />
+        <div className="text-center mb-6">
+          <h3 className="font-bold text-[12pt] uppercase underline">RUMUSAN KEHADIRAN AKTIVITI TAHUNAN</h3>
+          <p className="text-[10pt] font-bold uppercase mt-1">TAHUN {currentYear}</p>
+        </div>
+
+        <table className="w-full border-collapse border border-black text-[8pt]">
+          <thead>
+            <tr className="bg-gray-100 font-bold">
+              <th rowSpan={2} className="border border-black p-1 text-center w-[30px]">BIL</th>
+              <th rowSpan={2} className="border border-black p-1 text-left">NAMA ANGGOTA</th>
+              <th colSpan={12} className="border border-black p-1 text-center">PERJUMPAAN / TARIKH</th>
+              <th rowSpan={2} className="border border-black p-1 text-center w-[35px]">JUM</th>
+              <th rowSpan={2} className="border border-black p-1 text-center w-[40px]">%</th>
+            </tr>
+            <tr className="bg-gray-50 font-bold text-[7pt]">
+              {meetingSlots.map((slot, i) => (
+                <th key={i} className="border border-black p-1 text-center w-[25px]">
+                  {i + 1}
+                  {slot && <div className="mt-1 text-[6pt] font-normal rotate-0">{slot.tarikh.split('-').reverse().slice(0,2).join('/')}</div>}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sortedStudents.map((s, idx) => {
+              let totalPresent = 0;
+              return (
+                <tr key={s.id}>
+                  <td className="border border-black p-1 text-center">{idx + 1}</td>
+                  <td className="border border-black p-1 uppercase font-bold text-[8.5pt] whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">{s.nama}</td>
+                  {meetingSlots.map((slot, i) => {
+                    const isPresent = slot ? slot.presents.includes(s.id) : false;
+                    if (isPresent) totalPresent++;
+                    return (
+                      <td key={i} className="border border-black p-1 text-center font-bold">
+                        {isPresent ? '/' : ''}
+                      </td>
+                    );
+                  })}
+                  <td className="border border-black p-1 text-center font-bold">{totalPresent}</td>
+                  <td className="border border-black p-1 text-center">
+                    {sortedAttendance.length > 0 
+                      ? Math.round((totalPresent / sortedAttendance.length) * 100) 
+                      : 0}%
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+
+        <div className="mt-8">
+           <p className="text-[8pt] font-bold uppercase underline mb-2">PETUNJUK:</p>
+           <div className="flex gap-8 text-[8pt]">
+              <div>/ : HADIR</div>
+              <div>O : TIDAK HADIR</div>
+              <div>TH : TIDAK HADIR BERSEBAB</div>
+           </div>
+        </div>
+
+        <div className="mt-12 flex justify-between items-end">
+           <div className="text-[8pt] italic w-[200px]">
+             * Rekod dijana secara automatik oleh sistem.
+           </div>
+           <div className="text-center w-[200px]">
+              <p className="font-bold uppercase text-[9pt]">Disahkan Oleh:</p>
+              <div className="h-16 border-b border-black"></div>
+              <p className="text-[9pt] font-bold uppercase mt-2">( GURU PENASIHAT )</p>
+           </div>
+        </div>
+      </div>
+    );
+  };
+
   // --- RENDER MODUL: AJK ---
   const renderAJK = () => {
-    // Susunan hierarki jawatan
     const order = Object.values(JawatanAJK);
     const sortedCommittees = [...data.committees].sort((a, b) => 
       order.indexOf(a.jawatan) - order.indexOf(b.jawatan)
@@ -85,71 +228,6 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
               <p className="text-[9pt] font-bold uppercase">( GURU PENASIHAT )</p>
             </div>
           </div>
-        </div>
-      </div>
-    );
-  };
-
-  // --- RENDER MODUL: KEHADIRAN ---
-  const renderKehadiran = () => {
-    const sortedAttendance = [...data.attendances].sort((a,b) => new Date(a.tarikh).getTime() - new Date(b.tarikh).getTime());
-    const totalStudents = data.students.length || 1;
-
-    return (
-      <div className="text-black leading-tight text-[10.5pt] min-h-[297mm] font-serif">
-        <JBPMHeader />
-        <div className="text-center mb-8">
-          <h3 className="font-bold text-[12pt] uppercase underline">REKOD KEHADIRAN TAHUNAN</h3>
-          <p className="text-[10pt] font-bold uppercase mt-1">TAHUN {currentYear}</p>
-        </div>
-
-        <div className="mb-6">
-          <p className="font-bold uppercase text-[10pt]">JUMLAH KEKUATAN ANGGOTA: {data.students.length} ORANG</p>
-        </div>
-
-        <table className="w-full border-collapse border border-black text-[10pt]">
-          <thead>
-            <tr className="bg-gray-100 font-bold">
-              <th className="border border-black p-2 text-center w-[50px]">BIL</th>
-              <th className="border border-black p-2 text-center">TARIKH</th>
-              <th className="border border-black p-2 text-center">JUMLAH HADIR</th>
-              <th className="border border-black p-2 text-center">JUMLAH TIDAK HADIR</th>
-              <th className="border border-black p-2 text-center">PERATUS (%)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedAttendance.map((att, idx) => {
-              const presentCount = att.presents.length;
-              const absentCount = totalStudents - presentCount;
-              const percentage = Math.round((presentCount / totalStudents) * 100);
-              return (
-                <tr key={att.id}>
-                  <td className="border border-black p-2 text-center">{idx + 1}</td>
-                  <td className="border border-black p-2 text-center font-bold uppercase">{att.tarikh}</td>
-                  <td className="border border-black p-2 text-center font-bold">{presentCount}</td>
-                  <td className="border border-black p-2 text-center">{absentCount}</td>
-                  <td className="border border-black p-2 text-center font-bold">{percentage}%</td>
-                </tr>
-              );
-            })}
-             {sortedAttendance.length === 0 && (
-              <tr><td colSpan={5} className="border border-black p-8 text-center italic">Tiada rekod kehadiran direkodkan.</td></tr>
-            )}
-          </tbody>
-          <tfoot>
-             <tr className="bg-gray-50 font-bold">
-               <td colSpan={2} className="border border-black p-2 text-right uppercase">Purata Kehadiran:</td>
-               <td colSpan={3} className="border border-black p-2 text-center">
-                 {sortedAttendance.length > 0 
-                   ? Math.round(sortedAttendance.reduce((acc, curr) => acc + (curr.presents.length/totalStudents)*100, 0) / sortedAttendance.length) 
-                   : 0}%
-               </td>
-             </tr>
-          </tfoot>
-        </table>
-
-        <div className="mt-12">
-           <p className="text-[9pt] italic">* Laporan ini dijana secara automatik oleh sistem.</p>
         </div>
       </div>
     );
@@ -537,6 +615,8 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         return renderAJK();
       case 'KEHADIRAN':
         return renderKehadiran();
+      case 'AHLI':
+        return renderAhli();
       case 'AKTIVITI':
         if (!targetId) return <div className="p-20 text-center font-bold">RALAT: Sila pilih aktiviti untuk dicetak.</div>;
         return renderAktiviti(targetId);
@@ -544,15 +624,15 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     }
   };
 
-  // --- UI UTAMA ---
   const getHeaderTitle = () => {
      switch(type) {
         case 'LAMPIRAN_F': return 'Cetak Lampiran F (Kolektif)';
         case 'LAMPIRAN_E': return 'Cetak Lampiran E (Permohonan)';
         case 'LAMPIRAN_B': return 'Cetak Lampiran B (Pelepasan)';
         case 'AJK': return 'Cetak Carta Organisasi';
-        case 'KEHADIRAN': return 'Laporan Kehadiran Tahunan';
+        case 'KEHADIRAN': return 'Rumusan Kehadiran Tahunan';
         case 'AKTIVITI': return 'Laporan Aktiviti Mingguan';
+        case 'AHLI': return 'Senarai Keahlian';
         default: return 'Cetak Lampiran A (Kesihatan)';
      }
   };
