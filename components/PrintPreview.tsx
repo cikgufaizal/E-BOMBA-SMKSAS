@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Printer, ArrowLeft, FileOutput, RefreshCcw } from 'lucide-react';
+import { Printer, ArrowLeft } from 'lucide-react';
 import { SystemData, ReportType, JawatanAJK, Jantina, Student, JawatanGuru } from '../types';
 import { SCHOOL_INFO } from '../constants';
 
@@ -34,14 +34,9 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
   // URL Logo JBPM
   const BOMBA_LOGO = "https://upload.wikimedia.org/wikipedia/commons/8/87/Jabatan_Bomba_dan_Penyelamat_Malaysia.png";
 
-  // Tentukan LOGIK HEADER:
-  // HANYA modul Pendaftaran/Lampiran guna header Bomba.
-  // Modul pengurusan dalaman (Aktiviti, Kehadiran, AJK, Senarai Ahli) guna header Sekolah.
-  const isBombaModule = ['PENDAFTARAN', 'LAMPIRAN_A', 'LAMPIRAN_B', 'LAMPIRAN_D', 'LAMPIRAN_E', 'LAMPIRAN_F'].includes(type);
-
   // --- HEADER SEKOLAH (FORMAT SURAT RASMI - LOGO KIRI) ---
   const SchoolHeader = () => (
-    <div className="w-full mb-8 border-b-2 border-black pb-4 flex items-center gap-6 font-serif">
+    <div className="w-full mb-6 border-b-2 border-black pb-4 flex items-center gap-6 font-serif">
       <div className="w-24 h-24 shrink-0 flex items-center justify-center">
          {schoolLogo ? (
             <img src={schoolLogo} alt="Logo Sekolah" className="w-full h-full object-contain" />
@@ -59,7 +54,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
 
   // --- HEADER BOMBA (FORMAT BORANG - LOGO TENGAH) ---
   const BombaHeader = () => (
-    <div className="w-full mb-8 text-center font-serif uppercase">
+    <div className="w-full mb-6 text-center font-serif uppercase">
        <div className="flex justify-center mb-3">
           <img src={BOMBA_LOGO} alt="Logo JBPM" className="h-24 w-auto object-contain" />
        </div>
@@ -69,16 +64,11 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     </div>
   );
 
-  // WRAPPER HEADER DINAMIK
-  const DynamicHeader = ({ title, subtitle }: { title?: string, subtitle?: string }) => (
-    <div className="w-full">
-       {isBombaModule ? <BombaHeader /> : <SchoolHeader />}
-       {(title || subtitle) && (
-          <div className="text-center mb-8 font-serif uppercase text-black">
-             {title && <h2 className="text-[12pt] font-bold underline">{title}</h2>}
-             {subtitle && <p className="text-[11pt] font-bold mt-1">{subtitle}</p>}
-          </div>
-       )}
+  // COMPONENT TAJUK DOKUMEN
+  const DocumentTitle = ({ title, subtitle }: { title: string, subtitle?: string }) => (
+    <div className="text-center mb-6 font-serif uppercase text-black">
+        <h2 className="text-[12pt] font-bold underline">{title}</h2>
+        {subtitle && <p className="text-[11pt] font-bold mt-1">{subtitle}</p>}
     </div>
   );
 
@@ -87,7 +77,8 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     const sortedStudents = [...data.students].sort((a, b) => a.nama.localeCompare(b.nama));
     return (
       <div className="w-full">
-        <DynamicHeader 
+        <SchoolHeader />
+        <DocumentTitle 
           title="SENARAI KEHADIRAN / KEAHLIAN PASUKAN" 
           subtitle={`TAHUN ${currentYear}`} 
         />
@@ -150,7 +141,8 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
 
     return (
       <div className="w-full relative">
-        <DynamicHeader 
+        <SchoolHeader />
+        <DocumentTitle 
           title="RUMUSAN KEHADIRAN AKTIVITI KOKURIKULUM" 
           subtitle={`TAHUN ${currentYear}`} 
         />
@@ -236,7 +228,8 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
 
     return (
       <div className="w-full">
-        <DynamicHeader 
+        <SchoolHeader />
+        <DocumentTitle 
           title="CARTA ORGANISASI PASUKAN" 
           subtitle={`TAHUN ${currentYear}`} 
         />
@@ -293,7 +286,8 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
 
     return (
       <div className="w-full">
-         <DynamicHeader title="LAPORAN AKTIVITI MINGGUAN" />
+         <SchoolHeader />
+         <DocumentTitle title="LAPORAN AKTIVITI MINGGUAN" />
          <div className="border border-black p-6 space-y-6 font-serif text-black">
             <div className="grid grid-cols-[180px_auto] gap-y-4 text-[11pt]">
                <div className="font-bold uppercase">1. Nama Aktiviti</div><div className="font-bold uppercase">: {act.nama}</div>
@@ -340,7 +334,8 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
   // --- RENDER LAMPIRAN (Guna BombaHeader) ---
   const renderLampiran = (content: React.ReactNode, title: string) => (
     <div className="w-full">
-      <DynamicHeader title={title} />
+      <BombaHeader />
+      <DocumentTitle title={title} />
       {content}
     </div>
   );
@@ -401,7 +396,8 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     const sortedStudents = [...data.students].sort((a, b) => a.nama.localeCompare(b.nama));
     return (
       <div className="w-full">
-         <DynamicHeader title="BORANG PENDAFTARAN KOLEKTIF" subtitle={`TAHUN ${currentYear}`} />
+         <BombaHeader />
+         <DocumentTitle title="BORANG PENDAFTARAN KOLEKTIF" subtitle={`TAHUN ${currentYear}`} />
          <table className="w-full border-collapse border border-black text-[10pt] font-serif">
           <thead>
             <tr className="bg-gray-100 font-bold">
@@ -442,12 +438,13 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
 
   const getReportContent = () => {
     switch(type) {
+      // Modul Dalaman -> Guna School Header (hardcoded dalam function)
       case 'KEHADIRAN': return renderKehadiran();
       case 'AHLI': return renderAhli();
       case 'AJK': return renderAJK();
-      case 'AKTIVITI': return targetId ? renderAktiviti(targetId) : <div>Error</div>;
+      case 'AKTIVITI': return targetId ? renderAktiviti(targetId) : <div>Error: ID Aktiviti Tidak Dijumpai</div>;
       
-      // KUMPULAN BOMBA HEADER
+      // Modul Pendaftaran (Bomba) -> Guna Bomba Header (hardcoded dalam renderLampiran atau function)
       case 'PENDAFTARAN': // Lampiran A
         const sA = data.students.find(x => x.id === targetId);
         return sA ? renderLampiran(renderLampiranA_Content(sA), "BORANG MAKLUMAT PERIBADI (LAMPIRAN A)") : null;
@@ -462,8 +459,8 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
            </div>, 
            "PERMOHONAN PENUBUHAN PASUKAN (LAMPIRAN E)"
          );
-      case 'LAMPIRAN_F': return renderLampiranF_Content();
-      default: return <div>Modul Belum Sedia</div>;
+      case 'LAMPIRAN_F': return renderLampiranF_Content(); // Ada BombaHeader sendiri di dalam function
+      default: return <div>Modul Belum Sedia: {type}</div>;
     }
   };
 
@@ -490,7 +487,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
       <div className="flex-1 overflow-auto p-8 flex justify-center bg-slate-800/50">
          <div 
            className={`bg-white shadow-2xl transition-all duration-300 ${orientation === 'landscape' ? 'w-[297mm] min-h-[210mm]' : 'w-[210mm] min-h-[297mm]'}`}
-           style={{ fontFamily: '"Times New Roman", Times, serif', padding: '25mm' }} // MARGIN 25mm DI SINI
+           style={{ fontFamily: '"Times New Roman", Times, serif', padding: '20mm' }}
          >
             {getReportContent()}
          </div>
@@ -500,7 +497,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         @media print {
            @page { 
              size: A4 ${orientation}; 
-             margin: 0; /* Biar padding container yang kawal margin */
+             margin: 0;
            }
            body { 
              background: white; 
@@ -509,8 +506,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
              color: black;
            }
            .no-print { display: none !important; }
-           /* Padding 25mm untuk cetakan sebenar */
-           .bg-white { padding: 25mm !important; width: 100% !important; box-shadow: none !important; }
+           .bg-white { padding: 20mm !important; width: 100% !important; box-shadow: none !important; margin: 0 auto !important; }
            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
       `}</style>
