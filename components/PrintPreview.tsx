@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Printer, ArrowLeft } from 'lucide-react';
 import { SystemData, ReportType, JawatanAJK, Jantina, Student, JawatanGuru } from '../types';
@@ -36,7 +35,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
 
   // --- HEADER SEKOLAH (FORMAT SURAT RASMI - LOGO KIRI) ---
   const SchoolHeader = () => (
-    <div className="w-full mb-6 border-b-2 border-black pb-4 flex items-center gap-6 font-serif break-inside-avoid">
+    <div className="w-full mb-6 border-b-2 border-black pb-4 flex items-center gap-6 font-serif break-inside-avoid page-break-inside-avoid">
       <div className="w-24 h-24 shrink-0 flex items-center justify-center">
          {schoolLogo ? (
             <img src={schoolLogo} alt="Logo Sekolah" className="w-full h-full object-contain" />
@@ -54,7 +53,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
 
   // --- HEADER BOMBA (FORMAT BORANG - LOGO TENGAH) ---
   const BombaHeader = () => (
-    <div className="w-full mb-6 text-center font-serif uppercase break-inside-avoid">
+    <div className="w-full mb-6 text-center font-serif uppercase break-inside-avoid page-break-inside-avoid">
        <div className="flex justify-center mb-3">
           <img src={BOMBA_LOGO} alt="Logo JBPM" className="h-24 w-auto object-contain" />
        </div>
@@ -66,7 +65,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
 
   // COMPONENT TAJUK DOKUMEN
   const DocumentTitle = ({ title, subtitle }: { title: string, subtitle?: string }) => (
-    <div className="text-center mb-6 font-serif uppercase text-black break-inside-avoid">
+    <div className="text-center mb-6 font-serif uppercase text-black break-inside-avoid page-break-inside-avoid">
         <h2 className="text-[12pt] font-bold underline">{title}</h2>
         {subtitle && <p className="text-[11pt] font-bold mt-1">{subtitle}</p>}
     </div>
@@ -88,7 +87,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         </div>
         <table className="w-full border-collapse border border-black text-[10pt] font-serif">
           <thead className="table-header-group">
-            <tr className="bg-gray-100 font-bold break-inside-avoid">
+            <tr className="bg-gray-100 font-bold break-inside-avoid page-break-inside-avoid">
               <th className="border border-black p-2 text-center w-[5%]">BIL</th>
               <th className="border border-black p-2 text-left w-[40%]">NAMA PENUH</th>
               <th className="border border-black p-2 text-center w-[15%]">NO. KP</th>
@@ -112,7 +111,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
             ))}
           </tbody>
         </table>
-        <div className="mt-12 flex justify-end font-serif text-black break-inside-avoid">
+        <div className="mt-12 flex justify-end font-serif text-black break-inside-avoid page-break-inside-avoid">
            <div className="text-center w-[250px]">
               <p className="font-bold uppercase text-[11pt]">Disahkan Oleh:</p>
               <div className="h-20 border-b border-black"></div>
@@ -148,7 +147,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         />
         <table className="w-full border-collapse border border-black text-[9pt] font-serif">
           <thead className="table-header-group">
-            <tr className="bg-transparent font-bold text-center break-inside-avoid">
+            <tr className="bg-transparent font-bold text-center break-inside-avoid page-break-inside-avoid">
               <th className="border border-black p-1 w-[3%]" rowSpan={2}>BIL</th>
               <th className="border border-black p-1 text-center" rowSpan={2}>NAMA PELAJAR</th>
               {Array.from({length: 12}).map((_, i) => (
@@ -159,7 +158,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
               <th className="border border-black p-1 w-[4%] text-[8pt] bg-gray-100">%</th>
               <th className="border border-black p-1 w-[6%] text-[8pt] bg-gray-200">MARKAH<br/>(40%)</th>
             </tr>
-            <tr className="text-[8pt] break-inside-avoid">
+            <tr className="text-[8pt] break-inside-avoid page-break-inside-avoid">
                {meetingSlots.map((slot, i) => (
                   <th key={`date-${i}`} className="border border-black h-[60px] align-bottom p-0.5 bg-gray-50">
                      {slot && (
@@ -199,7 +198,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
               );
             })}
           </tbody>
-          <tfoot className="break-inside-avoid">
+          <tfoot className="break-inside-avoid page-break-inside-avoid">
              <tr>
                 <td colSpan={2} className="border border-black p-1 text-right font-bold pr-2 bg-gray-50">JUM. HADIR</td>
                 {footerStats.map((stat, i) => <td key={i} className="border border-black text-center font-bold text-[9pt] bg-gray-50">{stat.total > 0 ? stat.hadir : ''}</td>)}
@@ -235,7 +234,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         />
         <table className="w-full border-collapse border border-black text-[11pt] mt-6 font-serif">
           <thead className="table-header-group">
-            <tr className="bg-gray-100 font-bold break-inside-avoid">
+            <tr className="bg-gray-100 font-bold break-inside-avoid page-break-inside-avoid">
               <th className="border border-black p-3 text-center w-[10%]">BIL</th>
               <th className="border border-black p-3 text-left w-[30%]">JAWATAN</th>
               <th className="border border-black p-3 text-left w-[40%]">NAMA PENUH</th>
@@ -259,7 +258,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
             )}
           </tbody>
         </table>
-        <div className="mt-16 grid grid-cols-2 gap-20 font-serif text-black break-inside-avoid">
+        <div className="mt-16 grid grid-cols-2 gap-20 font-serif text-black break-inside-avoid page-break-inside-avoid">
           <div className="text-center">
             <p className="font-bold uppercase text-[11pt]">Disediakan Oleh:</p>
             <div className="h-20 border-b border-black"></div>
@@ -288,7 +287,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
       <div className="w-full">
          <SchoolHeader />
          <DocumentTitle title="LAPORAN AKTIVITI MINGGUAN" />
-         <div className="border border-black p-6 space-y-6 font-serif text-black break-inside-avoid">
+         <div className="border border-black p-6 space-y-6 font-serif text-black break-inside-avoid page-break-inside-avoid">
             <div className="grid grid-cols-[180px_auto] gap-y-4 text-[11pt]">
                <div className="font-bold uppercase">1. Nama Aktiviti</div><div className="font-bold uppercase">: {act.nama}</div>
                <div className="font-bold uppercase">2. Tarikh</div><div className="uppercase">: {act.tarikh}</div>
@@ -296,14 +295,14 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
                <div className="font-bold uppercase">4. Tempat</div><div className="uppercase">: {act.tempat}</div>
                <div className="font-bold uppercase">5. Kehadiran</div><div className="uppercase">: {presentCount} / {totalStudents} ({percentage}%)</div>
             </div>
-            <div className="pt-4 border-t border-black break-inside-avoid">
+            <div className="pt-4 border-t border-black break-inside-avoid page-break-inside-avoid">
                <div className="font-bold uppercase mb-2 text-[11pt]">6. Laporan / Ulasan Aktiviti:</div>
                <div className="p-4 bg-gray-50 border border-black min-h-[150px] text-justify whitespace-pre-wrap leading-relaxed text-[11pt]">
                   {act.ulasan || "Tiada ulasan disediakan."}
                </div>
             </div>
             {act.photos && act.photos.length > 0 && (
-              <div className="pt-4 border-t border-black break-inside-avoid">
+              <div className="pt-4 border-t border-black break-inside-avoid page-break-inside-avoid">
                  <div className="font-bold uppercase mb-4 text-[11pt]">7. Dokumentasi Bergambar:</div>
                  <div className="grid grid-cols-2 gap-4">
                     {act.photos.map((photo, i) => (
@@ -315,7 +314,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
               </div>
             )}
          </div>
-         <div className="mt-12 grid grid-cols-2 gap-20 font-serif text-black break-inside-avoid">
+         <div className="mt-12 grid grid-cols-2 gap-20 font-serif text-black break-inside-avoid page-break-inside-avoid">
             <div className="text-center">
               <p className="font-bold uppercase text-[11pt]">Disediakan Oleh:</p>
               <div className="h-20 border-b border-black"></div>
@@ -349,7 +348,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         <div className="font-bold">4. Jantina</div><div className="uppercase border-b border-black/50">: {s.jantina}</div>
         <div className="font-bold">5. Kaum</div><div className="uppercase border-b border-black/50">: {s.kaum}</div>
       </div>
-      <div className="border border-black p-4 mt-6 break-inside-avoid">
+      <div className="border border-black p-4 mt-6 break-inside-avoid page-break-inside-avoid">
         <p className="font-bold underline mb-2">PENGAKUAN KESIHATAN</p>
         <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-[10pt]">
            {Object.entries(s.health || {}).map(([k, v]) => (
@@ -362,7 +361,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
            ))}
         </div>
       </div>
-      <div className="mt-12 break-inside-avoid">
+      <div className="mt-12 break-inside-avoid page-break-inside-avoid">
         <p className="text-justify leading-relaxed">Saya mengaku bahawa segala maklumat yang diberikan adalah benar.</p>
         <div className="mt-8 grid grid-cols-2 gap-10">
            <div className="text-center mt-10">
@@ -378,7 +377,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
      <div className="text-[11pt] px-4 text-justify leading-relaxed space-y-6 font-serif text-black">
         <p>Saya, <strong>{s.namaWaris || '................................'}</strong> (No KP: <strong>{s.noKPWaris || '......................'}</strong>), waris kepada pelajar bernama <strong>{s.nama}</strong> (<strong>{s.tingkatan} {s.kelas}</strong>), dengan ini memberi kebenaran kepada anak jagaan saya untuk menyertai aktiviti Pasukan Kadet Bomba.</p>
         <p>Saya faham bahawa pihak sekolah akan mengambil langkah keselamatan yang sewajarnya. Namun demikian, saya tidak akan mengambil sebarang tindakan undang-undang terhadap pihak sekolah sekiranya berlaku kemalangan di luar jangkaan.</p>
-        <div className="mt-16 grid grid-cols-2 gap-20 break-inside-avoid">
+        <div className="mt-16 grid grid-cols-2 gap-20 break-inside-avoid page-break-inside-avoid">
            <div className="text-center">
               <div className="border-b border-black h-20"></div>
               <p className="mt-2 font-bold uppercase">( TANDATANGAN WARIS )</p>
@@ -400,7 +399,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
          <DocumentTitle title="BORANG PENDAFTARAN KOLEKTIF" subtitle={`TAHUN ${currentYear}`} />
          <table className="w-full border-collapse border border-black text-[10pt] font-serif">
           <thead className="table-header-group">
-            <tr className="bg-gray-100 font-bold break-inside-avoid">
+            <tr className="bg-gray-100 font-bold break-inside-avoid page-break-inside-avoid">
               <th className="border border-black p-2 text-center w-[5%]">BIL</th>
               <th className="border border-black p-2 text-left w-[40%]">NAMA PENUH</th>
               <th className="border border-black p-2 text-center w-[15%]">NO. KP</th>
@@ -420,7 +419,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
             ))}
           </tbody>
         </table>
-        <div className="mt-12 flex justify-between font-serif text-black break-inside-avoid">
+        <div className="mt-12 flex justify-between font-serif text-black break-inside-avoid page-break-inside-avoid">
            <div className="text-center w-[250px]">
               <p className="font-bold uppercase text-[11pt]">Disediakan Oleh:</p>
               <div className="h-20 border-b border-black"></div>
@@ -498,7 +497,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         @media print {
            @page { 
              size: A4 ${orientation}; 
-             margin: 0;
+             margin: 10mm; /* Browser uruskan margin kertas */
            }
            html, body {
              height: auto !important;
@@ -506,11 +505,13 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
              background: white !important;
              margin: 0 !important;
              padding: 0 !important;
+             width: 100% !important;
            }
-           /* Hide semua kecuali printable area */
+           
+           /* Sembunyikan semua UI asal */
            body > * { display: none !important; }
            
-           /* Setup printable area */
+           /* Paparkan hanya kawasan print */
            #printable-area { 
              display: block !important;
              position: absolute !important;
@@ -519,7 +520,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
              width: 100% !important;
              height: auto !important;
              margin: 0 !important;
-             padding: 20mm !important;
+             padding: 0 !important; /* Margin dah set di @page */
              box-shadow: none !important;
              background: white !important;
              overflow: visible !important;
@@ -532,7 +533,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
              color: black !important;
            }
            
-           /* TABLE LOGIC */
+           /* TABLE LOGIC: Header Berulang */
            table { 
              width: 100%; 
              border-collapse: collapse; 
@@ -550,7 +551,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
            }
            
            /* ELAKKAN PECAH COMPONENT PENTING */
-           .break-inside-avoid {
+           .break-inside-avoid, .page-break-inside-avoid {
              page-break-inside: avoid !important;
              break-inside: avoid !important;
            }
