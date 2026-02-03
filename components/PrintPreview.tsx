@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { Printer, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Printer, ArrowLeft, FileOutput, RefreshCcw } from 'lucide-react';
 import { SystemData, ReportType, JawatanAJK, Jantina, Student, JawatanGuru } from '../types';
 import { SCHOOL_INFO } from '../constants';
 
@@ -13,50 +13,107 @@ interface PrintProps {
 
 const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) => {
   const currentYear = new Date().getFullYear();
+  
+  // State untuk orientasi kertas
+  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
 
-  // ALAMAT RASMI SEKOLAH
+  // Auto-set orientasi berdasarkan jenis laporan
+  useEffect(() => {
+    if (type === 'KEHADIRAN' || type === 'AHLI') {
+      setOrientation('landscape');
+    } else {
+      setOrientation('portrait');
+    }
+  }, [type]);
+
+  // MAKLUMAT SEKOLAH
   const schoolName = data.settings?.schoolName || SCHOOL_INFO.name;
   const address = data.settings?.address || SCHOOL_INFO.address;
-  const principalName = SCHOOL_INFO.principal;
-  const logoUrl = data.settings?.logoUrl;
+  const schoolLogo = data.settings?.logoUrl;
 
-  const JBPMHeader = () => (
-    <div className="flex flex-col items-center text-center mb-6 text-black border-b-[1.5pt] border-black pb-4">
-      <h2 className="text-[12pt] font-bold uppercase">JABATAN BOMBA DAN PENYELAMAT MALAYSIA</h2>
-      <p className="text-[10pt] font-bold uppercase">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA</p>
-    </div>
-  );
+  // URL Logo JBPM (Public CDN)
+  const BOMBA_LOGO = "https://upload.wikimedia.org/wikipedia/commons/8/87/Jabatan_Bomba_dan_Penyelamat_Malaysia.png";
+
+  // Tentukan jika modul ini memerlukan Letterhead Bomba
+  const isBombaModule = ['PENDAFTARAN', 'LAMPIRAN_A', 'LAMPIRAN_B', 'LAMPIRAN_D', 'LAMPIRAN_E', 'LAMPIRAN_F'].includes(type);
+
+  // --- KOMPONEN HEADER DINAMIK (BOMBA vs SEKOLAH) ---
+  const DynamicHeader = ({ title, subtitle }: { title?: string, subtitle?: string }) => {
+    
+    // Konfigurasi Header
+    const headerConfig = isBombaModule ? {
+        logo: BOMBA_LOGO,
+        mainTitle: "PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA",
+        subTitle: schoolName, // Nama sekolah di bawah tajuk Bomba
+        address: address
+    } : {
+        logo: schoolLogo,
+        mainTitle: schoolName,
+        subTitle: address,
+        address: "(Unit Kokurikulum - Pasukan Kadet Bomba & Penyelamat Malaysia)"
+    };
+
+    return (
+      <div className="mb-6">
+        <div className="flex items-center gap-6 border-b-2 border-black pb-4 mb-4">
+          {/* LOGO DI SEBELAH KIRI */}
+          <div className="shrink-0 w-24 h-24 flex items-center justify-center">
+            {headerConfig.logo ? (
+              <img src={headerConfig.logo} alt="Logo" className="w-full h-full object-contain" />
+            ) : (
+              <div className="w-20 h-20 border-2 border-dashed border-black flex items-center justify-center text-[8pt] text-center italic">
+                TIADA LOGO
+              </div>
+            )}
+          </div>
+          
+          {/* TEKS HEADER */}
+          <div className="flex-1 text-left uppercase">
+            <h1 className="font-bold text-[14pt] leading-tight mb-1">{headerConfig.mainTitle}</h1>
+            <p className="font-bold text-[10pt] leading-tight text-black/90">{headerConfig.subTitle}</p>
+            <div className={`mt-1 text-[9pt] ${isBombaModule ? 'font-normal' : 'italic font-normal normal-case'}`}>
+               {headerConfig.address}
+            </div>
+          </div>
+        </div>
+
+        {/* TAJUK DOKUMEN (JIKA ADA) */}
+        {(title || subtitle) && (
+          <div className="text-center mt-4 mb-6">
+             {title && <h2 className="text-[12pt] font-bold uppercase underline">{title}</h2>}
+             {subtitle && <p className="text-[11pt] font-bold uppercase mt-1">{subtitle}</p>}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // --- RENDER MODUL: SENARAI AHLI ---
   const renderAhli = () => {
     const sortedStudents = [...data.students].sort((a, b) => a.nama.localeCompare(b.nama));
     
     return (
-      <div className="text-black leading-tight text-[10.5pt] min-h-[297mm] font-serif">
-        <div className="flex justify-end mb-2">
-          <span className="font-bold text-[11pt]">Senarai Keahlian</span>
-        </div>
-        <JBPMHeader />
-        <div className="text-center mb-8">
-          <h3 className="font-bold text-[13pt] uppercase underline">SENARAI KEAHLIAN PASUKAN</h3>
-          <p className="text-[10pt] font-bold uppercase mt-1">TAHUN {currentYear}</p>
-          <p className="text-[9pt] font-bold uppercase mt-1">{schoolName}</p>
+      <div className="w-full">
+        <DynamicHeader 
+          title="SENARAI NAMADAFTAR KEAHLIAN" 
+          subtitle={`TAHUN ${currentYear}`} 
+        />
+
+        <div className="flex justify-between items-end mb-2 text-[10pt] font-bold">
+           <p>GURU PENASIHAT: {data.teachers.find(t => t.jawatan === JawatanGuru.Penasihat)?.nama || '................................'}</p>
+           <p>JUMLAH AHLI: {sortedStudents.length} ORANG</p>
         </div>
 
-        <div className="mb-4">
-           <p className="font-bold uppercase text-[9pt]">JUMLAH KEAHLIAN: {sortedStudents.length} ORANG</p>
-        </div>
-
-        <table className="w-full border-collapse border border-black text-[9pt]">
+        <table className="w-full border-collapse border border-black text-[10pt]">
           <thead>
             <tr className="bg-gray-100 font-bold">
-              <th className="border border-black p-2 text-center w-[40px]">BIL</th>
-              <th className="border border-black p-2 text-left">NAMA PENUH</th>
-              <th className="border border-black p-2 text-center w-[100px]">NO. KP</th>
-              <th className="border border-black p-2 text-center w-[90px]">NO. AHLI</th>
-              <th className="border border-black p-2 text-center w-[40px]">JANTINA</th>
-              <th className="border border-black p-2 text-center w-[80px]">TING/KELAS</th>
-              <th className="border border-black p-2 text-center w-[80px]">CATATAN</th>
+              <th className="border border-black p-2 text-center w-[5%]">BIL</th>
+              <th className="border border-black p-2 text-left w-[40%]">NAMA PENUH</th>
+              <th className="border border-black p-2 text-center w-[15%]">NO. KP</th>
+              <th className="border border-black p-2 text-center w-[10%]">NO. AHLI</th>
+              <th className="border border-black p-2 text-center w-[5%]">JANTINA</th>
+              <th className="border border-black p-2 text-center w-[10%]">KELAS</th>
+              <th className="border border-black p-2 text-center w-[15%]">CATATAN</th>
             </tr>
           </thead>
           <tbody>
@@ -64,7 +121,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
               <tr key={s.id}>
                 <td className="border border-black p-1.5 text-center">{idx + 1}</td>
                 <td className="border border-black p-1.5 uppercase font-bold">{s.nama}</td>
-                <td className="border border-black p-1.5 text-center font-mono">{s.noKP}</td>
+                <td className="border border-black p-1.5 text-center">{s.noKP}</td>
                 <td className="border border-black p-1.5 text-center font-bold">{s.noKeahlian || '-'}</td>
                 <td className="border border-black p-1.5 text-center">{s.jantina === Jantina.Lelaki ? 'L' : 'P'}</td>
                 <td className="border border-black p-1.5 text-center uppercase">{s.tingkatan} {s.kelas}</td>
@@ -75,129 +132,86 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         </table>
 
         <div className="mt-12 flex justify-end">
-           <div className="text-center w-[200px]">
-              <p className="font-bold uppercase text-[9pt]">Disahkan Oleh:</p>
-              <div className="h-16 border-b border-black"></div>
-              <p className="text-[9pt] font-bold uppercase mt-2">( GURU PENASIHAT )</p>
+           <div className="text-center w-[250px]">
+              <p className="font-bold uppercase text-[11pt]">Disahkan Oleh:</p>
+              <div className="h-20 border-b border-black"></div>
+              <p className="text-[11pt] font-bold uppercase mt-2">( PENGETUA / PK KOKURIKULUM )</p>
+              <p className="text-[10pt] mt-1">Tarikh: .................................</p>
            </div>
         </div>
       </div>
     );
   };
 
-  // --- RENDER MODUL: KEHADIRAN (FORMAT MENGIKUT PDF) ---
+  // --- RENDER MODUL: KEHADIRAN (FORMAT PDF KPM) ---
   const renderKehadiran = () => {
     const sortedStudents = [...data.students].sort((a, b) => a.nama.localeCompare(b.nama));
-    
-    // Ambil semua kehadiran, sort ikut tarikh
     const sortedAttendance = [...data.attendances]
       .sort((a, b) => new Date(a.tarikh).getTime() - new Date(b.tarikh).getTime());
 
-    // Fix kepada 12 slot (column) seperti dalam PDF
-    // Jika ada lebih dari 12 perjumpaan, ambil 12 terakhir atau pertama (bergantung logik, sini ambil 12 pertama)
-    // Jika kurang, isi dengan null
+    // Fix 12 column untuk bulan/perjumpaan
     const meetingSlots = Array.from({ length: 12 }, (_, i) => sortedAttendance[i] || null);
     
-    // Kira bilangan perjumpaan yang SEBENAR (yang ada data)
-    const totalMeetingsHeld = sortedAttendance.length > 0 ? sortedAttendance.length : 1; // Avoid divide by zero
-
-    // Pengiraan untuk Footer (Analisa per column)
+    // Kiraan Statistik Bawah
     const footerStats = meetingSlots.map(slot => {
        if (!slot) return { hadir: 0, takHadir: 0, total: 0, percent: 0 };
-       
        let hadirCount = 0;
-       sortedStudents.forEach(s => {
-          if (slot.presents.includes(s.id)) hadirCount++;
-       });
-
+       sortedStudents.forEach(s => { if (slot.presents.includes(s.id)) hadirCount++; });
        const totalAhli = sortedStudents.length;
        const takHadirCount = totalAhli - hadirCount;
        const percent = totalAhli > 0 ? Math.round((hadirCount / totalAhli) * 100) : 0;
-
        return { hadir: hadirCount, takHadir: takHadirCount, total: totalAhli, percent };
     });
 
     return (
-      <div className="text-black leading-tight text-[9pt] min-h-[297mm] font-serif relative">
-        {/* HEADER KHAS MENGIKUT PDF */}
-        <div className="flex justify-between items-start mb-6">
-           <div className="w-[70%]">
-              <h2 className="text-[11pt] font-bold uppercase">{schoolName}</h2>
-              <p className="text-[10pt] uppercase">{address}</p>
-              
-              <div className="mt-6">
-                 <h1 className="text-[14pt] font-bold uppercase">RUMUSAN KEDATANGAN PELAJAR</h1>
-                 <h2 className="text-[12pt] font-bold uppercase">KADET BOMBA</h2>
-              </div>
-           </div>
-           <div className="w-[30%] flex flex-col items-end">
-              {logoUrl ? (
-                 <img src={logoUrl} alt="Logo" className="h-24 w-auto object-contain mb-2" />
-              ) : (
-                 <div className="h-24 w-20 border border-black flex items-center justify-center text-[8pt] text-center italic mb-2">Tiada Logo</div>
-              )}
-              <div className="flex items-center gap-2 mt-4">
-                 <span className="font-bold text-[12pt]">Tahun :</span>
-                 <span className="font-bold text-[14pt]">{currentYear}</span>
-              </div>
-           </div>
-        </div>
+      <div className="w-full relative">
+        <DynamicHeader 
+          title="RUMUSAN KEHADIRAN AKTIVITI KOKURIKULUM" 
+          subtitle={`TAHUN ${currentYear}`} 
+        />
 
-        <table className="w-full border-collapse border border-black text-[9pt]">
+        <table className="w-full border-collapse border border-black text-[10pt]">
           <thead>
-            {/* ROW NOMBOR 1-12 */}
             <tr className="bg-transparent font-bold text-center">
-              <th className="border border-black p-1 w-[30px]" rowSpan={2}>Bil</th>
-              <th className="border border-black p-1 text-center" rowSpan={2}>Nama Ahli</th>
+              <th className="border border-black p-1 w-[3%]" rowSpan={2}>BIL</th>
+              <th className="border border-black p-1 text-center" rowSpan={2}>NAMA PELAJAR</th>
               {Array.from({length: 12}).map((_, i) => (
-                <th key={i} className="border border-black p-1 w-[25px] h-[25px] align-middle">{i + 1}</th>
+                <th key={i} className="border border-black p-1 w-[2.5%] align-middle bg-gray-50">{i + 1}</th>
               ))}
-              <th className="border border-black p-1 w-[35px] text-[8pt] rotate-header bg-gray-200">Bil Hadir</th>
-              <th className="border border-black p-1 w-[35px] text-[8pt] rotate-header bg-gray-200">Bil Tak Hadir</th>
-              <th className="border border-black p-1 w-[35px] text-[8pt] rotate-header bg-gray-200">% Kehadiran</th>
-              <th className="border border-black p-1 w-[45px] text-[8pt] bg-gray-200 leading-tight">Markah (40%)</th>
+              <th className="border border-black p-1 w-[4%] text-[9pt] bg-gray-100 leading-tight">JUM<br/>HADIR</th>
+              <th className="border border-black p-1 w-[4%] text-[9pt] bg-gray-100 leading-tight">TIDAK<br/>HADIR</th>
+              <th className="border border-black p-1 w-[4%] text-[9pt] bg-gray-100">%</th>
+              <th className="border border-black p-1 w-[6%] text-[9pt] bg-gray-200">MARKAH<br/>(40%)</th>
             </tr>
-            {/* ROW TARIKH (Kecil di bawah nombor) */}
-            <tr className="text-[7pt]">
+            <tr className="text-[8pt]">
                {meetingSlots.map((slot, i) => (
-                  <th key={`date-${i}`} className="border border-black h-[40px] align-bottom p-0.5">
+                  <th key={`date-${i}`} className="border border-black h-[60px] align-bottom p-0.5 bg-gray-50">
                      {slot && (
-                        <div className="whitespace-nowrap -rotate-90 origin-center text-[7pt]">
+                        <div className="whitespace-nowrap -rotate-90 origin-center translate-y-[-10px]">
                            {slot.tarikh.split('-').reverse().slice(0,2).join('/')}
                         </div>
                      )}
                   </th>
                ))}
-               {/* Spacer cells for summary columns in the second header row */}
-               <th className="border border-black bg-gray-200"></th>
-               <th className="border border-black bg-gray-200"></th>
-               <th className="border border-black bg-gray-200"></th>
+               <th className="border border-black bg-gray-100"></th>
+               <th className="border border-black bg-gray-100"></th>
+               <th className="border border-black bg-gray-100"></th>
                <th className="border border-black bg-gray-200"></th>
             </tr>
           </thead>
           <tbody>
             {sortedStudents.map((s, idx) => {
               let totalPresent = 0;
-              // Check kehadiran untuk SEMUA rekod yang ada (bukan just 12 slot display)
-              // Tapi untuk display table, kita kira based on available slots displayed or actual data?
-              // Usually calculated based on data available.
-              
-              // Kira kehadiran specific student ini
-              data.attendances.forEach(att => {
-                  if (att.presents.includes(s.id)) totalPresent++;
-              });
-
-              // Markah 40% = (Hadir / Jumlah Perjumpaan Diadakan) * 40
-              // Jumlah perjumpaan diadakan = data.attendances.length
+              data.attendances.forEach(att => { if (att.presents.includes(s.id)) totalPresent++; });
               const totalHeld = data.attendances.length || 1;
               const percent = Math.round((totalPresent / totalHeld) * 100);
               const totalAbsent = totalHeld - totalPresent;
               const markah = ((totalPresent / totalHeld) * 40).toFixed(0);
 
               return (
-                <tr key={s.id} className="h-[25px]">
+                <tr key={s.id} className="h-[28px]">
                   <td className="border border-black p-1 text-center">{idx + 1}</td>
-                  <td className="border border-black p-1 px-2 uppercase font-semibold text-[9pt] whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">{s.nama}</td>
+                  <td className="border border-black p-1 px-2 uppercase font-semibold text-[10pt] whitespace-nowrap overflow-hidden text-ellipsis max-w-[250px]">{s.nama}</td>
                   {meetingSlots.map((slot, i) => {
                     const isPresent = slot ? slot.presents.includes(s.id) : false;
                     return (
@@ -206,99 +220,55 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
                       </td>
                     );
                   })}
-                  <td className="border border-black p-1 text-center bg-gray-100 font-bold">{totalPresent}</td>
-                  <td className="border border-black p-1 text-center bg-gray-100">{totalAbsent}</td>
-                  <td className="border border-black p-1 text-center bg-gray-100">{percent}</td>
-                  <td className="border border-black p-1 text-center bg-gray-100 font-bold">{markah}</td>
+                  <td className="border border-black p-1 text-center bg-gray-50 font-bold">{totalPresent}</td>
+                  <td className="border border-black p-1 text-center bg-gray-50">{totalAbsent}</td>
+                  <td className="border border-black p-1 text-center bg-gray-50">{percent}</td>
+                  <td className="border border-black p-1 text-center bg-gray-200 font-bold">{markah}</td>
                 </tr>
               );
             })}
-            
-            {/* ISI KOSONG JIKA LIST PENDEK UTK NAMPAK FULL PAGE */}
-            {sortedStudents.length < 20 && Array.from({length: 20 - sortedStudents.length}).map((_, i) => (
-               <tr key={`empty-${i}`} className="h-[25px]">
-                  <td className="border border-black text-center">{sortedStudents.length + i + 1}</td>
-                  <td className="border border-black"></td>
-                  {Array.from({length: 16}).map((__, j) => <td key={j} className={`border border-black ${j >= 12 ? 'bg-gray-100' : ''}`}></td>)}
-               </tr>
-            ))}
           </tbody>
-          
-          {/* FOOTER: ANALISA BAWAH SEPERTI PDF */}
           <tfoot>
-             {/* ROW: HADIR */}
              <tr>
-                <td colSpan={2} className="border border-black p-1 text-right font-bold pr-4">Hadir</td>
-                {footerStats.map((stat, i) => (
-                   <td key={i} className="border border-black text-center font-bold text-[8pt]">{stat.total > 0 ? stat.hadir : ''}</td>
-                ))}
+                <td colSpan={2} className="border border-black p-1 text-right font-bold pr-2 bg-gray-50">JUM. HADIR</td>
+                {footerStats.map((stat, i) => <td key={i} className="border border-black text-center font-bold text-[9pt] bg-gray-50">{stat.total > 0 ? stat.hadir : ''}</td>)}
                 <td colSpan={4} className="border border-black bg-gray-100"></td>
              </tr>
-             {/* ROW: TIDAK HADIR */}
              <tr>
-                <td colSpan={2} className="border border-black p-1 text-right font-bold pr-4">Tidak Hadir</td>
-                {footerStats.map((stat, i) => (
-                   <td key={i} className="border border-black text-center font-bold text-[8pt]">{stat.total > 0 ? stat.takHadir : ''}</td>
-                ))}
+                <td colSpan={2} className="border border-black p-1 text-right font-bold pr-2 bg-gray-50">JUM. TIDAK HADIR</td>
+                {footerStats.map((stat, i) => <td key={i} className="border border-black text-center font-bold text-[9pt] bg-gray-50">{stat.total > 0 ? stat.takHadir : ''}</td>)}
                 <td colSpan={4} className="border border-black bg-gray-100"></td>
              </tr>
-             {/* ROW: JUMLAH AHLI */}
              <tr>
-                <td colSpan={2} className="border border-black p-1 text-right font-bold pr-4">Jumlah Ahli</td>
-                {footerStats.map((stat, i) => (
-                   <td key={i} className="border border-black text-center font-bold text-[8pt]">{stat.total > 0 ? stat.total : ''}</td>
-                ))}
-                <td colSpan={4} className="border border-black bg-gray-100"></td>
-             </tr>
-             {/* ROW: PERATUS KEHADIRAN */}
-             <tr className="h-[30px]">
-                <td colSpan={2} className="border border-black p-1 text-right font-bold pr-4">Peratus Kehadiran</td>
-                {footerStats.map((stat, i) => (
-                   <td key={i} className="border border-black text-center font-bold text-[8pt]">{stat.total > 0 ? stat.percent : ''}</td>
-                ))}
+                <td colSpan={2} className="border border-black p-1 text-right font-bold pr-2 bg-gray-50">PERATUS (%)</td>
+                {footerStats.map((stat, i) => <td key={i} className="border border-black text-center font-bold text-[9pt] bg-gray-50">{stat.total > 0 ? stat.percent : ''}</td>)}
                 <td colSpan={4} className="border border-black bg-gray-100"></td>
              </tr>
           </tfoot>
         </table>
-
-        {/* CSS KHAS UNTUK HEADER ROTATE */}
-        <style>{`
-           .rotate-header {
-             writing-mode: vertical-rl;
-             transform: rotate(180deg);
-             white-space: nowrap;
-             height: 80px;
-             text-align: center;
-             vertical-align: middle;
-           }
-        `}</style>
       </div>
     );
   };
 
-  // --- RENDER MODUL: AJK ---
+  // --- RENDER MODUL: CARTA ORGANISASI (AJK) ---
   const renderAJK = () => {
     const order = Object.values(JawatanAJK);
-    const sortedCommittees = [...data.committees].sort((a, b) => 
-      order.indexOf(a.jawatan) - order.indexOf(b.jawatan)
-    );
+    const sortedCommittees = [...data.committees].sort((a, b) => order.indexOf(a.jawatan) - order.indexOf(b.jawatan));
 
     return (
-      <div className="text-black leading-tight text-[10.5pt] min-h-[297mm] font-serif">
-        <JBPMHeader />
-        <div className="text-center mb-10">
-          <h3 className="font-bold text-[14pt] uppercase underline">CARTA ORGANISASI PASUKAN</h3>
-          <p className="text-[11pt] font-bold uppercase mt-2">TAHUN {currentYear}</p>
-          <p className="text-[10pt] font-bold uppercase mt-1">{schoolName}</p>
-        </div>
+      <div className="w-full">
+        <DynamicHeader 
+          title="CARTA ORGANISASI MURID" 
+          subtitle={`TAHUN ${currentYear}`} 
+        />
 
-        <table className="w-full border-collapse border border-black text-[10pt]">
+        <table className="w-full border-collapse border border-black text-[11pt] mt-6">
           <thead>
             <tr className="bg-gray-100 font-bold">
-              <th className="border border-black p-3 text-center w-[50px]">BIL</th>
-              <th className="border border-black p-3 text-left w-[200px]">JAWATAN</th>
-              <th className="border border-black p-3 text-left">NAMA PENUH</th>
-              <th className="border border-black p-3 text-center w-[120px]">TINGKATAN</th>
+              <th className="border border-black p-3 text-center w-[10%]">BIL</th>
+              <th className="border border-black p-3 text-left w-[30%]">JAWATAN</th>
+              <th className="border border-black p-3 text-left w-[40%]">NAMA PENUH</th>
+              <th className="border border-black p-3 text-center w-[20%]">TINGKATAN</th>
             </tr>
           </thead>
           <tbody>
@@ -318,21 +288,17 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
             )}
           </tbody>
         </table>
-
+        
         <div className="mt-16 grid grid-cols-2 gap-20">
-          <div className="text-center space-y-16">
-            <p className="font-bold uppercase text-[9pt]">Disediakan Oleh:</p>
-            <div>
-              <div className="border-b border-black w-48 mx-auto mb-2"></div>
-              <p className="text-[9pt] font-bold uppercase">( SETIAUSAHA )</p>
-            </div>
+          <div className="text-center">
+            <p className="font-bold uppercase text-[11pt]">Disediakan Oleh:</p>
+            <div className="h-20 border-b border-black"></div>
+            <p className="text-[11pt] font-bold uppercase mt-2">( SETIAUSAHA )</p>
           </div>
-          <div className="text-center space-y-16">
-            <p className="font-bold uppercase text-[9pt]">Disahkan Oleh:</p>
-            <div>
-              <div className="border-b border-black w-48 mx-auto mb-2"></div>
-              <p className="text-[9pt] font-bold uppercase">( GURU PENASIHAT )</p>
-            </div>
+          <div className="text-center">
+            <p className="font-bold uppercase text-[11pt]">Disahkan Oleh:</p>
+            <div className="h-20 border-b border-black"></div>
+            <p className="text-[11pt] font-bold uppercase mt-2">( GURU PENASIHAT )</p>
           </div>
         </div>
       </div>
@@ -342,338 +308,145 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
   // --- RENDER MODUL: AKTIVITI ---
   const renderAktiviti = (actId: string) => {
     const act = data.activities.find(a => a.id === actId);
-    if (!act) return <div className="p-10 font-bold text-center">Data Aktiviti Tidak Dijumpai</div>;
-
+    if (!act) return <div>Data Tidak Dijumpai</div>;
     const attRecord = data.attendances.find(a => a.tarikh === act.tarikh);
     const presentCount = attRecord ? attRecord.presents.length : 0;
     const totalStudents = data.students.length || 1;
     const percentage = Math.round((presentCount / totalStudents) * 100);
 
     return (
-      <div className="text-black leading-relaxed text-[11pt] min-h-[297mm] font-serif">
-         <JBPMHeader />
-         <div className="text-center mb-8 border-b-2 border-black pb-4">
-            <h3 className="font-bold text-[14pt] uppercase">LAPORAN AKTIVITI MINGGUAN</h3>
-         </div>
+      <div className="w-full">
+         <DynamicHeader title="LAPORAN AKTIVITI MINGGUAN" />
 
-         <div className="space-y-6 px-4">
-            <div className="grid grid-cols-[150px_auto] gap-y-4">
-               <div className="font-bold uppercase">Nama Aktiviti</div>
+         <div className="border border-black p-6 space-y-6">
+            <div className="grid grid-cols-[180px_auto] gap-y-4 text-[11pt]">
+               <div className="font-bold uppercase">1. Nama Aktiviti</div>
                <div className="font-bold uppercase">: {act.nama}</div>
                
-               <div className="font-bold uppercase">Tarikh</div>
+               <div className="font-bold uppercase">2. Tarikh</div>
                <div className="uppercase">: {act.tarikh}</div>
 
-               <div className="font-bold uppercase">Masa</div>
+               <div className="font-bold uppercase">3. Masa</div>
                <div className="uppercase">: {act.masa}</div>
 
-               <div className="font-bold uppercase">Tempat</div>
+               <div className="font-bold uppercase">4. Tempat</div>
                <div className="uppercase">: {act.tempat}</div>
 
-               <div className="font-bold uppercase">Kehadiran</div>
+               <div className="font-bold uppercase">5. Kehadiran</div>
                <div className="uppercase">: {presentCount} / {totalStudents} ({percentage}%)</div>
             </div>
 
-            <div className="pt-6">
-               <div className="font-bold uppercase mb-2 border-b border-black w-fit">Laporan / Ulasan Aktiviti:</div>
-               <div className="border border-black p-6 min-h-[200px] text-justify whitespace-pre-wrap leading-relaxed">
+            <div className="pt-4 border-t border-black">
+               <div className="font-bold uppercase mb-2 text-[11pt]">6. Laporan / Ulasan Aktiviti:</div>
+               <div className="p-4 bg-gray-50 border border-black min-h-[150px] text-justify whitespace-pre-wrap leading-relaxed text-[11pt]">
                   {act.ulasan || "Tiada ulasan disediakan."}
                </div>
             </div>
 
-            {/* GAMBAR LAPORAN */}
             {act.photos && act.photos.length > 0 && (
-              <div className="pt-2">
-                 <div className="font-bold uppercase mb-4 border-b border-black w-fit">Dokumentasi Bergambar:</div>
+              <div className="pt-4 border-t border-black">
+                 <div className="font-bold uppercase mb-4 text-[11pt]">7. Dokumentasi Bergambar:</div>
                  <div className="grid grid-cols-2 gap-4">
                     {act.photos.map((photo, i) => (
-                      <div key={i} className="aspect-[4/3] border border-black overflow-hidden flex items-center justify-center bg-gray-50">
+                      <div key={i} className="aspect-[4/3] border border-black overflow-hidden flex items-center justify-center bg-white p-2">
                          <img src={photo} alt={`Gambar ${i+1}`} className="max-w-full max-h-full object-contain" />
                       </div>
                     ))}
                  </div>
               </div>
             )}
+         </div>
 
-            <div className="mt-12 grid grid-cols-2 gap-20">
-               <div className="space-y-16 text-center">
-                  <p className="font-bold uppercase text-[9pt]">Disediakan Oleh:</p>
-                  <div>
-                    <div className="border-b border-black w-48 mx-auto mb-2"></div>
-                    <p className="text-[9pt] font-bold uppercase">( SETIAUSAHA )</p>
-                  </div>
-               </div>
-               <div className="space-y-16 text-center">
-                  <p className="font-bold uppercase text-[9pt]">Disahkan Oleh:</p>
-                  <div>
-                    <div className="border-b border-black w-48 mx-auto mb-2"></div>
-                    <p className="text-[9pt] font-bold uppercase">( GURU PENASIHAT )</p>
-                  </div>
-               </div>
+         <div className="mt-12 grid grid-cols-2 gap-20">
+            <div className="text-center">
+              <p className="font-bold uppercase text-[11pt]">Disediakan Oleh:</p>
+              <div className="h-20 border-b border-black"></div>
+              <p className="text-[11pt] font-bold uppercase mt-2">( SETIAUSAHA )</p>
+            </div>
+            <div className="text-center">
+              <p className="font-bold uppercase text-[11pt]">Disahkan Oleh:</p>
+              <div className="h-20 border-b border-black"></div>
+              <p className="text-[11pt] font-bold uppercase mt-2">( GURU PENASIHAT )</p>
             </div>
          </div>
       </div>
     );
   };
 
-  // --- RENDER MODUL: LAMPIRAN B (PELEPASAN) ---
-  const renderLampiranB = (s: Student) => (
-    <div className="text-black leading-relaxed text-[10.5pt] min-h-[280mm] font-serif">
-      <div className="flex justify-end mb-2">
-        <span className="font-bold text-[11pt]">Lampiran B</span>
-      </div>
-      <JBPMHeader />
-      
-      <div className="text-center mb-8">
-        <h3 className="font-bold text-[12pt] uppercase underline">BORANG PELEPASAN TANGGUNGJAWAB</h3>
-        <p className="text-[10pt] font-bold uppercase mt-1">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA</p>
-      </div>
-
-      <div className="px-8 space-y-6">
-        <div className="space-y-4">
-          <p>Saya, <span className="font-bold border-b border-black uppercase px-2">{s.namaWaris || '................................................................'}</span> No. KP: <span className="font-bold border-b border-black px-2">{s.noKPWaris || '................................'}</span> adalah *bapa / ibu / penjaga kepada pelajar di bawah:</p>
-          
-          <div className="bg-gray-50 p-4 border border-black rounded-sm space-y-2">
-            <div className="grid grid-cols-[150px_auto]">
-              <div className="font-bold">Nama Pelajar</div><div className="uppercase font-bold">: {s.nama}</div>
-              <div className="font-bold">No. KP</div><div className="font-mono">: {s.noKP}</div>
-              <div className="font-bold">Tingkatan / Kelas</div><div className="uppercase">: {s.tingkatan} {s.kelas}</div>
-              <div className="font-bold">Nama Sekolah</div><div className="uppercase">: {schoolName}</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-4 text-justify">
-          <p>
-            1. Dengan ini saya memberikan kebenaran kepada anak / jagaan saya untuk menyertai segala aktiviti fizikal dan latihan yang dianjurkan oleh 
-            <span className="font-bold uppercase"> PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA </span> bagi tahun <span className="font-bold px-2 border-b border-black">{currentYear}</span>.
-          </p>
-          <p>
-            2. Saya sedar bahawa pihak penganjur akan mengambil segala langkah keselamatan yang perlu. Walaubagaimanapun, saya dengan ini melepaskan tanggungjawab 
-            kepada pihak sekolah, Jabatan Pendidikan Negeri, Jabatan Bomba dan Penyelamat Malaysia serta para pegawai yang bertugas daripada sebarang tuntutan 
-            ganti rugi atau tindakan undang-undang sekiranya berlaku sebarang kemalangan, kecederaan atau kehilangan harta benda yang tidak diingini ke atas anak / jagaan saya semasa atau selepas aktiviti dijalankan.
-          </p>
-          <p>
-            3. Saya juga mengesahkan bahawa anak / jagaan saya tidak mempunyai sebarang penyakit kronik atau masalah kesihatan yang boleh menghalangnya daripada menyertai aktiviti-aktiviti tersebut (seperti yang dinyatakan dalam Lampiran A).
-          </p>
-        </div>
-
-        <div className="mt-16 grid grid-cols-2 gap-20">
-          <div className="space-y-12">
-            <div className="space-y-2">
-              <div className="border-b border-black w-full h-8"></div>
-              <p className="font-bold uppercase text-[9pt]">Tandatangan Waris</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-[9pt]">Nama: .................................................</p>
-              <p className="text-[9pt]">No. KP: ...............................................</p>
-              <p className="text-[9pt]">Tarikh: ................................................</p>
-            </div>
-          </div>
-
-          <div className="space-y-12">
-            <div className="space-y-2 text-center">
-              <div className="border-b border-black w-full h-8"></div>
-              <p className="font-bold uppercase text-[9pt]">Saksi (Guru Penasihat / Pentadbir)</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-[9pt]">Nama: .................................................</p>
-              <p className="text-[9pt]">Jawatan: .............................................</p>
-              <p className="text-[9pt]">Tarikh: ................................................</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-20 border-t border-black pt-2 px-8">
-        <p className="text-[8pt] italic">* Potong yang tidak berkenaan.</p>
-      </div>
+  // --- RENDER: LAMPIRAN A, B, E, F (Generic Wrapper) ---
+  const renderLampiran = (content: React.ReactNode, title: string) => (
+    <div className="w-full">
+      <DynamicHeader title={title} />
+      {content}
     </div>
   );
 
-  // --- RENDER MODUL: LAMPIRAN E (PENUBUHAN) ---
-  const renderLampiranE = () => {
-    const penasihat = data.teachers.find(t => t.jawatan === JawatanGuru.Penasihat);
-
-    return (
-      <div className="text-black leading-snug text-[10.5pt] min-h-[280mm] font-serif">
-        <div className="flex justify-end mb-2">
-          <span className="font-bold text-[11pt]">Lampiran E</span>
+  // Content Generators untuk Lampiran
+  const renderLampiranA_Content = (s: Student) => (
+    <div className="text-[11pt] space-y-6 px-4">
+      <div className="grid grid-cols-[200px_auto] gap-y-3">
+        <div className="font-bold">1. Nama Penuh</div><div className="uppercase font-bold border-b border-black/50">: {s.nama}</div>
+        <div className="font-bold">2. No. Kad Pengenalan</div><div className="font-bold border-b border-black/50">: {s.noKP}</div>
+        <div className="font-bold">3. Tingkatan</div><div className="uppercase border-b border-black/50">: {s.tingkatan} {s.kelas}</div>
+        <div className="font-bold">4. Jantina</div><div className="uppercase border-b border-black/50">: {s.jantina}</div>
+        <div className="font-bold">5. Kaum</div><div className="uppercase border-b border-black/50">: {s.kaum}</div>
+      </div>
+      <div className="border border-black p-4 mt-6">
+        <p className="font-bold underline mb-2">PENGAKUAN KESIHATAN</p>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-[10pt]">
+           {Object.entries(s.health || {}).map(([k, v]) => (
+             k !== 'kecacatan' && (
+               <div key={k} className="flex justify-between border-b border-black/10 py-1">
+                 <span className="uppercase">{k.replace(/([A-Z])/g, ' $1')}</span>
+                 <span className="font-bold">{v ? 'YA' : 'TIDAK'}</span>
+               </div>
+             )
+           ))}
         </div>
-        <JBPMHeader />
-        
-        <div className="text-center mb-10">
-          <h3 className="font-bold text-[13pt] uppercase underline">BORANG PERMOHONAN PENUBUHAN</h3>
-          <p className="text-[10.5pt] font-bold uppercase mt-1">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA</p>
-        </div>
-
-        <div className="space-y-8 px-6">
-          <section>
-            <h4 className="font-bold border-b border-black mb-4 uppercase text-[11pt]">Bahagian A: Maklumat Sekolah / Institusi</h4>
-            <div className="grid grid-cols-[180px_auto] gap-y-3">
-              <div className="font-bold">Nama Sekolah</div><div className="uppercase font-bold">: {schoolName}</div>
-              <div className="font-bold">Alamat Sekolah</div><div className="uppercase leading-tight">: {address}</div>
-              <div className="font-bold">No. Telefon</div><div className="">: {data.teachers[0]?.telefon || '05-491 1000'}</div>
-              <div className="font-bold">Kod Sekolah</div><div className="">: CEB1003</div>
-            </div>
-          </section>
-
-          <section>
-            <h4 className="font-bold border-b border-black mb-4 uppercase text-[11pt]">Bahagian B: Maklumat Komander (Pengetua/Guru Besar)</h4>
-            <div className="grid grid-cols-[180px_auto] gap-y-3">
-              <div className="font-bold">Nama Penuh</div><div className="uppercase font-bold">: {principalName}</div>
-              <div className="font-bold">No. Kad Pengenalan</div><div className="font-mono">: ................................</div>
-              <div className="font-bold">Jawatan Hakiki</div><div className="uppercase">: PENGETUA</div>
-            </div>
-          </section>
-
-          <section>
-            <h4 className="font-bold border-b border-black mb-4 uppercase text-[11pt]">Bahagian C: Maklumat Guru Penasihat Utama</h4>
-            <div className="grid grid-cols-[180px_auto] gap-y-3">
-              <div className="font-bold">Nama Penuh</div><div className="uppercase font-bold">: {penasihat?.nama || '................................................................'}</div>
-              <div className="font-bold">No. Kad Pengenalan</div><div className="font-mono">: {penasihat?.noKP || '................................'}</div>
-              <div className="font-bold">No. Telefon (H/P)</div><div className="">: {penasihat?.telefon || '................................'}</div>
-            </div>
-          </section>
-
-          <section className="mt-12">
-             <h4 className="font-bold uppercase text-[11pt] mb-4">Pengesahan Dan Perakuan Institusi</h4>
-             <p className="text-justify leading-relaxed">
-               Saya dengan ini memohon untuk menubuhkan Pasukan Kadet Bomba dan Penyelamat Malaysia di institusi ini. Saya berjanji akan memastikan segala aktiviti yang dijalankan adalah selaras dengan perlembagaan dan arahan Jabatan Bomba dan Penyelamat Malaysia dari semasa ke semasa.
-             </p>
-             
-             <div className="mt-20 grid grid-cols-[250px_auto_250px] gap-4">
-                <div className="text-center">
-                   <div className="border-b border-black h-12"></div>
-                   <p className="mt-2 font-bold uppercase text-[9pt]">Tarikh</p>
-                </div>
-                <div></div>
-                <div className="text-center">
-                   <div className="border-b border-black h-12"></div>
-                   <p className="mt-2 font-bold uppercase text-[9pt]">Tandatangan & Cop Rasmi</p>
-                   <p className="text-[8pt] uppercase">Komander Institusi</p>
-                </div>
-             </div>
-          </section>
-        </div>
-
-        <div className="mt-24 border-t-2 border-dashed border-black pt-4">
-           <p className="text-[9pt] font-bold italic uppercase">Untuk Kegunaan Jabatan Bomba Dan Penyelamat Malaysia (JBPM) Sahaja</p>
-           <div className="mt-4 border border-black p-4 h-32">
-              <p className="text-[9pt]">Catatan / Ulasan Pegawai Penyelaras:</p>
+      </div>
+      <div className="mt-12">
+        <p className="text-justify leading-relaxed">Saya mengaku bahawa segala maklumat yang diberikan adalah benar.</p>
+        <div className="mt-8 grid grid-cols-2 gap-10">
+           <div className="text-center mt-10">
+              <div className="border-b border-black h-10 w-3/4 mx-auto"></div>
+              <p className="mt-2 font-bold uppercase text-[10pt]">Tandatangan Pelajar</p>
            </div>
         </div>
       </div>
-    );
-  };
-
-  // --- RENDER MODUL: LAMPIRAN A (KESIHATAN) ---
-  const renderLampiranA = (s: Student) => (
-    <div className="text-black leading-tight text-[10.5pt] min-h-[280mm] font-serif">
-      <div className="flex justify-end mb-2">
-        <span className="font-bold text-[11pt]">Lampiran A</span>
-      </div>
-      <JBPMHeader />
-      <div className="text-center mb-8">
-        <h3 className="font-bold text-[12pt] uppercase underline">BORANG MAKLUMAT PERIBADI</h3>
-        <p className="text-[10.5pt] font-bold uppercase mt-1">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA</p>
-      </div>
-
-      <div className="space-y-5 px-6">
-        <div className="grid grid-cols-[180px_auto] gap-x-2 gap-y-3">
-          <div className="font-bold">1. Nama Penuh</div><div className="uppercase font-bold border-b border-black/20">: {s.nama}</div>
-          <div className="font-bold">2. No. Kad Pengenalan</div><div className="font-mono border-b border-black/20">: {s.noKP}</div>
-          <div className="font-bold">3. Nama Sekolah</div><div className="uppercase border-b border-black/20">: {schoolName}</div>
-          <div className="font-bold">4. Alamat Sekolah</div><div className="uppercase border-b border-black/20">: {address}</div>
-          <div className="font-bold">5. Umur</div><div className="border-b border-black/20">: {s.umur || '-'} Tahun</div>
-          <div className="font-bold">6. Tahap Pendaftaran</div><div className="border-b border-black/20">: TAHAP {s.tahap || '-'}</div>
-          <div className="font-bold">7. Tingkatan / Kelas</div><div className="border-b border-black/20">: {s.tingkatan} {s.kelas}</div>
-        </div>
-
-        <div className="mt-8">
-          <p className="font-bold mb-4">8. PENGAKUAN KESIHATAN: - (Sila tandakan / pada ruangan berkaitan)</p>
-          <table className="w-full border-collapse border border-black text-[9.5pt]">
-            <thead>
-              <tr className="bg-gray-50 font-bold">
-                <th className="border border-black p-2 text-left w-[60%] uppercase">Jenis Penyakit / Keadaan Kesihatan</th>
-                <th className="border border-black p-2 text-center w-[20%]">ADA</th>
-                <th className="border border-black p-2 text-center w-[20%]">TIADA</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { key: 'asma', label: 'a. Asma / Sesak Nafas' },
-                { key: 'lelahTB', label: 'b. Lelah / Batuk Kering / TB' },
-                { key: 'kencingManis', label: 'c. Kencing Manis' },
-                { key: 'darahTinggi', label: 'd. Darah Tinggi' },
-                { key: 'penglihatan', label: 'e. Masalah Penglihatan (Rabun Teruk)' },
-                { key: 'pendengaran', label: 'f. Masalah Pendengaran' },
-                { key: 'kronikLain', label: 'g. Penyakit Kronik Lain' }
-              ].map(item => (
-                <tr key={item.key}>
-                  <td className="border border-black p-2 font-medium">{item.label}</td>
-                  <td className="border border-black p-2 text-center text-[12pt] font-bold">{s.health?.[item.key as keyof typeof s.health] ? '/' : ''}</td>
-                  <td className="border border-black p-2 text-center text-[12pt] font-bold">{!s.health?.[item.key as keyof typeof s.health] ? '/' : ''}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="mt-4 flex gap-4 items-start">
-            <div className="font-bold text-[9pt] shrink-0">h. Nyatakan Kecacatan (Jika Ada):</div>
-            <div className="border-b border-black flex-1 min-h-[24px] text-[9.5pt] italic">{s.health?.kecacatan || '-'}</div>
-          </div>
-        </div>
-
-        <div className="mt-10 text-justify italic text-[10pt] leading-relaxed">
-          Saya dengan ini mengaku bahawa segala maklumat yang diberikan di atas adalah benar and saya berada dalam keadaan sihat untuk menyertai segala aktiviti fizikal Pasukan Kadet Bomba dan Penyelamat Malaysia.
-        </div>
-
-        <div className="mt-16 grid grid-cols-[auto_250px] gap-10">
-          <div className="pt-4">
-            <p className="font-bold">Tarikh: ..............................</p>
-          </div>
-          <div className="text-center">
-            <div className="border-b border-black h-14"></div>
-            <p className="mt-2 font-bold uppercase text-[9pt]">Tandatangan Anggota Kadet</p>
-            <p className="text-[8pt] uppercase">( {s.nama} )</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 
-  // --- RENDER MODUL: LAMPIRAN F (KOLEKTIF) ---
-  const renderLampiranF = () => {
-    const sortedStudents = [...data.students].sort((a,b) => a.nama.localeCompare(b.nama));
-    const penasihat = data.teachers.find(t => t.jawatan === JawatanGuru.Penasihat)?.nama || principalName;
+  const renderLampiranB_Content = (s: Student) => (
+     <div className="text-[11pt] px-4 text-justify leading-relaxed space-y-6">
+        <p>Saya, <strong>{s.namaWaris || '................................'}</strong> (No KP: <strong>{s.noKPWaris || '......................'}</strong>), waris kepada pelajar bernama <strong>{s.nama}</strong> (<strong>{s.tingkatan} {s.kelas}</strong>), dengan ini memberi kebenaran kepada anak jagaan saya untuk menyertai aktiviti Pasukan Kadet Bomba.</p>
+        <p>Saya faham bahawa pihak sekolah akan mengambil langkah keselamatan yang sewajarnya. Namun demikian, saya tidak akan mengambil sebarang tindakan undang-undang terhadap pihak sekolah sekiranya berlaku kemalangan di luar jangkaan.</p>
+        <div className="mt-16 grid grid-cols-2 gap-20">
+           <div className="text-center">
+              <div className="border-b border-black h-20"></div>
+              <p className="mt-2 font-bold uppercase">( TANDATANGAN WARIS )</p>
+           </div>
+           <div className="text-center">
+              <div className="border-b border-black h-20"></div>
+              <p className="mt-2 font-bold uppercase">( SAKSI )</p>
+           </div>
+        </div>
+     </div>
+  );
 
+  // LAMPIRAN F CONTENT (REUSE AHLI TABLE BUT WITH BOMBA HEADER)
+  const renderLampiranF_Content = () => {
+    const sortedStudents = [...data.students].sort((a, b) => a.nama.localeCompare(b.nama));
     return (
-      <div className="text-black leading-tight text-[10pt] min-h-[297mm] font-serif">
-        <div className="flex justify-end mb-2">
-          <span className="font-bold text-[11pt]">Lampiran F</span>
-        </div>
-        <JBPMHeader />
-        <div className="text-center mb-8">
-          <h3 className="font-bold text-[11.5pt] uppercase underline">BORANG PENDAFTARAN KOLEKTIF</h3>
-          <p className="text-[10pt] font-bold uppercase mt-1">AHLI PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA</p>
-        </div>
-
-        <div className="space-y-3 mb-6 px-4 text-[9.5pt]">
-          <div className="grid grid-cols-[160px_auto] gap-1">
-            <div className="font-bold uppercase">Nama Sekolah</div><div className="uppercase font-bold border-b border-black/10">: {schoolName}</div>
-            <div className="font-bold uppercase">Alamat Sekolah</div><div className="uppercase border-b border-black/10">: {address}</div>
-            <div className="font-bold uppercase">Guru Penasihat</div><div className="uppercase border-b border-black/10">: {penasihat}</div>
-            <div className="font-bold uppercase">Tahun Pendaftaran</div><div className="font-bold border-b border-black/10">: {currentYear}</div>
-          </div>
-        </div>
-
-        <table className="w-full border-collapse border border-black text-[9pt]">
+      <div className="w-full">
+         <DynamicHeader title="BORANG PENDAFTARAN KOLEKTIF" subtitle="TAHUN 2025" />
+         <table className="w-full border-collapse border border-black text-[10pt]">
           <thead>
             <tr className="bg-gray-100 font-bold">
-              <th className="border border-black p-2 text-center w-[40px]">Bil.</th>
-              <th className="border border-black p-2 text-left">Nama Penuh Calon</th>
-              <th className="border border-black p-2 text-center w-[140px]">No. Kad Pengenalan</th>
-              <th className="border border-black p-2 text-center w-[120px]">No. Keahlian</th>
+              <th className="border border-black p-2 text-center w-[5%]">BIL</th>
+              <th className="border border-black p-2 text-left w-[40%]">NAMA PENUH</th>
+              <th className="border border-black p-2 text-center w-[15%]">NO. KP</th>
+              <th className="border border-black p-2 text-center w-[15%]">NO. KEAHLIAN</th>
+              <th className="border border-black p-2 text-center w-[10%]">TINGKATAN</th>
             </tr>
           </thead>
           <tbody>
@@ -681,37 +454,24 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
               <tr key={s.id}>
                 <td className="border border-black p-1.5 text-center">{idx + 1}</td>
                 <td className="border border-black p-1.5 uppercase font-bold">{s.nama}</td>
-                <td className="border border-black p-1.5 text-center font-mono">{s.noKP}</td>
+                <td className="border border-black p-1.5 text-center">{s.noKP}</td>
                 <td className="border border-black p-1.5 text-center font-bold">{s.noKeahlian || ''}</td>
+                <td className="border border-black p-1.5 text-center uppercase">{s.tingkatan} {s.kelas}</td>
               </tr>
-            ))}
-            {sortedStudents.length < 15 && Array.from({ length: 15 - sortedStudents.length }).map((_, i) => (
-               <tr key={`empty-${i}`} className="h-10">
-                 <td className="border border-black p-1.5 text-center">{sortedStudents.length + i + 1}</td>
-                 <td className="border border-black p-1.5"></td>
-                 <td className="border border-black p-1.5"></td>
-                 <td className="border border-black p-1.5"></td>
-               </tr>
             ))}
           </tbody>
         </table>
-
-        <div className="mt-12 px-6 flex justify-between items-start">
-          <div className="space-y-12">
-            <p className="font-bold uppercase text-[9pt]">Disediakan Oleh:</p>
-            <div className="pt-8">
-              <div className="border-b border-black w-[200px] mb-2"></div>
-              <p className="text-[8pt] font-bold uppercase">( Guru Penasihat )</p>
-            </div>
-          </div>
-          <div className="space-y-12 text-center">
-            <p className="font-bold uppercase text-[9pt]">Disahkan Oleh:</p>
-            <div className="pt-8">
-              <div className="border-b border-black w-[250px] mb-2"></div>
-              <p className="text-[8pt] font-bold uppercase">( Pengetua / Guru Besar / Cop Rasmi )</p>
-              <p className="text-[8pt]">Tarikh: ..............................</p>
-            </div>
-          </div>
+        <div className="mt-12 flex justify-between">
+           <div className="text-center w-[250px]">
+              <p className="font-bold uppercase text-[11pt]">Disediakan Oleh:</p>
+              <div className="h-20 border-b border-black"></div>
+              <p className="text-[11pt] font-bold uppercase mt-2">( GURU PENASIHAT )</p>
+           </div>
+           <div className="text-center w-[250px]">
+              <p className="font-bold uppercase text-[11pt]">Disahkan Oleh:</p>
+              <div className="h-20 border-b border-black"></div>
+              <p className="text-[11pt] font-bold uppercase mt-2">( PENGETUA )</p>
+           </div>
         </div>
       </div>
     );
@@ -719,72 +479,92 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
 
   const getReportContent = () => {
     switch(type) {
-      case 'PENDAFTARAN': 
-        const s = targetId ? data.students.find(x => x.id === targetId) : null;
-        if (!s) return <div className="p-20 text-center font-bold">RALAT: Data Pelajar Tidak Dijumpai</div>;
-        return renderLampiranA(s);
-      case 'LAMPIRAN_F': 
-        return renderLampiranF();
-      case 'LAMPIRAN_E':
-        return renderLampiranE();
+      case 'KEHADIRAN': return renderKehadiran();
+      case 'AHLI': return renderAhli();
+      case 'AJK': return renderAJK();
+      case 'AKTIVITI': return targetId ? renderAktiviti(targetId) : <div>Error</div>;
+      
+      // Lampiran Forms using Dynamic Header (Bomba)
+      case 'PENDAFTARAN': // Lampiran A
+        const sA = data.students.find(x => x.id === targetId);
+        return sA ? renderLampiran(renderLampiranA_Content(sA), "BORANG MAKLUMAT PERIBADI (LAMPIRAN A)") : null;
+      
       case 'LAMPIRAN_B':
-        const studentB = targetId ? data.students.find(x => x.id === targetId) : null;
-        if (!studentB) return <div className="p-20 text-center font-bold">RALAT: Data Pelajar Tidak Dijumpai</div>;
-        return renderLampiranB(studentB);
-      case 'AJK':
-        return renderAJK();
-      case 'KEHADIRAN':
-        return renderKehadiran();
-      case 'AHLI':
-        return renderAhli();
-      case 'AKTIVITI':
-        if (!targetId) return <div className="p-20 text-center font-bold">RALAT: Sila pilih aktiviti untuk dicetak.</div>;
-        return renderAktiviti(targetId);
-      default: return <div className="p-20 text-center font-bold uppercase tracking-widest">Modul Cetakan {type} Sedang Menunggu Arahan Debug</div>;
+        const sB = data.students.find(x => x.id === targetId);
+        return sB ? renderLampiran(renderLampiranB_Content(sB), "SURAT KEBENARAN IBU BAPA / PENJAGA (LAMPIRAN B)") : null;
+        
+      case 'LAMPIRAN_E':
+         return renderLampiran(
+           <div className="text-[11pt] space-y-4 px-4">
+             <p className="text-justify">Bahawasanya kami guru-guru dan pelajar-pelajar sekolah ini memohon menubuhkan Pasukan Kadet Bomba dan Penyelamat Malaysia.</p>
+             <div className="mt-8 border border-black p-4 h-32">Ulasan Pengetua:</div>
+           </div>, 
+           "PERMOHONAN PENUBUHAN PASUKAN (LAMPIRAN E)"
+         );
+
+      case 'LAMPIRAN_F':
+         return renderLampiranF_Content();
+
+      default: return <div>Modul Belum Sedia</div>;
     }
   };
 
-  const getHeaderTitle = () => {
-     switch(type) {
-        case 'LAMPIRAN_F': return 'Cetak Lampiran F (Kolektif)';
-        case 'LAMPIRAN_E': return 'Cetak Lampiran E (Permohonan)';
-        case 'LAMPIRAN_B': return 'Cetak Lampiran B (Pelepasan)';
-        case 'AJK': return 'Cetak Carta Organisasi';
-        case 'KEHADIRAN': return 'Rumusan Kehadiran Tahunan';
-        case 'AKTIVITI': return 'Laporan Aktiviti Mingguan';
-        case 'AHLI': return 'Senarai Keahlian';
-        default: return 'Cetak Lampiran A (Kesihatan)';
-     }
-  };
-
   return (
-    <div className="min-h-screen bg-slate-900 overflow-y-auto">
-      <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b-2 border-slate-200 z-[100] flex items-center justify-between px-8 text-black no-print shadow-xl">
-        <div className="flex items-center gap-4">
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><ArrowLeft className="w-6 h-6 text-red-600" /></button>
-          <h2 className="font-black text-lg uppercase tracking-tighter text-black">
-             {getHeaderTitle()}
-          </h2>
-        </div>
-        <button onClick={() => window.print()} className="flex items-center gap-3 px-10 py-3 bg-red-700 text-white font-black rounded-xl hover:bg-red-800 transition-all shadow-xl uppercase text-xs tracking-widest">
-          <Printer className="w-5 h-5" /> CETAK SEKARANG
-        </button>
+    <div className="fixed inset-0 z-[200] bg-slate-900/90 backdrop-blur-sm flex flex-col">
+      {/* TOOLBAR */}
+      <div className="h-16 bg-white border-b flex items-center justify-between px-6 shadow-md shrink-0 no-print">
+         <div className="flex items-center gap-4">
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-red-600">
+               <ArrowLeft className="w-6 h-6" />
+            </button>
+            <h2 className="font-bold text-lg uppercase text-slate-800">Pratonton Cetakan: {type}</h2>
+         </div>
+         <div className="flex items-center gap-4">
+            <div className="flex bg-gray-100 rounded-lg p-1 border">
+               <button 
+                 onClick={() => setOrientation('portrait')}
+                 className={`px-4 py-1.5 text-xs font-bold uppercase rounded-md transition-all ${orientation === 'portrait' ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-black'}`}
+               >
+                 Portrait
+               </button>
+               <button 
+                 onClick={() => setOrientation('landscape')}
+                 className={`px-4 py-1.5 text-xs font-bold uppercase rounded-md transition-all ${orientation === 'landscape' ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-black'}`}
+               >
+                 Landscape
+               </button>
+            </div>
+            <button onClick={() => window.print()} className="flex items-center gap-2 px-6 py-2 bg-blue-700 text-white font-bold rounded-lg hover:bg-blue-800 transition-colors shadow-lg">
+               <Printer className="w-4 h-4" /> CETAK
+            </button>
+         </div>
       </div>
 
-      <div className="pt-24 pb-20 flex justify-center bg-slate-900 min-h-screen no-print">
-        <div className="bg-white shadow-2xl w-[210mm] p-[15mm] print-area border border-slate-300 rounded-sm">
-          {getReportContent()}
-        </div>
+      {/* PREVIEW AREA */}
+      <div className="flex-1 overflow-auto p-8 flex justify-center bg-slate-800/50">
+         <div 
+           className={`bg-white shadow-2xl p-[10mm] transition-all duration-300 ${orientation === 'landscape' ? 'w-[297mm] min-h-[210mm]' : 'w-[210mm] min-h-[297mm]'}`}
+           style={{ fontFamily: '"Times New Roman", Times, serif' }}
+         >
+            {getReportContent()}
+         </div>
       </div>
 
-      <div className="hidden print:block">
-          {getReportContent()}
-      </div>
-      
+      {/* CSS UNTUK PRINT */}
       <style>{`
         @media print {
-          @page { size: A4; margin: 0; }
-          .print-area { padding: 15mm !important; }
+           @page { 
+             size: A4 ${orientation}; 
+             margin: 10mm; 
+           }
+           body { 
+             background: white; 
+             font-family: 'Times New Roman', Times, serif;
+             font-size: 11pt;
+             color: black;
+           }
+           .no-print { display: none !important; }
+           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
       `}</style>
     </div>
