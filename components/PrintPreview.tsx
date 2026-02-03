@@ -18,6 +18,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
   const schoolName = data.settings?.schoolName || SCHOOL_INFO.name;
   const address = data.settings?.address || SCHOOL_INFO.address;
   const principalName = SCHOOL_INFO.principal;
+  const logoUrl = data.settings?.logoUrl;
 
   const JBPMHeader = () => (
     <div className="flex flex-col items-center text-center mb-6 text-black border-b-[1.5pt] border-black pb-4">
@@ -84,88 +85,193 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     );
   };
 
-  // --- RENDER MODUL: KEHADIRAN (FORMAT MATRIKS 12 KOLUM) ---
+  // --- RENDER MODUL: KEHADIRAN (FORMAT MENGIKUT PDF) ---
   const renderKehadiran = () => {
     const sortedStudents = [...data.students].sort((a, b) => a.nama.localeCompare(b.nama));
+    
+    // Ambil semua kehadiran, sort ikut tarikh
     const sortedAttendance = [...data.attendances]
-      .sort((a, b) => new Date(a.tarikh).getTime() - new Date(b.tarikh).getTime())
-      .slice(0, 12);
+      .sort((a, b) => new Date(a.tarikh).getTime() - new Date(b.tarikh).getTime());
 
+    // Fix kepada 12 slot (column) seperti dalam PDF
+    // Jika ada lebih dari 12 perjumpaan, ambil 12 terakhir atau pertama (bergantung logik, sini ambil 12 pertama)
+    // Jika kurang, isi dengan null
     const meetingSlots = Array.from({ length: 12 }, (_, i) => sortedAttendance[i] || null);
+    
+    // Kira bilangan perjumpaan yang SEBENAR (yang ada data)
+    const totalMeetingsHeld = sortedAttendance.length > 0 ? sortedAttendance.length : 1; // Avoid divide by zero
+
+    // Pengiraan untuk Footer (Analisa per column)
+    const footerStats = meetingSlots.map(slot => {
+       if (!slot) return { hadir: 0, takHadir: 0, total: 0, percent: 0 };
+       
+       let hadirCount = 0;
+       sortedStudents.forEach(s => {
+          if (slot.presents.includes(s.id)) hadirCount++;
+       });
+
+       const totalAhli = sortedStudents.length;
+       const takHadirCount = totalAhli - hadirCount;
+       const percent = totalAhli > 0 ? Math.round((hadirCount / totalAhli) * 100) : 0;
+
+       return { hadir: hadirCount, takHadir: takHadirCount, total: totalAhli, percent };
+    });
 
     return (
-      <div className="text-black leading-tight text-[9pt] min-h-[297mm] font-serif">
-        <JBPMHeader />
-        <div className="text-center mb-6">
-          <h3 className="font-bold text-[12pt] uppercase underline">RUMUSAN KEHADIRAN AKTIVITI TAHUNAN</h3>
-          <p className="text-[10pt] font-bold uppercase mt-1">TAHUN {currentYear}</p>
+      <div className="text-black leading-tight text-[9pt] min-h-[297mm] font-serif relative">
+        {/* HEADER KHAS MENGIKUT PDF */}
+        <div className="flex justify-between items-start mb-6">
+           <div className="w-[70%]">
+              <h2 className="text-[11pt] font-bold uppercase">{schoolName}</h2>
+              <p className="text-[10pt] uppercase">{address}</p>
+              
+              <div className="mt-6">
+                 <h1 className="text-[14pt] font-bold uppercase">RUMUSAN KEDATANGAN PELAJAR</h1>
+                 <h2 className="text-[12pt] font-bold uppercase">KADET BOMBA</h2>
+              </div>
+           </div>
+           <div className="w-[30%] flex flex-col items-end">
+              {logoUrl ? (
+                 <img src={logoUrl} alt="Logo" className="h-24 w-auto object-contain mb-2" />
+              ) : (
+                 <div className="h-24 w-20 border border-black flex items-center justify-center text-[8pt] text-center italic mb-2">Tiada Logo</div>
+              )}
+              <div className="flex items-center gap-2 mt-4">
+                 <span className="font-bold text-[12pt]">Tahun :</span>
+                 <span className="font-bold text-[14pt]">{currentYear}</span>
+              </div>
+           </div>
         </div>
 
-        <table className="w-full border-collapse border border-black text-[8pt]">
+        <table className="w-full border-collapse border border-black text-[9pt]">
           <thead>
-            <tr className="bg-gray-100 font-bold">
-              <th rowSpan={2} className="border border-black p-1 text-center w-[30px]">BIL</th>
-              <th rowSpan={2} className="border border-black p-1 text-left">NAMA ANGGOTA</th>
-              <th colSpan={12} className="border border-black p-1 text-center">PERJUMPAAN / TARIKH</th>
-              <th rowSpan={2} className="border border-black p-1 text-center w-[35px]">JUM</th>
-              <th rowSpan={2} className="border border-black p-1 text-center w-[40px]">%</th>
-            </tr>
-            <tr className="bg-gray-50 font-bold text-[7pt]">
-              {meetingSlots.map((slot, i) => (
-                <th key={i} className="border border-black p-1 text-center w-[25px]">
-                  {i + 1}
-                  {slot && <div className="mt-1 text-[6pt] font-normal rotate-0">{slot.tarikh.split('-').reverse().slice(0,2).join('/')}</div>}
-                </th>
+            {/* ROW NOMBOR 1-12 */}
+            <tr className="bg-transparent font-bold text-center">
+              <th className="border border-black p-1 w-[30px]" rowSpan={2}>Bil</th>
+              <th className="border border-black p-1 text-center" rowSpan={2}>Nama Ahli</th>
+              {Array.from({length: 12}).map((_, i) => (
+                <th key={i} className="border border-black p-1 w-[25px] h-[25px] align-middle">{i + 1}</th>
               ))}
+              <th className="border border-black p-1 w-[35px] text-[8pt] rotate-header bg-gray-200">Bil Hadir</th>
+              <th className="border border-black p-1 w-[35px] text-[8pt] rotate-header bg-gray-200">Bil Tak Hadir</th>
+              <th className="border border-black p-1 w-[35px] text-[8pt] rotate-header bg-gray-200">% Kehadiran</th>
+              <th className="border border-black p-1 w-[45px] text-[8pt] bg-gray-200 leading-tight">Markah (40%)</th>
+            </tr>
+            {/* ROW TARIKH (Kecil di bawah nombor) */}
+            <tr className="text-[7pt]">
+               {meetingSlots.map((slot, i) => (
+                  <th key={`date-${i}`} className="border border-black h-[40px] align-bottom p-0.5">
+                     {slot && (
+                        <div className="whitespace-nowrap -rotate-90 origin-center text-[7pt]">
+                           {slot.tarikh.split('-').reverse().slice(0,2).join('/')}
+                        </div>
+                     )}
+                  </th>
+               ))}
+               {/* Spacer cells for summary columns in the second header row */}
+               <th className="border border-black bg-gray-200"></th>
+               <th className="border border-black bg-gray-200"></th>
+               <th className="border border-black bg-gray-200"></th>
+               <th className="border border-black bg-gray-200"></th>
             </tr>
           </thead>
           <tbody>
             {sortedStudents.map((s, idx) => {
               let totalPresent = 0;
+              // Check kehadiran untuk SEMUA rekod yang ada (bukan just 12 slot display)
+              // Tapi untuk display table, kita kira based on available slots displayed or actual data?
+              // Usually calculated based on data available.
+              
+              // Kira kehadiran specific student ini
+              data.attendances.forEach(att => {
+                  if (att.presents.includes(s.id)) totalPresent++;
+              });
+
+              // Markah 40% = (Hadir / Jumlah Perjumpaan Diadakan) * 40
+              // Jumlah perjumpaan diadakan = data.attendances.length
+              const totalHeld = data.attendances.length || 1;
+              const percent = Math.round((totalPresent / totalHeld) * 100);
+              const totalAbsent = totalHeld - totalPresent;
+              const markah = ((totalPresent / totalHeld) * 40).toFixed(0);
+
               return (
-                <tr key={s.id}>
+                <tr key={s.id} className="h-[25px]">
                   <td className="border border-black p-1 text-center">{idx + 1}</td>
-                  <td className="border border-black p-1 uppercase font-bold text-[8.5pt] whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">{s.nama}</td>
+                  <td className="border border-black p-1 px-2 uppercase font-semibold text-[9pt] whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">{s.nama}</td>
                   {meetingSlots.map((slot, i) => {
                     const isPresent = slot ? slot.presents.includes(s.id) : false;
-                    if (isPresent) totalPresent++;
                     return (
-                      <td key={i} className="border border-black p-1 text-center font-bold">
+                      <td key={i} className="border border-black p-0 text-center font-bold align-middle">
                         {isPresent ? '/' : ''}
                       </td>
                     );
                   })}
-                  <td className="border border-black p-1 text-center font-bold">{totalPresent}</td>
-                  <td className="border border-black p-1 text-center">
-                    {sortedAttendance.length > 0 
-                      ? Math.round((totalPresent / sortedAttendance.length) * 100) 
-                      : 0}%
-                  </td>
+                  <td className="border border-black p-1 text-center bg-gray-100 font-bold">{totalPresent}</td>
+                  <td className="border border-black p-1 text-center bg-gray-100">{totalAbsent}</td>
+                  <td className="border border-black p-1 text-center bg-gray-100">{percent}</td>
+                  <td className="border border-black p-1 text-center bg-gray-100 font-bold">{markah}</td>
                 </tr>
               );
             })}
+            
+            {/* ISI KOSONG JIKA LIST PENDEK UTK NAMPAK FULL PAGE */}
+            {sortedStudents.length < 20 && Array.from({length: 20 - sortedStudents.length}).map((_, i) => (
+               <tr key={`empty-${i}`} className="h-[25px]">
+                  <td className="border border-black text-center">{sortedStudents.length + i + 1}</td>
+                  <td className="border border-black"></td>
+                  {Array.from({length: 16}).map((__, j) => <td key={j} className={`border border-black ${j >= 12 ? 'bg-gray-100' : ''}`}></td>)}
+               </tr>
+            ))}
           </tbody>
+          
+          {/* FOOTER: ANALISA BAWAH SEPERTI PDF */}
+          <tfoot>
+             {/* ROW: HADIR */}
+             <tr>
+                <td colSpan={2} className="border border-black p-1 text-right font-bold pr-4">Hadir</td>
+                {footerStats.map((stat, i) => (
+                   <td key={i} className="border border-black text-center font-bold text-[8pt]">{stat.total > 0 ? stat.hadir : ''}</td>
+                ))}
+                <td colSpan={4} className="border border-black bg-gray-100"></td>
+             </tr>
+             {/* ROW: TIDAK HADIR */}
+             <tr>
+                <td colSpan={2} className="border border-black p-1 text-right font-bold pr-4">Tidak Hadir</td>
+                {footerStats.map((stat, i) => (
+                   <td key={i} className="border border-black text-center font-bold text-[8pt]">{stat.total > 0 ? stat.takHadir : ''}</td>
+                ))}
+                <td colSpan={4} className="border border-black bg-gray-100"></td>
+             </tr>
+             {/* ROW: JUMLAH AHLI */}
+             <tr>
+                <td colSpan={2} className="border border-black p-1 text-right font-bold pr-4">Jumlah Ahli</td>
+                {footerStats.map((stat, i) => (
+                   <td key={i} className="border border-black text-center font-bold text-[8pt]">{stat.total > 0 ? stat.total : ''}</td>
+                ))}
+                <td colSpan={4} className="border border-black bg-gray-100"></td>
+             </tr>
+             {/* ROW: PERATUS KEHADIRAN */}
+             <tr className="h-[30px]">
+                <td colSpan={2} className="border border-black p-1 text-right font-bold pr-4">Peratus Kehadiran</td>
+                {footerStats.map((stat, i) => (
+                   <td key={i} className="border border-black text-center font-bold text-[8pt]">{stat.total > 0 ? stat.percent : ''}</td>
+                ))}
+                <td colSpan={4} className="border border-black bg-gray-100"></td>
+             </tr>
+          </tfoot>
         </table>
 
-        <div className="mt-8">
-           <p className="text-[8pt] font-bold uppercase underline mb-2">PETUNJUK:</p>
-           <div className="flex gap-8 text-[8pt]">
-              <div>/ : HADIR</div>
-              <div>O : TIDAK HADIR</div>
-              <div>TH : TIDAK HADIR BERSEBAB</div>
-           </div>
-        </div>
-
-        <div className="mt-12 flex justify-between items-end">
-           <div className="text-[8pt] italic w-[200px]">
-             * Rekod dijana secara automatik oleh sistem.
-           </div>
-           <div className="text-center w-[200px]">
-              <p className="font-bold uppercase text-[9pt]">Disahkan Oleh:</p>
-              <div className="h-16 border-b border-black"></div>
-              <p className="text-[9pt] font-bold uppercase mt-2">( GURU PENASIHAT )</p>
-           </div>
-        </div>
+        {/* CSS KHAS UNTUK HEADER ROTATE */}
+        <style>{`
+           .rotate-header {
+             writing-mode: vertical-rl;
+             transform: rotate(180deg);
+             white-space: nowrap;
+             height: 80px;
+             text-align: center;
+             vertical-align: middle;
+           }
+        `}</style>
       </div>
     );
   };
