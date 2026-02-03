@@ -497,33 +497,38 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
         @media print {
            @page { 
              size: A4 ${orientation}; 
-             margin: 10mm; /* Browser uruskan margin kertas */
+             margin: 10mm;
            }
+           
+           /* Reset body dan html */
            html, body {
-             height: auto !important;
-             overflow: visible !important;
-             background: white !important;
              margin: 0 !important;
              padding: 0 !important;
-             width: 100% !important;
-           }
-           
-           /* Sembunyikan semua UI asal */
-           body > * { display: none !important; }
-           
-           /* Paparkan hanya kawasan print */
-           #printable-area { 
-             display: block !important;
-             position: absolute !important;
-             top: 0 !important;
-             left: 0 !important;
+             background: white !important;
              width: 100% !important;
              height: auto !important;
-             margin: 0 !important;
-             padding: 0 !important; /* Margin dah set di @page */
-             box-shadow: none !important;
-             background: white !important;
              overflow: visible !important;
+           }
+
+           /* Sembunyikan semua elemen dalam body secara default (bukan display:none untuk elak hilang parent) */
+           body * {
+             visibility: hidden;
+           }
+
+           /* Paparkan hanya kawasan print dan anak-anaknya */
+           #printable-area, #printable-area * {
+             visibility: visible;
+           }
+
+           /* Letakkan kawasan print di posisi mutlak atas kiri */
+           #printable-area {
+             position: absolute !important;
+             left: 0 !important;
+             top: 0 !important;
+             width: 100% !important;
+             margin: 0 !important;
+             padding: 0 !important;
+             box-shadow: none !important;
            }
            
            /* Pastikan text warna hitam */
@@ -533,7 +538,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
              color: black !important;
            }
            
-           /* TABLE LOGIC: Header Berulang */
+           /* TABLE LOGIC */
            table { 
              width: 100%; 
              border-collapse: collapse; 
@@ -550,7 +555,6 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
              display: table-footer-group; 
            }
            
-           /* ELAKKAN PECAH COMPONENT PENTING */
            .break-inside-avoid, .page-break-inside-avoid {
              page-break-inside: avoid !important;
              break-inside: avoid !important;
