@@ -31,8 +31,8 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
   const address = data.settings?.address || SCHOOL_INFO.address;
   const schoolLogo = data.settings?.logoUrl;
 
-  // URL Logo JBPM
-  const BOMBA_LOGO = "https://upload.wikimedia.org/wikipedia/commons/8/87/Jabatan_Bomba_dan_Penyelamat_Malaysia.png";
+  // URL Logo JBPM (Guna Custom jika ada, jika tidak guna Default CDN)
+  const BOMBA_LOGO = data.settings?.bombaLogoUrl || "https://upload.wikimedia.org/wikipedia/commons/8/87/Jabatan_Bomba_dan_Penyelamat_Malaysia.png";
 
   // --- HEADER SEKOLAH (FORMAT SURAT RASMI - LOGO KIRI) ---
   const SchoolHeader = () => (

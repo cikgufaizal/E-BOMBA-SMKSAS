@@ -105,7 +105,8 @@ export interface AnnualPlan {
 
 export interface CloudSettings {
   sheetUrl: string;
-  logoUrl?: string;
+  logoUrl?: string; // Sekolah
+  bombaLogoUrl?: string; // Bomba Custom
   schoolName?: string;
   clubName?: string;
   address?: string;

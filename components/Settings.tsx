@@ -14,12 +14,19 @@ interface Props {
 const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
   const [password, setPassword] = useState('');
   const [isAuthorized, setIsAuthorized] = useState(false);
+  
   const [schoolName, setSchoolName] = useState(data.settings?.schoolName || '');
   const [clubName, setClubName] = useState(data.settings?.clubName || '');
   const [address, setAddress] = useState(data.settings?.address || '');
+  
+  // LOGO STATES
   const [logoUrl, setLogoUrl] = useState(data.settings?.logoUrl || '');
+  const [bombaLogoUrl, setBombaLogoUrl] = useState(data.settings?.bombaLogoUrl || '');
+
   const [isSaving, setIsSaving] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const schoolLogoInputRef = useRef<HTMLInputElement>(null);
+  const bombaLogoInputRef = useRef<HTMLInputElement>(null);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,16 +34,21 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
     else { alert("Akses Ditolak!"); setPassword(''); }
   };
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // GENERIC LOGO UPLOAD HANDLER (Max 2MB)
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'school' | 'bomba') => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 500000) { // Had 500KB untuk prestasi cloud
-        alert("Saiz fail terlalu besar! Sila gunakan imej bawah 500KB.");
+      if (file.size > 2 * 1024 * 1024) { // Had 2MB
+        alert("Saiz fail terlalu besar! Sila gunakan imej bawah 2MB.");
         return;
       }
       const reader = new FileReader();
       reader.onloadend = () => {
-        setLogoUrl(reader.result as string);
+        if (type === 'school') {
+            setLogoUrl(reader.result as string);
+        } else {
+            setBombaLogoUrl(reader.result as string);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -120,13 +132,15 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
 
       <FormCard title="Global Unit Profiles">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="md:col-span-2 space-y-4">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Logo Sekolah / Unit</label>
-            <div className="flex flex-col md:flex-row items-center gap-8 p-6 bg-slate-950/50 border border-white/[0.05] rounded-[2rem]">
-              <div className="w-32 h-32 bg-slate-900 rounded-2xl border-2 border-dashed border-slate-800 flex items-center justify-center overflow-hidden shrink-0 group relative">
+          
+          {/* LOGO SEKOLAH */}
+          <div className="space-y-4">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Logo Sekolah (Header Sekolah)</label>
+            <div className="flex items-center gap-4 p-4 bg-slate-950/50 border border-white/[0.05] rounded-[2rem]">
+              <div className="w-24 h-24 bg-slate-900 rounded-2xl border-2 border-dashed border-slate-800 flex items-center justify-center overflow-hidden shrink-0 group relative">
                 {logoUrl ? (
                   <>
-                    <img src={logoUrl} alt="Logo Preview" className="w-full h-full object-contain p-2" />
+                    <img src={logoUrl} alt="School Logo" className="w-full h-full object-contain p-2" />
                     <button 
                       onClick={() => setLogoUrl('')}
                       className="absolute inset-0 bg-red-600/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
@@ -138,31 +152,63 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
                   <ImageIcon className="w-8 h-8 text-slate-700" />
                 )}
               </div>
-              <div className="flex-1 space-y-3">
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-tight">Resolusi disarankan: 512x512 (PNG/JPG)</p>
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  onChange={handleLogoUpload} 
-                  accept="image/*" 
-                  className="hidden" 
-                />
-                <Button variant="secondary" onClick={() => fileInputRef.current?.click()} className="w-full h-12">
-                  Muat Naik Imej Logo
+              <div className="flex-1 space-y-2">
+                <p className="text-[10px] text-slate-500 font-bold uppercase">Max Size: 2MB</p>
+                <input type="file" ref={schoolLogoInputRef} onChange={(e) => handleLogoUpload(e, 'school')} accept="image/*" className="hidden" />
+                <Button variant="secondary" onClick={() => schoolLogoInputRef.current?.click()} className="w-full py-2 text-[10px]">
+                  Upload Logo Sekolah
                 </Button>
               </div>
             </div>
           </div>
-          
-          <Input label="Nama Sekolah" value={schoolName} onChange={(e: any) => setSchoolName(e.target.value)} />
-          <Input label="Nama Unit" value={clubName} onChange={(e: any) => setClubName(e.target.value)} />
-          <div className="md:col-span-2">
-            <Input label="Alamat Surat-Menyurat" value={address} onChange={(e: any) => setAddress(e.target.value)} />
+
+          {/* LOGO BOMBA */}
+          <div className="space-y-4">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Logo Bomba (Header Bomba)</label>
+            <div className="flex items-center gap-4 p-4 bg-slate-950/50 border border-white/[0.05] rounded-[2rem]">
+              <div className="w-24 h-24 bg-slate-900 rounded-2xl border-2 border-dashed border-slate-800 flex items-center justify-center overflow-hidden shrink-0 group relative">
+                {bombaLogoUrl ? (
+                  <>
+                    <img src={bombaLogoUrl} alt="Bomba Logo" className="w-full h-full object-contain p-2" />
+                    <button 
+                      onClick={() => setBombaLogoUrl('')}
+                      className="absolute inset-0 bg-red-600/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                    >
+                      <Trash2 className="w-6 h-6" />
+                    </button>
+                  </>
+                ) : (
+                  <ImageIcon className="w-8 h-8 text-slate-700" />
+                )}
+              </div>
+              <div className="flex-1 space-y-2">
+                <p className="text-[10px] text-slate-500 font-bold uppercase">Max Size: 2MB</p>
+                <input type="file" ref={bombaLogoInputRef} onChange={(e) => handleLogoUpload(e, 'bomba')} accept="image/*" className="hidden" />
+                <Button variant="secondary" onClick={() => bombaLogoInputRef.current?.click()} className="w-full py-2 text-[10px]">
+                  Upload Logo Bomba
+                </Button>
+              </div>
+            </div>
           </div>
+
+          <div className="md:col-span-2 space-y-6 mt-4">
+              <Input label="Nama Sekolah" value={schoolName} onChange={(e: any) => setSchoolName(e.target.value)} />
+              <Input label="Nama Unit" value={clubName} onChange={(e: any) => setClubName(e.target.value)} />
+              <Input label="Alamat Surat-Menyurat" value={address} onChange={(e: any) => setAddress(e.target.value)} />
+          </div>
+
           <Button 
             onClick={() => { 
-              updateData({ settings: { ...data.settings, schoolName, clubName, address, logoUrl, sheetUrl: data.settings?.sheetUrl || '' } as any }); 
-              alert("Profil dikemaskini."); 
+              updateData({ settings: { 
+                  ...data.settings, 
+                  schoolName, 
+                  clubName, 
+                  address, 
+                  logoUrl, 
+                  bombaLogoUrl, 
+                  sheetUrl: data.settings?.sheetUrl || '' 
+              } as any }); 
+              alert("Profil & Logo dikemaskini."); 
             }} 
             className="md:col-span-2 h-14"
           >
