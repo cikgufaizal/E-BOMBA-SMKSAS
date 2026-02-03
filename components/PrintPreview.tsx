@@ -17,7 +17,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
   // State untuk orientasi kertas
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
 
-  // Auto-set orientasi berdasarkan jenis laporan
+  // Auto-set orientasi
   useEffect(() => {
     if (type === 'KEHADIRAN' || type === 'AHLI') {
       setOrientation('landscape');
@@ -31,80 +31,71 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
   const address = data.settings?.address || SCHOOL_INFO.address;
   const schoolLogo = data.settings?.logoUrl;
 
-  // URL Logo JBPM (Public CDN)
+  // URL Logo JBPM
   const BOMBA_LOGO = "https://upload.wikimedia.org/wikipedia/commons/8/87/Jabatan_Bomba_dan_Penyelamat_Malaysia.png";
 
-  // Tentukan jika modul ini memerlukan Letterhead Bomba
+  // Tentukan LOGIK HEADER:
+  // HANYA modul Pendaftaran/Lampiran guna header Bomba.
+  // Modul pengurusan dalaman (Aktiviti, Kehadiran, AJK, Senarai Ahli) guna header Sekolah.
   const isBombaModule = ['PENDAFTARAN', 'LAMPIRAN_A', 'LAMPIRAN_B', 'LAMPIRAN_D', 'LAMPIRAN_E', 'LAMPIRAN_F'].includes(type);
 
-  // --- KOMPONEN HEADER DINAMIK (BOMBA vs SEKOLAH) ---
-  const DynamicHeader = ({ title, subtitle }: { title?: string, subtitle?: string }) => {
-    
-    // Konfigurasi Header
-    const headerConfig = isBombaModule ? {
-        logo: BOMBA_LOGO,
-        mainTitle: "PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA",
-        subTitle: schoolName, // Nama sekolah di bawah tajuk Bomba
-        address: address
-    } : {
-        logo: schoolLogo,
-        mainTitle: schoolName,
-        subTitle: address,
-        address: "(Unit Kokurikulum - Pasukan Kadet Bomba & Penyelamat Malaysia)"
-    };
-
-    return (
-      <div className="mb-6">
-        <div className="flex items-center gap-6 border-b-2 border-black pb-4 mb-4">
-          {/* LOGO DI SEBELAH KIRI */}
-          <div className="shrink-0 w-24 h-24 flex items-center justify-center">
-            {headerConfig.logo ? (
-              <img src={headerConfig.logo} alt="Logo" className="w-full h-full object-contain" />
-            ) : (
-              <div className="w-20 h-20 border-2 border-dashed border-black flex items-center justify-center text-[8pt] text-center italic">
-                TIADA LOGO
-              </div>
-            )}
-          </div>
-          
-          {/* TEKS HEADER */}
-          <div className="flex-1 text-left uppercase">
-            <h1 className="font-bold text-[14pt] leading-tight mb-1">{headerConfig.mainTitle}</h1>
-            <p className="font-bold text-[10pt] leading-tight text-black/90">{headerConfig.subTitle}</p>
-            <div className={`mt-1 text-[9pt] ${isBombaModule ? 'font-normal' : 'italic font-normal normal-case'}`}>
-               {headerConfig.address}
-            </div>
-          </div>
-        </div>
-
-        {/* TAJUK DOKUMEN (JIKA ADA) */}
-        {(title || subtitle) && (
-          <div className="text-center mt-4 mb-6">
-             {title && <h2 className="text-[12pt] font-bold uppercase underline">{title}</h2>}
-             {subtitle && <p className="text-[11pt] font-bold uppercase mt-1">{subtitle}</p>}
-          </div>
-        )}
+  // --- HEADER SEKOLAH (FORMAT SURAT RASMI - LOGO KIRI) ---
+  const SchoolHeader = () => (
+    <div className="w-full mb-8 border-b-2 border-black pb-4 flex items-center gap-6 font-serif">
+      <div className="w-24 h-24 shrink-0 flex items-center justify-center">
+         {schoolLogo ? (
+            <img src={schoolLogo} alt="Logo Sekolah" className="w-full h-full object-contain" />
+         ) : (
+            <div className="border border-dashed border-black w-20 h-20 flex items-center justify-center text-[8pt] text-center italic">Tiada Logo</div>
+         )}
       </div>
-    );
-  };
+      <div className="flex-1 uppercase text-left">
+         <h1 className="text-[14pt] font-bold leading-tight tracking-wide text-black">{schoolName}</h1>
+         <p className="text-[10pt] font-semibold leading-tight mt-1 text-black">{address}</p>
+         <p className="text-[9pt] italic normal-case mt-2 text-black">(Unit Kokurikulum - Pasukan Kadet Bomba)</p>
+      </div>
+    </div>
+  );
 
-  // --- RENDER MODUL: SENARAI AHLI ---
+  // --- HEADER BOMBA (FORMAT BORANG - LOGO TENGAH) ---
+  const BombaHeader = () => (
+    <div className="w-full mb-8 text-center font-serif uppercase">
+       <div className="flex justify-center mb-3">
+          <img src={BOMBA_LOGO} alt="Logo JBPM" className="h-24 w-auto object-contain" />
+       </div>
+       <h2 className="text-[12pt] font-bold text-black">JABATAN BOMBA DAN PENYELAMAT MALAYSIA</h2>
+       <h3 className="text-[11pt] font-bold text-black">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA</h3>
+       <div className="border-b-2 border-black w-full mt-4"></div>
+    </div>
+  );
+
+  // WRAPPER HEADER DINAMIK
+  const DynamicHeader = ({ title, subtitle }: { title?: string, subtitle?: string }) => (
+    <div className="w-full">
+       {isBombaModule ? <BombaHeader /> : <SchoolHeader />}
+       {(title || subtitle) && (
+          <div className="text-center mb-8 font-serif uppercase text-black">
+             {title && <h2 className="text-[12pt] font-bold underline">{title}</h2>}
+             {subtitle && <p className="text-[11pt] font-bold mt-1">{subtitle}</p>}
+          </div>
+       )}
+    </div>
+  );
+
+  // --- RENDER MODUL: SENARAI AHLI (Guna SchoolHeader) ---
   const renderAhli = () => {
     const sortedStudents = [...data.students].sort((a, b) => a.nama.localeCompare(b.nama));
-    
     return (
       <div className="w-full">
         <DynamicHeader 
-          title="SENARAI NAMADAFTAR KEAHLIAN" 
+          title="SENARAI KEHADIRAN / KEAHLIAN PASUKAN" 
           subtitle={`TAHUN ${currentYear}`} 
         />
-
-        <div className="flex justify-between items-end mb-2 text-[10pt] font-bold">
+        <div className="flex justify-between items-end mb-2 text-[10pt] font-bold font-serif text-black">
            <p>GURU PENASIHAT: {data.teachers.find(t => t.jawatan === JawatanGuru.Penasihat)?.nama || '................................'}</p>
            <p>JUMLAH AHLI: {sortedStudents.length} ORANG</p>
         </div>
-
-        <table className="w-full border-collapse border border-black text-[10pt]">
+        <table className="w-full border-collapse border border-black text-[10pt] font-serif">
           <thead>
             <tr className="bg-gray-100 font-bold">
               <th className="border border-black p-2 text-center w-[5%]">BIL</th>
@@ -130,37 +121,31 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
             ))}
           </tbody>
         </table>
-
-        <div className="mt-12 flex justify-end">
+        <div className="mt-12 flex justify-end font-serif text-black">
            <div className="text-center w-[250px]">
               <p className="font-bold uppercase text-[11pt]">Disahkan Oleh:</p>
               <div className="h-20 border-b border-black"></div>
               <p className="text-[11pt] font-bold uppercase mt-2">( PENGETUA / PK KOKURIKULUM )</p>
-              <p className="text-[10pt] mt-1">Tarikh: .................................</p>
            </div>
         </div>
       </div>
     );
   };
 
-  // --- RENDER MODUL: KEHADIRAN (FORMAT PDF KPM) ---
+  // --- RENDER MODUL: KEHADIRAN (Guna SchoolHeader) ---
   const renderKehadiran = () => {
     const sortedStudents = [...data.students].sort((a, b) => a.nama.localeCompare(b.nama));
     const sortedAttendance = [...data.attendances]
       .sort((a, b) => new Date(a.tarikh).getTime() - new Date(b.tarikh).getTime());
-
-    // Fix 12 column untuk bulan/perjumpaan
     const meetingSlots = Array.from({ length: 12 }, (_, i) => sortedAttendance[i] || null);
     
-    // Kiraan Statistik Bawah
     const footerStats = meetingSlots.map(slot => {
        if (!slot) return { hadir: 0, takHadir: 0, total: 0, percent: 0 };
        let hadirCount = 0;
        sortedStudents.forEach(s => { if (slot.presents.includes(s.id)) hadirCount++; });
        const totalAhli = sortedStudents.length;
-       const takHadirCount = totalAhli - hadirCount;
        const percent = totalAhli > 0 ? Math.round((hadirCount / totalAhli) * 100) : 0;
-       return { hadir: hadirCount, takHadir: takHadirCount, total: totalAhli, percent };
+       return { hadir: hadirCount, takHadir: totalAhli - hadirCount, total: totalAhli, percent };
     });
 
     return (
@@ -169,8 +154,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
           title="RUMUSAN KEHADIRAN AKTIVITI KOKURIKULUM" 
           subtitle={`TAHUN ${currentYear}`} 
         />
-
-        <table className="w-full border-collapse border border-black text-[10pt]">
+        <table className="w-full border-collapse border border-black text-[9pt] font-serif">
           <thead>
             <tr className="bg-transparent font-bold text-center">
               <th className="border border-black p-1 w-[3%]" rowSpan={2}>BIL</th>
@@ -178,10 +162,10 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
               {Array.from({length: 12}).map((_, i) => (
                 <th key={i} className="border border-black p-1 w-[2.5%] align-middle bg-gray-50">{i + 1}</th>
               ))}
-              <th className="border border-black p-1 w-[4%] text-[9pt] bg-gray-100 leading-tight">JUM<br/>HADIR</th>
-              <th className="border border-black p-1 w-[4%] text-[9pt] bg-gray-100 leading-tight">TIDAK<br/>HADIR</th>
-              <th className="border border-black p-1 w-[4%] text-[9pt] bg-gray-100">%</th>
-              <th className="border border-black p-1 w-[6%] text-[9pt] bg-gray-200">MARKAH<br/>(40%)</th>
+              <th className="border border-black p-1 w-[4%] text-[8pt] bg-gray-100">JUM<br/>HADIR</th>
+              <th className="border border-black p-1 w-[4%] text-[8pt] bg-gray-100">TIDAK<br/>HADIR</th>
+              <th className="border border-black p-1 w-[4%] text-[8pt] bg-gray-100">%</th>
+              <th className="border border-black p-1 w-[6%] text-[8pt] bg-gray-200">MARKAH<br/>(40%)</th>
             </tr>
             <tr className="text-[8pt]">
                {meetingSlots.map((slot, i) => (
@@ -205,23 +189,18 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
               data.attendances.forEach(att => { if (att.presents.includes(s.id)) totalPresent++; });
               const totalHeld = data.attendances.length || 1;
               const percent = Math.round((totalPresent / totalHeld) * 100);
-              const totalAbsent = totalHeld - totalPresent;
               const markah = ((totalPresent / totalHeld) * 40).toFixed(0);
 
               return (
                 <tr key={s.id} className="h-[28px]">
                   <td className="border border-black p-1 text-center">{idx + 1}</td>
-                  <td className="border border-black p-1 px-2 uppercase font-semibold text-[10pt] whitespace-nowrap overflow-hidden text-ellipsis max-w-[250px]">{s.nama}</td>
+                  <td className="border border-black p-1 px-2 uppercase font-semibold text-[9pt] whitespace-nowrap overflow-hidden text-ellipsis max-w-[250px]">{s.nama}</td>
                   {meetingSlots.map((slot, i) => {
                     const isPresent = slot ? slot.presents.includes(s.id) : false;
-                    return (
-                      <td key={i} className="border border-black p-0 text-center font-bold align-middle">
-                        {isPresent ? '/' : ''}
-                      </td>
-                    );
+                    return <td key={i} className="border border-black p-0 text-center font-bold align-middle">{isPresent ? '/' : ''}</td>;
                   })}
                   <td className="border border-black p-1 text-center bg-gray-50 font-bold">{totalPresent}</td>
-                  <td className="border border-black p-1 text-center bg-gray-50">{totalAbsent}</td>
+                  <td className="border border-black p-1 text-center bg-gray-50">{totalHeld - totalPresent}</td>
                   <td className="border border-black p-1 text-center bg-gray-50">{percent}</td>
                   <td className="border border-black p-1 text-center bg-gray-200 font-bold">{markah}</td>
                 </tr>
@@ -250,7 +229,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     );
   };
 
-  // --- RENDER MODUL: CARTA ORGANISASI (AJK) ---
+  // --- RENDER MODUL: CARTA ORGANISASI (Guna SchoolHeader) ---
   const renderAJK = () => {
     const order = Object.values(JawatanAJK);
     const sortedCommittees = [...data.committees].sort((a, b) => order.indexOf(a.jawatan) - order.indexOf(b.jawatan));
@@ -258,11 +237,10 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     return (
       <div className="w-full">
         <DynamicHeader 
-          title="CARTA ORGANISASI MURID" 
+          title="CARTA ORGANISASI PASUKAN" 
           subtitle={`TAHUN ${currentYear}`} 
         />
-
-        <table className="w-full border-collapse border border-black text-[11pt] mt-6">
+        <table className="w-full border-collapse border border-black text-[11pt] mt-6 font-serif">
           <thead>
             <tr className="bg-gray-100 font-bold">
               <th className="border border-black p-3 text-center w-[10%]">BIL</th>
@@ -288,8 +266,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
             )}
           </tbody>
         </table>
-        
-        <div className="mt-16 grid grid-cols-2 gap-20">
+        <div className="mt-16 grid grid-cols-2 gap-20 font-serif text-black">
           <div className="text-center">
             <p className="font-bold uppercase text-[11pt]">Disediakan Oleh:</p>
             <div className="h-20 border-b border-black"></div>
@@ -305,7 +282,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     );
   };
 
-  // --- RENDER MODUL: AKTIVITI ---
+  // --- RENDER MODUL: AKTIVITI (Guna SchoolHeader) ---
   const renderAktiviti = (actId: string) => {
     const act = data.activities.find(a => a.id === actId);
     if (!act) return <div>Data Tidak Dijumpai</div>;
@@ -317,32 +294,20 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     return (
       <div className="w-full">
          <DynamicHeader title="LAPORAN AKTIVITI MINGGUAN" />
-
-         <div className="border border-black p-6 space-y-6">
+         <div className="border border-black p-6 space-y-6 font-serif text-black">
             <div className="grid grid-cols-[180px_auto] gap-y-4 text-[11pt]">
-               <div className="font-bold uppercase">1. Nama Aktiviti</div>
-               <div className="font-bold uppercase">: {act.nama}</div>
-               
-               <div className="font-bold uppercase">2. Tarikh</div>
-               <div className="uppercase">: {act.tarikh}</div>
-
-               <div className="font-bold uppercase">3. Masa</div>
-               <div className="uppercase">: {act.masa}</div>
-
-               <div className="font-bold uppercase">4. Tempat</div>
-               <div className="uppercase">: {act.tempat}</div>
-
-               <div className="font-bold uppercase">5. Kehadiran</div>
-               <div className="uppercase">: {presentCount} / {totalStudents} ({percentage}%)</div>
+               <div className="font-bold uppercase">1. Nama Aktiviti</div><div className="font-bold uppercase">: {act.nama}</div>
+               <div className="font-bold uppercase">2. Tarikh</div><div className="uppercase">: {act.tarikh}</div>
+               <div className="font-bold uppercase">3. Masa</div><div className="uppercase">: {act.masa}</div>
+               <div className="font-bold uppercase">4. Tempat</div><div className="uppercase">: {act.tempat}</div>
+               <div className="font-bold uppercase">5. Kehadiran</div><div className="uppercase">: {presentCount} / {totalStudents} ({percentage}%)</div>
             </div>
-
             <div className="pt-4 border-t border-black">
                <div className="font-bold uppercase mb-2 text-[11pt]">6. Laporan / Ulasan Aktiviti:</div>
                <div className="p-4 bg-gray-50 border border-black min-h-[150px] text-justify whitespace-pre-wrap leading-relaxed text-[11pt]">
                   {act.ulasan || "Tiada ulasan disediakan."}
                </div>
             </div>
-
             {act.photos && act.photos.length > 0 && (
               <div className="pt-4 border-t border-black">
                  <div className="font-bold uppercase mb-4 text-[11pt]">7. Dokumentasi Bergambar:</div>
@@ -356,8 +321,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
               </div>
             )}
          </div>
-
-         <div className="mt-12 grid grid-cols-2 gap-20">
+         <div className="mt-12 grid grid-cols-2 gap-20 font-serif text-black">
             <div className="text-center">
               <p className="font-bold uppercase text-[11pt]">Disediakan Oleh:</p>
               <div className="h-20 border-b border-black"></div>
@@ -373,7 +337,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     );
   };
 
-  // --- RENDER: LAMPIRAN A, B, E, F (Generic Wrapper) ---
+  // --- RENDER LAMPIRAN (Guna BombaHeader) ---
   const renderLampiran = (content: React.ReactNode, title: string) => (
     <div className="w-full">
       <DynamicHeader title={title} />
@@ -381,9 +345,8 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
     </div>
   );
 
-  // Content Generators untuk Lampiran
   const renderLampiranA_Content = (s: Student) => (
-    <div className="text-[11pt] space-y-6 px-4">
+    <div className="text-[11pt] space-y-6 px-4 font-serif text-black">
       <div className="grid grid-cols-[200px_auto] gap-y-3">
         <div className="font-bold">1. Nama Penuh</div><div className="uppercase font-bold border-b border-black/50">: {s.nama}</div>
         <div className="font-bold">2. No. Kad Pengenalan</div><div className="font-bold border-b border-black/50">: {s.noKP}</div>
@@ -417,7 +380,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
   );
 
   const renderLampiranB_Content = (s: Student) => (
-     <div className="text-[11pt] px-4 text-justify leading-relaxed space-y-6">
+     <div className="text-[11pt] px-4 text-justify leading-relaxed space-y-6 font-serif text-black">
         <p>Saya, <strong>{s.namaWaris || '................................'}</strong> (No KP: <strong>{s.noKPWaris || '......................'}</strong>), waris kepada pelajar bernama <strong>{s.nama}</strong> (<strong>{s.tingkatan} {s.kelas}</strong>), dengan ini memberi kebenaran kepada anak jagaan saya untuk menyertai aktiviti Pasukan Kadet Bomba.</p>
         <p>Saya faham bahawa pihak sekolah akan mengambil langkah keselamatan yang sewajarnya. Namun demikian, saya tidak akan mengambil sebarang tindakan undang-undang terhadap pihak sekolah sekiranya berlaku kemalangan di luar jangkaan.</p>
         <div className="mt-16 grid grid-cols-2 gap-20">
@@ -433,13 +396,13 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
      </div>
   );
 
-  // LAMPIRAN F CONTENT (REUSE AHLI TABLE BUT WITH BOMBA HEADER)
+  // Lampiran F (Guna BombaHeader)
   const renderLampiranF_Content = () => {
     const sortedStudents = [...data.students].sort((a, b) => a.nama.localeCompare(b.nama));
     return (
       <div className="w-full">
-         <DynamicHeader title="BORANG PENDAFTARAN KOLEKTIF" subtitle="TAHUN 2025" />
-         <table className="w-full border-collapse border border-black text-[10pt]">
+         <DynamicHeader title="BORANG PENDAFTARAN KOLEKTIF" subtitle={`TAHUN ${currentYear}`} />
+         <table className="w-full border-collapse border border-black text-[10pt] font-serif">
           <thead>
             <tr className="bg-gray-100 font-bold">
               <th className="border border-black p-2 text-center w-[5%]">BIL</th>
@@ -461,7 +424,7 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
             ))}
           </tbody>
         </table>
-        <div className="mt-12 flex justify-between">
+        <div className="mt-12 flex justify-between font-serif text-black">
            <div className="text-center w-[250px]">
               <p className="font-bold uppercase text-[11pt]">Disediakan Oleh:</p>
               <div className="h-20 border-b border-black"></div>
@@ -484,34 +447,28 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
       case 'AJK': return renderAJK();
       case 'AKTIVITI': return targetId ? renderAktiviti(targetId) : <div>Error</div>;
       
-      // Lampiran Forms using Dynamic Header (Bomba)
+      // KUMPULAN BOMBA HEADER
       case 'PENDAFTARAN': // Lampiran A
         const sA = data.students.find(x => x.id === targetId);
         return sA ? renderLampiran(renderLampiranA_Content(sA), "BORANG MAKLUMAT PERIBADI (LAMPIRAN A)") : null;
-      
       case 'LAMPIRAN_B':
         const sB = data.students.find(x => x.id === targetId);
         return sB ? renderLampiran(renderLampiranB_Content(sB), "SURAT KEBENARAN IBU BAPA / PENJAGA (LAMPIRAN B)") : null;
-        
       case 'LAMPIRAN_E':
          return renderLampiran(
-           <div className="text-[11pt] space-y-4 px-4">
+           <div className="text-[11pt] space-y-4 px-4 font-serif text-black">
              <p className="text-justify">Bahawasanya kami guru-guru dan pelajar-pelajar sekolah ini memohon menubuhkan Pasukan Kadet Bomba dan Penyelamat Malaysia.</p>
              <div className="mt-8 border border-black p-4 h-32">Ulasan Pengetua:</div>
            </div>, 
            "PERMOHONAN PENUBUHAN PASUKAN (LAMPIRAN E)"
          );
-
-      case 'LAMPIRAN_F':
-         return renderLampiranF_Content();
-
+      case 'LAMPIRAN_F': return renderLampiranF_Content();
       default: return <div>Modul Belum Sedia</div>;
     }
   };
 
   return (
     <div className="fixed inset-0 z-[200] bg-slate-900/90 backdrop-blur-sm flex flex-col">
-      {/* TOOLBAR */}
       <div className="h-16 bg-white border-b flex items-center justify-between px-6 shadow-md shrink-0 no-print">
          <div className="flex items-center gap-4">
             <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-red-600">
@@ -521,18 +478,8 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
          </div>
          <div className="flex items-center gap-4">
             <div className="flex bg-gray-100 rounded-lg p-1 border">
-               <button 
-                 onClick={() => setOrientation('portrait')}
-                 className={`px-4 py-1.5 text-xs font-bold uppercase rounded-md transition-all ${orientation === 'portrait' ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-black'}`}
-               >
-                 Portrait
-               </button>
-               <button 
-                 onClick={() => setOrientation('landscape')}
-                 className={`px-4 py-1.5 text-xs font-bold uppercase rounded-md transition-all ${orientation === 'landscape' ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-black'}`}
-               >
-                 Landscape
-               </button>
+               <button onClick={() => setOrientation('portrait')} className={`px-4 py-1.5 text-xs font-bold uppercase rounded-md transition-all ${orientation === 'portrait' ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-black'}`}>Portrait</button>
+               <button onClick={() => setOrientation('landscape')} className={`px-4 py-1.5 text-xs font-bold uppercase rounded-md transition-all ${orientation === 'landscape' ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-black'}`}>Landscape</button>
             </div>
             <button onClick={() => window.print()} className="flex items-center gap-2 px-6 py-2 bg-blue-700 text-white font-bold rounded-lg hover:bg-blue-800 transition-colors shadow-lg">
                <Printer className="w-4 h-4" /> CETAK
@@ -540,22 +487,20 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
          </div>
       </div>
 
-      {/* PREVIEW AREA */}
       <div className="flex-1 overflow-auto p-8 flex justify-center bg-slate-800/50">
          <div 
-           className={`bg-white shadow-2xl p-[10mm] transition-all duration-300 ${orientation === 'landscape' ? 'w-[297mm] min-h-[210mm]' : 'w-[210mm] min-h-[297mm]'}`}
-           style={{ fontFamily: '"Times New Roman", Times, serif' }}
+           className={`bg-white shadow-2xl transition-all duration-300 ${orientation === 'landscape' ? 'w-[297mm] min-h-[210mm]' : 'w-[210mm] min-h-[297mm]'}`}
+           style={{ fontFamily: '"Times New Roman", Times, serif', padding: '25mm' }} // MARGIN 25mm DI SINI
          >
             {getReportContent()}
          </div>
       </div>
 
-      {/* CSS UNTUK PRINT */}
       <style>{`
         @media print {
            @page { 
              size: A4 ${orientation}; 
-             margin: 10mm; 
+             margin: 0; /* Biar padding container yang kawal margin */
            }
            body { 
              background: white; 
@@ -564,6 +509,8 @@ const PrintPreview: React.FC<PrintProps> = ({ type, data, targetId, onClose }) =
              color: black;
            }
            .no-print { display: none !important; }
+           /* Padding 25mm untuk cetakan sebenar */
+           .bg-white { padding: 25mm !important; width: 100% !important; box-shadow: none !important; }
            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
       `}</style>
