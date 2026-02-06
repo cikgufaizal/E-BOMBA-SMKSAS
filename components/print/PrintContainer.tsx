@@ -72,7 +72,7 @@ const PrintContainer: React.FC<PrintProps> = ({ type, data, targetId, onClose })
          <div 
            id="printable-area"
            className={`bg-white shadow-2xl transition-all duration-300 ${orientation === 'landscape' ? 'w-[297mm] min-h-[210mm]' : 'w-[210mm] min-h-[297mm]'}`}
-           style={{ fontFamily: '"Times New Roman", Times, serif', padding: '20mm' }}
+           style={{ fontFamily: '"Times New Roman", Times, serif', padding: '15mm' }}
          >
             {renderContent()}
          </div>
@@ -83,7 +83,7 @@ const PrintContainer: React.FC<PrintProps> = ({ type, data, targetId, onClose })
         @media print {
            @page { 
              size: A4 ${orientation}; 
-             margin: 10mm;
+             margin: 10mm; /* Margin selamat pencetak */
            }
            
            /* Reset body dan html */
@@ -97,24 +97,24 @@ const PrintContainer: React.FC<PrintProps> = ({ type, data, targetId, onClose })
            }
 
            /* Sembunyikan semua elemen dalam body secara default */
-           body * {
-             visibility: hidden;
+           body > * {
+             display: none !important;
            }
 
            /* Paparkan hanya kawasan print dan anak-anaknya */
-           #printable-area, #printable-area * {
-             visibility: visible;
-           }
-
-           /* Letakkan kawasan print di posisi mutlak atas kiri */
            #printable-area {
-             position: absolute !important;
-             left: 0 !important;
-             top: 0 !important;
+             display: block !important;
+             position: relative !important; /* PENTING: Jangan guna absolute */
              width: 100% !important;
+             height: auto !important;
              margin: 0 !important;
              padding: 0 !important;
              box-shadow: none !important;
+             visibility: visible !important;
+           }
+           
+           #printable-area * {
+             visibility: visible !important;
            }
            
            /* Pastikan text warna hitam */
@@ -124,26 +124,22 @@ const PrintContainer: React.FC<PrintProps> = ({ type, data, targetId, onClose })
              color: black !important;
            }
            
-           /* TABLE LOGIC */
+           /* TABLE LOGIC UNTUK PAGE BREAK */
            table { 
              width: 100%; 
              border-collapse: collapse; 
-             page-break-inside: auto; 
-           }
-           thead { 
-             display: table-header-group; 
-           }
-           tr { 
-             page-break-inside: avoid; 
-             page-break-after: auto; 
-           }
-           tfoot { 
-             display: table-footer-group; 
            }
            
-           .break-inside-avoid, .page-break-inside-avoid {
-             page-break-inside: avoid !important;
-             break-inside: avoid !important;
+           thead { 
+             display: table-header-group; /* Header berulang setiap page */
+           }
+           
+           tr { 
+             page-break-inside: avoid; /* Jangan potong baris di tengah */
+           }
+           
+           tfoot { 
+             display: table-footer-group; 
            }
            
            .no-print { display: none !important; }
