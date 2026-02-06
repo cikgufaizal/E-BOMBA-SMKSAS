@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Plus, Trash2, Upload, Edit2, X } from 'lucide-react';
 import { SystemData, Teacher, JawatanGuru } from '../types';
 import { FormCard, Input, Select, Button, Table, InlineConfirm } from './CommonUI';
-import { handleFileUpload, parseCSV } from '../utils/csvParser';
+import CsvImportModal from './common/CsvImportModal';
 
 interface Props {
   data: SystemData;
@@ -12,19 +11,14 @@ interface Props {
 
 const GuruManager: React.FC<Props> = ({ data, updateData }) => {
   const [formData, setFormData] = useState<Partial<Teacher>>({
-    nama: '',
-    noKP: '',
-    jawatan: JawatanGuru.GuruPelaksana,
-    telefon: ''
+    nama: '', noKP: '', jawatan: JawatanGuru.GuruPelaksana, telefon: ''
   });
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [csvText, setCsvText] = useState('');
   const [showImport, setShowImport] = useState(false);
 
   const saveGuru = () => {
     if (!formData.nama || !formData.telefon) return;
-    
     const cleanKP = formData.noKP?.replace(/[^0-9]/g, '') || '';
 
     if (editingId) {
@@ -43,7 +37,6 @@ const GuruManager: React.FC<Props> = ({ data, updateData }) => {
       };
       updateData({ teachers: [...data.teachers, newGuru] });
     }
-    
     setFormData({ nama: '', noKP: '', jawatan: JawatanGuru.GuruPelaksana, telefon: '' });
   };
 
@@ -52,11 +45,6 @@ const GuruManager: React.FC<Props> = ({ data, updateData }) => {
     setFormData({ nama: guru.nama, noKP: guru.noKP, jawatan: guru.jawatan, telefon: guru.telefon });
     setShowImport(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setFormData({ nama: '', noKP: '', jawatan: JawatanGuru.GuruPelaksana, telefon: '' });
   };
 
   const handleImport = (rows: string[][]) => {
@@ -69,13 +57,6 @@ const GuruManager: React.FC<Props> = ({ data, updateData }) => {
     }));
     updateData({ teachers: [...data.teachers, ...imported] });
     setShowImport(false);
-    setCsvText('');
-  };
-
-  const deleteGuru = (id: string) => {
-    updateData({ teachers: data.teachers.filter(t => t.id !== id) });
-    setDeletingId(null);
-    if (editingId === id) cancelEdit();
   };
 
   return (
@@ -83,86 +64,44 @@ const GuruManager: React.FC<Props> = ({ data, updateData }) => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-lg font-bold text-slate-200 uppercase tracking-tighter">Urus Guru Pembimbing</h2>
         {!editingId && (
-          <Button variant="secondary" onClick={() => setShowImport(!showImport)}>
-            <Upload className="w-4 h-4" />
-            {showImport ? 'Tutup Import' : 'Import CSV'}
+          <Button variant="secondary" onClick={() => setShowImport(true)}>
+            <Upload className="w-4 h-4" /> Import CSV
           </Button>
         )}
       </div>
 
-      {showImport && !editingId && (
-        <FormCard title="Import Data Guru">
-          <div className="space-y-4">
-            <p className="text-xs text-slate-500">Format CSV: Nama, No KP, Jawatan, No Telefon</p>
-            <textarea
-              className="w-full h-32 p-4 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-red-600 outline-none text-slate-200"
-              placeholder="Ali bin Abu, 800101145566, Penasihat, 0123456789"
-              value={csvText}
-              onChange={(e) => setCsvText(e.target.value)}
-            />
-            <div className="flex gap-4">
-              <Button onClick={() => handleImport(parseCSV(csvText))} className="flex-1">Import dari Paste</Button>
-              <div className="flex-1">
-                <input
-                  type="file"
-                  accept=".csv"
-                  className="hidden"
-                  id="csv-upload"
-                  onChange={(e) => e.target.files && handleFileUpload(e.target.files[0], handleImport)}
-                />
-                <Button variant="secondary" className="w-full" onClick={() => document.getElementById('csv-upload')?.click()}>
-                  Upload Fail CSV
-                </Button>
-              </div>
-            </div>
-          </div>
-        </FormCard>
-      )}
+      <CsvImportModal 
+        isOpen={showImport} 
+        onClose={() => setShowImport(false)} 
+        onImport={handleImport}
+        title="Import Data Guru"
+        notes={<p className="text-[10px] text-slate-400 uppercase">Format: Nama, No KP, Jawatan, No Telefon</p>}
+      />
 
-      {(!showImport || editingId) && (
+      {editingId || !showImport ? (
         <FormCard title={editingId ? "Kemaskini Maklumat Guru" : "Tambah Guru Baru"}>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
             <div className="md:col-span-2">
-                <Input 
-                  label="Nama Penuh" 
-                  placeholder="Cth: Ahmad bin Bakri" 
-                  value={formData.nama} 
-                  onChange={(e: any) => setFormData({...formData, nama: e.target.value})} 
-                />
+                <Input label="Nama Penuh" placeholder="Cth: Ahmad bin Bakri" value={formData.nama} onChange={(e: any) => setFormData({...formData, nama: e.target.value})} />
             </div>
-            <Input 
-              label="No. Kad Pengenalan" 
-              placeholder="80010114xxxx" 
-              value={formData.noKP} 
-              onChange={(e: any) => setFormData({...formData, noKP: e.target.value})} 
-            />
-            <Select 
-              label="Jawatan" 
-              value={formData.jawatan} 
-              onChange={(e: any) => setFormData({...formData, jawatan: e.target.value})}
-              options={Object.values(JawatanGuru).map(j => ({ value: j, label: j }))} 
-            />
+            <Input label="No. Kad Pengenalan" placeholder="80010114xxxx" value={formData.noKP} onChange={(e: any) => setFormData({...formData, noKP: e.target.value})} />
+            <Select label="Jawatan" value={formData.jawatan} onChange={(e: any) => setFormData({...formData, jawatan: e.target.value})} options={Object.values(JawatanGuru).map(j => ({ value: j, label: j }))} />
             <div className="md:col-span-2">
-                <Input 
-                  label="No. Telefon" 
-                  placeholder="Cth: 0192837465" 
-                  value={formData.telefon} 
-                  onChange={(e: any) => setFormData({...formData, telefon: e.target.value})} 
-                />
+                <Input label="No. Telefon" placeholder="Cth: 0192837465" value={formData.telefon} onChange={(e: any) => setFormData({...formData, telefon: e.target.value})} />
             </div>
             <div className="md:col-span-2 flex gap-3">
               <Button onClick={saveGuru} className="w-full h-14">
                 {editingId ? <><Edit2 className="w-4 h-4" /> Simpan Perubahan</> : <><Plus className="w-4 h-4" /> Tambah Guru</>}
               </Button>
               {editingId && (
-                <Button variant="secondary" onClick={cancelEdit} className="h-14">
+                <Button variant="secondary" onClick={() => { setEditingId(null); setFormData({ nama: '', noKP: '', jawatan: JawatanGuru.GuruPelaksana, telefon: '' }); }} className="h-14">
                   <X className="w-4 h-4" /> Batal
                 </Button>
               )}
             </div>
           </div>
         </FormCard>
-      )}
+      ) : null}
 
       <Table
         headers={['Bil', 'Nama Guru', 'No. KP', 'Jawatan', 'Tindakan']}
@@ -185,7 +124,7 @@ const GuruManager: React.FC<Props> = ({ data, updateData }) => {
                   <Edit2 className="w-5 h-5" />
                 </button>
                 {deletingId === guru.id ? (
-                  <InlineConfirm onConfirm={() => deleteGuru(guru.id)} onCancel={() => setDeletingId(null)} />
+                  <InlineConfirm onConfirm={() => { updateData({ teachers: data.teachers.filter(t => t.id !== guru.id) }); setDeletingId(null); }} onCancel={() => setDeletingId(null)} />
                 ) : (
                   <button onClick={() => setDeletingId(guru.id)} className="p-2 text-slate-500 hover:text-red-500 transition-colors">
                     <Trash2 className="w-5 h-5" />
