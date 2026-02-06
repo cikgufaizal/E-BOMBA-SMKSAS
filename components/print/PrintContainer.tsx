@@ -66,6 +66,7 @@ const PrintContainer: React.FC<PrintProps> = ({ type, data, targetId, onClose })
        {/* KERTAS PUTIH (PREVIEW AREA) */}
        {/* Kita set background white secara hardcode di sini */}
        <div 
+         id="printable-area"
          className="bg-white text-black shadow-2xl mt-10 print-content"
          style={{
            width: orientation === 'landscape' ? '297mm' : '210mm',
@@ -107,7 +108,7 @@ const PrintContainer: React.FC<PrintProps> = ({ type, data, targetId, onClose })
              }
 
              /* Pastikan content print memenuhi kertas */
-             .print-content {
+             .print-content, #printable-area {
                 width: 100% !important;
                 margin: 0 !important;
                 padding: 0 !important; /* Margin dikawal oleh @page */
@@ -115,6 +116,9 @@ const PrintContainer: React.FC<PrintProps> = ({ type, data, targetId, onClose })
                 border: none !important;
                 background: white !important;
                 color: black !important;
+                position: absolute;
+                top: 0;
+                left: 0;
              }
 
              /* TABLE OPTIMIZATION */
@@ -130,7 +134,7 @@ const PrintContainer: React.FC<PrintProps> = ({ type, data, targetId, onClose })
              }
              
              /* Elak row putus di tengah page */
-             tr {
+             tr, .break-inside-avoid {
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
              }
