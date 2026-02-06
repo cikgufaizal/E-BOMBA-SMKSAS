@@ -20,11 +20,12 @@ const PrintContainer: React.FC<PrintProps> = ({ type, data, targetId, onClose })
   const orientation = (type === 'KEHADIRAN' || type === 'AHLI') ? 'landscape' : 'portrait';
 
   useEffect(() => {
-    // Tunggu render selesai
+    // Kita beri masa sedikit untuk imej (logo sekolah) load jika ada
     const timer = setTimeout(() => {
       window.print();
+      // Selepas dialog print tutup, kita tutup component ini
       onClose();
-    }, 1000); // Masa ditambah sedikit untuk memastikan CSS load sepenuhnya
+    }, 800);
 
     return () => clearTimeout(timer);
   }, []);
@@ -45,84 +46,82 @@ const PrintContainer: React.FC<PrintProps> = ({ type, data, targetId, onClose })
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-white text-black font-serif" id="print-wrapper">
+    <div id="print-wrapper" className="fixed inset-0 z-[9999] bg-white">
        
-       {/* LOADING SCREEN (HANYA DI PAPARAN, HILANG BILA PRINT) */}
+       {/* LOADING SCREEN (HANYA DI PAPARAN SKRIN, HILANG BILA PRINT) */}
        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/95 z-[10000] print:hidden">
           <Loader2 className="w-16 h-16 text-red-600 animate-spin mb-6" />
           <h2 className="text-2xl font-black text-slate-900 uppercase tracking-widest">Menjana Dokumen...</h2>
           <p className="text-slate-500 mt-2 font-sans font-medium">Sila tunggu dialog pencetak muncul.</p>
        </div>
 
-       {/* CONTENT SEBENAR */}
-       <div id="printable-area" className="mx-auto bg-white p-10 min-h-screen">
+       {/* KAWASAN YANG AKAN DICETAK */}
+       <div className="printable-content bg-white p-10 min-h-screen text-black font-serif">
           {renderContent()}
        </div>
 
-       {/* GLOBAL PRINT STYLES - PENYELESAIAN MASALAH "PRINT SCREEN" */}
+       {/* CSS KHAS UNTUK PRINT */}
        <style>{`
           @media print {
              @page { 
                size: A4 ${orientation}; 
-               margin: 10mm; /* Margin standard pencetak */
+               margin: 10mm; 
              }
              
-             /* 1. RESET GLOBAL */
+             /* 1. Reset Asas */
              html, body {
                height: auto !important;
                overflow: visible !important;
-               background: #FFF !important;
+               background: white !important;
                margin: 0 !important;
                padding: 0 !important;
              }
 
-             /* 2. SEMBUNYIKAN SEMUA ELEMEN LAIN */
-             body * {
-               visibility: hidden; /* Sembunyikan visual tetapi kekalkan posisi jika perlu (biasanya kita override di bawah) */
+             /* 2. Sembunyikan semua elemen lain selain root (App.tsx dah handle print:hidden utk layout utama) */
+             /* Tetapi untuk keselamatan, kita sembunyikan siblings jika ada */
+             body > *:not(#root) {
+               display: none !important;
              }
 
-             /* 3. PAPARKAN HANYA WRAPPER KITA & ANAK-ANAKNYA */
-             #print-wrapper, #print-wrapper * {
-               visibility: visible;
-             }
-
-             /* 4. POSISIKAN WRAPPER KE ATAS HALAMAN (OVERRIDE LAYOUT ASAL) */
+             /* 3. Setup Wrapper Print */
+             /* Kita ubah dari fixed (screen) ke absolute (print) supaya boleh scroll/multiple pages */
              #print-wrapper {
                position: absolute !important;
-               left: 0 !important;
                top: 0 !important;
+               left: 0 !important;
                width: 100% !important;
                height: auto !important;
-               margin: 0 !important;
-               padding: 0 !important;
+               z-index: 9999 !important;
                background: white !important;
-               z-index: 99999 !important;
                display: block !important;
                overflow: visible !important;
              }
-             
-             #printable-area {
-                width: 100% !important;
-                padding: 0 !important;
-                margin: 0 !important;
+
+             /* 4. Setup Content */
+             .printable-content {
+               width: 100% !important;
+               margin: 0 !important;
+               padding: 0 !important; /* Margin page dah handle padding */
              }
 
-             /* 5. PAKSA WARNA HITAM & BORDER JELAS */
+             /* 5. Pastikan warna hitam pekat (Jimat dakwat & jelas) */
              * { 
                 -webkit-print-color-adjust: exact !important; 
                 print-color-adjust: exact !important; 
-                color: #000 !important;
+                color: black !important;
+                text-shadow: none !important;
+                box-shadow: none !important;
              }
 
-             /* 6. TABLE BORDERS */
-             table, th, td {
-                border-color: #000 !important;
-             }
+             /* 6. Table Fixes */
+             table { width: 100%; border-collapse: collapse; }
+             tr { page-break-inside: avoid; }
              
-             /* 7. HILANGKAN ELEMEN 'print:hidden' (Double Safety) */
-             .print\\:hidden {
-               display: none !important;
-             }
+             /* 7. Utility Classes */
+             .print\\:hidden { display: none !important; }
+             .no-print { display: none !important; }
+             .break-inside-avoid { break-inside: avoid; }
+             .page-break-inside-avoid { page-break-inside: avoid; }
           }
        `}</style>
     </div>

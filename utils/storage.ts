@@ -26,6 +26,7 @@ export const loadData = (): SystemData => {
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
+      // Sentiasa update URL dari constants jika ia berubah di kod
       if (parsed.settings) {
         parsed.settings.sheetUrl = CLOUD_API_URL;
       }
@@ -41,13 +42,17 @@ export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
   if (!CLOUD_API_URL) return null;
   
   try {
-    // FIX CORS & NETWORK ERROR:
-    // 1. credentials: 'omit' -> Penting! Elak hantar cookie Google yang menyebabkan konflik akaun.
-    // 2. Tiada Header Custom -> Pastikan ia kekal 'Simple Request'.
+    // TIPS: 'no-cors' tidak membenarkan kita baca JSON response.
+    // Kita MESTI guna 'cors' (default).
+    // Jika berlaku CORS Error, selalunya sebab Script Google App tidak di-deploy sebagai "Anyone".
+    // Sila pastikan di Google Script: Deploy > Web App > Who has access > "Anyone".
+    
     const response = await fetch(`${CLOUD_API_URL}?t=${Date.now()}`, {
       method: 'GET',
-      redirect: 'follow',
-      credentials: 'omit' 
+      credentials: 'omit', // Penting untuk elak hantar cookies yg menyebabkan redirect ke login
+      headers: {
+        'Accept': 'application/json',
+      }
     });
 
     if (!response.ok) {
@@ -57,7 +62,8 @@ export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
 
     const contentType = response.headers.get("content-type");
     if (contentType && contentType.includes("text/html")) {
-       console.warn("Cloud returned HTML instead of JSON. Check Script Deployment (Anyone vs Me).");
+       // Ini berlaku jika script redirect ke Google Login Page
+       console.warn("Cloud returned HTML instead of JSON. Deployment Issue?");
        return null;
     }
 
@@ -68,7 +74,8 @@ export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
     }
     return null;
   } catch (err) {
-    console.error("Network Error / CORS Blocked:", err);
+    // Suppress network errors to avoid UI noise
+    console.debug("Offline Mode / Cloud Unreachable:", err);
     return null;
   }
 };
@@ -79,22 +86,24 @@ export const saveDataToCloud = async (data: SystemData): Promise<{success: boole
   try {
     const dataToSend = { ...data, lastUpdated: Date.now() };
     
-    // Guna 'no-cors' untuk POST ke GAS. 
-    // Kita tak boleh baca response status, tapi ini satu-satunya cara elak CORS Preflight untuk POST.
+    // Gunakan 'no-cors' untuk POST ke Google Apps Script.
+    // Ini standard untuk form submission ke GAS tanpa perlu handle CORS Preflight.
     await fetch(CLOUD_API_URL, {
       method: 'POST',
       mode: 'no-cors',
-      credentials: 'omit', // Tambah ini juga untuk keselamatan
+      credentials: 'omit',
       headers: { 'Content-Type': 'text/plain' }, // Mesti text/plain
       body: JSON.stringify(dataToSend)
     });
     
-    // Simpan ke local sebagai backup
+    // Simpan ke local juga
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSend));
+    
+    // Oleh sebab 'no-cors', kita tak tahu status sebenar. Kita anggap berjaya jika tiada network error.
     return { success: true, message: "Data dihantar ke Cloud (Mod Senyap)" };
   } catch (err) {
     console.error("Gagal menghantar ke Cloud:", err);
-    return { success: false, message: "Ralat sambungan Cloud" };
+    return { success: false, message: "Ralat sambungan Cloud (Semak Internet)" };
   }
 };
 
