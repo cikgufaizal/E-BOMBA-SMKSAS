@@ -17,11 +17,11 @@ interface PrintProps {
 }
 
 const PrintContainer: React.FC<PrintProps> = ({ type, data, targetId, onClose }) => {
-  // Untuk Senarai Ahli & Kehadiran, Landscape lebih kemas. Dokumen lain Portrait.
+  // Senarai Ahli & Kehadiran = Landscape. Lain = Portrait.
   const orientation = (type === 'KEHADIRAN' || type === 'AHLI') ? 'landscape' : 'portrait';
 
   useEffect(() => {
-    // Beri masa render sebelum print dialog keluar
+    // Delay sedikit untuk pastikan content load sebelum print dialog keluar
     const timer = setTimeout(() => {
       window.print();
     }, 800);
@@ -44,97 +44,104 @@ const PrintContainer: React.FC<PrintProps> = ({ type, data, targetId, onClose })
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center py-10 text-black">
+    <div className="min-h-screen bg-gray-500 flex flex-col items-center py-10">
        
-       {/* HEADER KAWALAN (TIDAK DICETAK) */}
+       {/* HEADER KAWALAN (AKAN HILANG BILA PRINT) */}
        <div className="no-print fixed top-0 left-0 right-0 bg-white shadow-md p-4 flex justify-between items-center z-50">
           <div className="flex items-center gap-4">
-             <button onClick={onClose} className="flex items-center gap-2 text-slate-600 hover:text-black font-bold font-sans">
-                <ArrowLeft className="w-5 h-5" /> KEMBALI
+             <button onClick={onClose} className="flex items-center gap-2 text-slate-700 hover:text-black font-bold font-sans text-sm">
+                <ArrowLeft className="w-5 h-5" /> KEMBALI KE SISTEM
              </button>
-             <span className="text-sm font-bold bg-gray-200 px-3 py-1 rounded text-gray-700 font-sans">MOD CETAKAN: {type}</span>
           </div>
-          <button 
-            onClick={() => window.print()} 
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg transition-all font-sans"
-          >
-             <Printer className="w-5 h-5" /> CETAK
-          </button>
+          <div className="flex gap-3">
+             <button 
+                onClick={() => window.print()} 
+                className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white px-6 py-2 rounded shadow-lg font-bold font-sans text-sm"
+             >
+                <Printer className="w-4 h-4" /> CETAK / SIMPAN PDF
+             </button>
+          </div>
        </div>
 
        {/* KERTAS PUTIH (PREVIEW AREA) */}
-       {/* Menggunakan font Times New Roman (Serif) secara default untuk nampak rasmi */}
+       {/* Kita set background white secara hardcode di sini */}
        <div 
-         id="printable-area"
-         className="bg-white shadow-2xl mt-16 font-serif"
+         className="bg-white text-black shadow-2xl mt-10 print-content"
          style={{
            width: orientation === 'landscape' ? '297mm' : '210mm',
            minHeight: orientation === 'landscape' ? '210mm' : '297mm',
-           padding: '20mm', // Padding visual di skrin
+           padding: '15mm', // Padding default untuk preview skrin
+           boxSizing: 'border-box',
+           fontFamily: '"Times New Roman", Times, serif'
          }}
        >
           {renderContent()}
        </div>
 
-       {/* CSS KHAS UNTUK PRINT (PENTING) */}
+       {/* CSS KHAS PRINT (Global Styles) */}
        <style>{`
-          /* Import Font Google jika perlu, tapi Times New Roman biasanya built-in */
+          /* Import font rasmi jika tiada di PC user */
           @import url('https://fonts.googleapis.com/css2?family=Tinos:wght@400;700&display=swap');
 
           @media print {
              @page { 
                 size: A4 ${orientation}; 
-                margin: 20mm; /* Margin Rasmi 2cm / 20mm sekeliling */
+                margin: 15mm; /* Margin standard 1.5cm sekeliling */
              }
              
+             /* Reset Browser Defaults */
              html, body { 
-                background: white !important; 
+                background-color: white !important; 
                 margin: 0 !important;
                 padding: 0 !important;
                 width: 100% !important;
                 height: 100% !important;
-                font-family: 'Times New Roman', Times, serif !important;
+                overflow: visible !important;
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important;
              }
 
-             /* Hide UI System */
-             .no-print { display: none !important; }
-             body > *:not(#printable-area) { display: none !important; }
+             /* Sembunyikan UI Sistem */
+             .no-print, nav, aside, header { 
+                display: none !important; 
+             }
 
-             /* Print Area Reset */
-             #printable-area {
-                display: block !important;
-                position: relative !important;
+             /* Pastikan content print memenuhi kertas */
+             .print-content {
                 width: 100% !important;
                 margin: 0 !important;
-                padding: 0 !important; /* Margin @page dah handle */
+                padding: 0 !important; /* Margin dikawal oleh @page */
                 box-shadow: none !important;
-                overflow: visible !important;
+                border: none !important;
+                background: white !important;
+                color: black !important;
              }
 
-             /* TABLE LOGIC YANG LEBIH KETAT */
+             /* TABLE OPTIMIZATION */
              table {
-                width: 100%;
-                border-collapse: collapse;
-                border-spacing: 0;
+                width: 100% !important;
+                border-collapse: collapse !important;
+                font-size: 10pt; /* Saiz standard */
              }
              
-             /* Pastikan Header Jadual Berulang di Page Baru */
+             /* Ulang Header di setiap page */
              thead {
-                display: table-header-group;
+                display: table-header-group !important;
              }
              
-             tfoot {
-                display: table-footer-group;
-             }
-
-             /* PENTING: Jangan potong baris di tengah jalan */
+             /* Elak row putus di tengah page */
              tr {
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
              }
+             
+             /* Footer table jika ada */
+             tfoot {
+                display: table-footer-group !important;
+             }
 
-             /* Font Styles */
-             td, th, p, div, span {
+             /* Pastikan text sentiasa hitam pekat */
+             * {
                 color: black !important;
                 font-family: 'Times New Roman', Times, serif !important;
              }
