@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { Printer, ArrowLeft } from 'lucide-react';
+import React, { useEffect } from 'react';
 import { SystemData, ReportType } from '../../types';
 
 // Import Templates
@@ -17,16 +16,22 @@ interface PrintProps {
 }
 
 const PrintContainer: React.FC<PrintProps> = ({ type, data, targetId, onClose }) => {
-  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
+  // 1. Tentukan Orientasi secara automatik
+  const orientation = (type === 'KEHADIRAN' || type === 'AHLI') ? 'landscape' : 'portrait';
 
-  // Auto-set orientasi berdasarkan jenis laporan
+  // 2. Auto-Print apabila component di-mount
   useEffect(() => {
-    if (type === 'KEHADIRAN' || type === 'AHLI') {
-      setOrientation('landscape');
-    } else {
-      setOrientation('portrait');
-    }
-  }, [type]);
+    // Timeout kecil untuk memastikan DOM sudah render sepenuhnya sebelum print trigger
+    const timer = setTimeout(() => {
+      window.print();
+      // Selepas dialog print tutup (atau cancel), kita tutup component ini
+      // Nota: window.print() adalah blocking di kebanyakan browser (script berhenti di situ).
+      // Selepas user tutup dialog, script sambung dan jalankan onClose().
+      onClose();
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const renderContent = () => {
     switch(type) {
@@ -47,104 +52,69 @@ const PrintContainer: React.FC<PrintProps> = ({ type, data, targetId, onClose })
   };
 
   return (
-    <div className="fixed inset-0 z-[200] bg-slate-900/90 backdrop-blur-sm flex flex-col">
-      {/* TOOLBAR ATAS (Tidak akan dicetak) */}
-      <div className="h-16 bg-white border-b flex items-center justify-between px-6 shadow-md shrink-0 no-print">
-         <div className="flex items-center gap-4">
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-red-600">
-               <ArrowLeft className="w-6 h-6" />
-            </button>
-            <h2 className="font-bold text-lg uppercase text-slate-800">Pratonton Cetakan: {type}</h2>
-         </div>
-         <div className="flex items-center gap-4">
-            <div className="flex bg-gray-100 rounded-lg p-1 border">
-               <button onClick={() => setOrientation('portrait')} className={`px-4 py-1.5 text-xs font-bold uppercase rounded-md transition-all ${orientation === 'portrait' ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-black'}`}>Portrait</button>
-               <button onClick={() => setOrientation('landscape')} className={`px-4 py-1.5 text-xs font-bold uppercase rounded-md transition-all ${orientation === 'landscape' ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-black'}`}>Landscape</button>
-            </div>
-            <button onClick={() => window.print()} className="flex items-center gap-2 px-6 py-2 bg-blue-700 text-white font-bold rounded-lg hover:bg-blue-800 transition-colors shadow-lg">
-               <Printer className="w-4 h-4" /> CETAK
-            </button>
-         </div>
-      </div>
+    <div className="fixed top-0 left-0 w-0 h-0 overflow-hidden opacity-0 pointer-events-none">
+       {/* 
+          Container ini tersembunyi di skrin biasa (w-0 h-0 opacity-0).
+          Tetapi CSS @media print di bawah akan memaksa ia menjadi visible semasa printing.
+       */}
+       
+       <div id="printable-area" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+          {renderContent()}
+       </div>
 
-      {/* KAWASAN PREVIEW */}
-      <div className="flex-1 overflow-auto p-8 flex justify-center bg-slate-800/50">
-         <div 
-           id="printable-area"
-           className={`bg-white shadow-2xl transition-all duration-300 ${orientation === 'landscape' ? 'w-[297mm] min-h-[210mm]' : 'w-[210mm] min-h-[297mm]'}`}
-           style={{ fontFamily: '"Times New Roman", Times, serif', padding: '15mm' }}
-         >
-            {renderContent()}
-         </div>
-      </div>
+       <style>{`
+          @media print {
+             @page { 
+               size: A4 ${orientation}; 
+               margin: 10mm; 
+             }
+             
+             /* Sembunyikan semua elemen UI App */
+             body > *:not(#root) { display: none !important; }
+             /* Dalam #root, sembunyikan semua kecuali printable-area parent */
+             #root > * { display: none !important; }
 
-      {/* CSS KHAS UNTUK PRINTING */}
-      <style>{`
-        @media print {
-           @page { 
-             size: A4 ${orientation}; 
-             margin: 10mm; /* Margin selamat pencetak */
-           }
-           
-           /* Reset body dan html */
-           html, body {
-             margin: 0 !important;
-             padding: 0 !important;
-             background: white !important;
-             width: 100% !important;
-             height: auto !important;
-             overflow: visible !important;
-           }
+             /* Reset body */
+             html, body {
+               background: white !important;
+               height: auto !important;
+               width: 100% !important;
+               margin: 0 !important;
+               padding: 0 !important;
+               overflow: visible !important;
+             }
 
-           /* Sembunyikan semua elemen dalam body secara default */
-           body > * {
-             display: none !important;
-           }
+             /* Paparkan Printable Area Sahaja - Teknik Overlay */
+             .fixed.top-0.left-0 {
+                position: absolute !important;
+                width: 100% !important;
+                height: auto !important;
+                opacity: 1 !important;
+                display: block !important;
+                left: 0 !important;
+                top: 0 !important;
+                z-index: 9999 !important;
+                pointer-events: auto !important;
+             }
 
-           /* Paparkan hanya kawasan print dan anak-anaknya */
-           #printable-area {
-             display: block !important;
-             position: relative !important; /* PENTING: Jangan guna absolute */
-             width: 100% !important;
-             height: auto !important;
-             margin: 0 !important;
-             padding: 0 !important;
-             box-shadow: none !important;
-             visibility: visible !important;
-           }
-           
-           #printable-area * {
-             visibility: visible !important;
-           }
-           
-           /* Pastikan text warna hitam */
-           * { 
-             -webkit-print-color-adjust: exact !important; 
-             print-color-adjust: exact !important; 
-             color: black !important;
-           }
-           
-           /* TABLE LOGIC UNTUK PAGE BREAK */
-           table { 
-             width: 100%; 
-             border-collapse: collapse; 
-           }
-           
-           thead { 
-             display: table-header-group; /* Header berulang setiap page */
-           }
-           
-           tr { 
-             page-break-inside: avoid; /* Jangan potong baris di tengah */
-           }
-           
-           tfoot { 
-             display: table-footer-group; 
-           }
-           
-           .no-print { display: none !important; }
-        }
-      `}</style>
+             #printable-area {
+                display: block !important;
+                width: 100% !important;
+             }
+             
+             /* Table Page Break Logic */
+             table { width: 100%; border-collapse: collapse; }
+             thead { display: table-header-group; }
+             tr { page-break-inside: avoid; }
+             
+             /* Warna Hitam */
+             * { 
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important; 
+                color: black !important;
+             }
+          }
+       `}</style>
     </div>
   );
 };

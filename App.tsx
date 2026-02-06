@@ -74,17 +74,6 @@ const App: React.FC = () => {
     setTimeout(() => setSyncStatus('idle'), 2000);
   };
 
-  if (printConfig.isOpen && printConfig.type) {
-    return (
-      <PrintContainer 
-        type={printConfig.type} 
-        data={data} 
-        targetId={printConfig.targetId}
-        onClose={() => setPrintConfig({ isOpen: false, type: null })} 
-      />
-    );
-  }
-
   return (
     <>
       {isInitializing && (
@@ -95,6 +84,16 @@ const App: React.FC = () => {
           </div>
           <h2 className="mt-8 text-[10px] font-black text-white uppercase tracking-[0.4em] animate-pulse">Initializing Security Systems...</h2>
         </div>
+      )}
+
+      {/* MODUL CETAKAN (INVISIBLE OVERLAY) */}
+      {printConfig.isOpen && printConfig.type && (
+        <PrintContainer 
+          type={printConfig.type} 
+          data={data} 
+          targetId={printConfig.targetId}
+          onClose={() => setPrintConfig({ isOpen: false, type: null })} 
+        />
       )}
 
       <Layout 
