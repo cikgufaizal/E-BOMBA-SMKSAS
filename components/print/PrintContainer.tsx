@@ -17,17 +17,14 @@ interface PrintProps {
 }
 
 const PrintContainer: React.FC<PrintProps> = ({ type, data, targetId, onClose }) => {
-  // 1. Tentukan Orientasi
   const orientation = (type === 'KEHADIRAN' || type === 'AHLI') ? 'landscape' : 'portrait';
 
-  // 2. Auto-Print Logic
   useEffect(() => {
-    // Beri masa untuk React render DOM sepenuhnya sebelum panggil window.print()
-    // Masa 800ms cukup untuk memastikan gambar/logo sempat dimuatkan (jika cached)
+    // Tunggu render selesai
     const timer = setTimeout(() => {
       window.print();
-      onClose(); // Tutup overlay selepas dialog print ditutup
-    }, 800);
+      onClose();
+    }, 1000); // Masa ditambah sedikit untuk memastikan CSS load sepenuhnya
 
     return () => clearTimeout(timer);
   }, []);
@@ -48,74 +45,83 @@ const PrintContainer: React.FC<PrintProps> = ({ type, data, targetId, onClose })
   };
 
   return (
-    // OVERLAY PENUH SKRIN (Z-INDEX TINGGI)
-    // Di skrin: Kelihatan putih penuh menutup aplikasi.
-    // Di print: Hanya ini yang akan dicetak kerana App.tsx guna class 'print:hidden' pada Layout.
-    <div className="fixed inset-0 z-[9999] bg-white text-black overflow-y-auto">
+    <div className="fixed inset-0 z-[9999] bg-white text-black font-serif" id="print-wrapper">
        
-       {/* MESEJ STATUS UNTUK PENGGUNA (HILANG BILA PRINT) */}
-       <div className="fixed inset-0 flex flex-col items-center justify-center bg-white/90 z-[10000] print:hidden">
-          <Loader2 className="w-12 h-12 text-red-600 animate-spin mb-4" />
-          <h2 className="text-xl font-bold text-slate-800 uppercase tracking-widest">Sedang Menjana Dokumen...</h2>
-          <p className="text-sm text-slate-500 mt-2">Sila tunggu dialog pencetak muncul.</p>
+       {/* LOADING SCREEN (HANYA DI PAPARAN, HILANG BILA PRINT) */}
+       <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/95 z-[10000] print:hidden">
+          <Loader2 className="w-16 h-16 text-red-600 animate-spin mb-6" />
+          <h2 className="text-2xl font-black text-slate-900 uppercase tracking-widest">Menjana Dokumen...</h2>
+          <p className="text-slate-500 mt-2 font-sans font-medium">Sila tunggu dialog pencetak muncul.</p>
        </div>
 
-       {/* KAWASAN YANG AKAN DICETAK */}
-       <div 
-        id="printable-area" 
-        className="mx-auto bg-white"
-        style={{ 
-          fontFamily: '"Times New Roman", Times, serif',
-          width: orientation === 'landscape' ? '297mm' : '210mm',
-          minHeight: orientation === 'landscape' ? '210mm' : '297mm',
-          padding: '10mm' // Padding visual di skrin
-        }}
-       >
+       {/* CONTENT SEBENAR */}
+       <div id="printable-area" className="mx-auto bg-white p-10 min-h-screen">
           {renderContent()}
        </div>
 
-       {/* CSS KHAS UNTUK PRINT - MEMAKSA FORMAT YANG BETUL */}
+       {/* GLOBAL PRINT STYLES - PENYELESAIAN MASALAH "PRINT SCREEN" */}
        <style>{`
           @media print {
              @page { 
                size: A4 ${orientation}; 
-               margin: 10mm; /* Margin fizikal printer */
+               margin: 10mm; /* Margin standard pencetak */
              }
              
-             /* PASTIKAN BODY DAN HTML TIDAK MENGGANGGU */
+             /* 1. RESET GLOBAL */
              html, body {
-               width: 100%;
+               height: auto !important;
+               overflow: visible !important;
+               background: #FFF !important;
+               margin: 0 !important;
+               padding: 0 !important;
+             }
+
+             /* 2. SEMBUNYIKAN SEMUA ELEMEN LAIN */
+             body * {
+               visibility: hidden; /* Sembunyikan visual tetapi kekalkan posisi jika perlu (biasanya kita override di bawah) */
+             }
+
+             /* 3. PAPARKAN HANYA WRAPPER KITA & ANAK-ANAKNYA */
+             #print-wrapper, #print-wrapper * {
+               visibility: visible;
+             }
+
+             /* 4. POSISIKAN WRAPPER KE ATAS HALAMAN (OVERRIDE LAYOUT ASAL) */
+             #print-wrapper {
+               position: absolute !important;
+               left: 0 !important;
+               top: 0 !important;
+               width: 100% !important;
                height: auto !important;
                margin: 0 !important;
                padding: 0 !important;
                background: white !important;
+               z-index: 99999 !important;
+               display: block !important;
                overflow: visible !important;
              }
-
-             /* PASTIKAN CONTAINER KITA MENGAMBIL ALIH */
+             
              #printable-area {
-               width: 100% !important;
-               margin: 0 !important;
-               padding: 0 !important;
-               position: absolute;
-               top: 0;
-               left: 0;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
              }
 
-             /* SEMBUNYIKAN SEMUA YANG LAIN (Double Safety) */
-             body > *:not(#root) { display: none !important; }
-             
-             /* TABLE PAGE BREAK FIXES */
-             table { width: 100%; border-collapse: collapse; }
-             thead { display: table-header-group; }
-             tfoot { display: table-footer-group; }
-             tr { page-break-inside: avoid; }
-             
-             /* FONT & COLOR */
+             /* 5. PAKSA WARNA HITAM & BORDER JELAS */
              * { 
                 -webkit-print-color-adjust: exact !important; 
                 print-color-adjust: exact !important; 
-                color: black !important;
+                color: #000 !important;
+             }
+
+             /* 6. TABLE BORDERS */
+             table, th, td {
+                border-color: #000 !important;
+             }
+             
+             /* 7. HILANGKAN ELEMEN 'print:hidden' (Double Safety) */
+             .print\\:hidden {
+               display: none !important;
              }
           }
        `}</style>
