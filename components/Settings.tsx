@@ -157,4 +157,107 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
           <div className="space-y-4">
             <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Logo Sekolah (Header Sekolah)</label>
             <div className="flex items-center gap-4 p-4 bg-slate-950/50 border border-white/[0.05] rounded-[2rem]">
-              <div className="w-24 h-24 bg-slate-900 rounded-2xl border
+              <div className="w-24 h-24 bg-slate-900 rounded-2xl border-2 border-dashed border-slate-800 flex items-center justify-center overflow-hidden shrink-0 group relative">
+                {logoUrl ? (
+                  <>
+                    <img src={logoUrl} alt="School Logo" className="w-full h-full object-contain p-2" />
+                    <button 
+                      onClick={() => setLogoUrl('')}
+                      className="absolute inset-0 bg-red-600/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                    >
+                      <Trash2 className="w-6 h-6" />
+                    </button>
+                  </>
+                ) : (
+                  <ImageIcon className="w-8 h-8 text-slate-700" />
+                )}
+              </div>
+              <div className="flex-1 space-y-2">
+                <p className="text-[10px] text-slate-500 font-bold uppercase">Max Size: 2MB</p>
+                <input type="file" ref={schoolLogoInputRef} onChange={(e) => handleLogoUpload(e, 'school')} accept="image/*" className="hidden" />
+                <Button variant="secondary" onClick={() => schoolLogoInputRef.current?.click()} className="w-full py-2 text-[10px]">
+                  Upload Logo Sekolah
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* LOGO BOMBA */}
+          <div className="space-y-4">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Logo Bomba (Header Bomba)</label>
+            <div className="flex items-center gap-4 p-4 bg-slate-950/50 border border-white/[0.05] rounded-[2rem]">
+              <div className="w-24 h-24 bg-slate-900 rounded-2xl border-2 border-dashed border-slate-800 flex items-center justify-center overflow-hidden shrink-0 group relative">
+                {bombaLogoUrl ? (
+                  <>
+                    <img src={bombaLogoUrl} alt="Bomba Logo" className="w-full h-full object-contain p-2" />
+                    <button 
+                      onClick={() => setBombaLogoUrl('')}
+                      className="absolute inset-0 bg-red-600/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                    >
+                      <Trash2 className="w-6 h-6" />
+                    </button>
+                  </>
+                ) : (
+                  <ImageIcon className="w-8 h-8 text-slate-700" />
+                )}
+              </div>
+              <div className="flex-1 space-y-2">
+                <p className="text-[10px] text-slate-500 font-bold uppercase">Max Size: 2MB</p>
+                <input type="file" ref={bombaLogoInputRef} onChange={(e) => handleLogoUpload(e, 'bomba')} accept="image/*" className="hidden" />
+                <Button variant="secondary" onClick={() => bombaLogoInputRef.current?.click()} className="w-full py-2 text-[10px]">
+                  Upload Logo Bomba
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="md:col-span-2 space-y-6 mt-4">
+              <Input label="Nama Sekolah" value={schoolName} onChange={(e: any) => setSchoolName(e.target.value)} />
+              <Input label="Nama Unit" value={clubName} onChange={(e: any) => setClubName(e.target.value)} />
+              <Input label="Alamat Surat-Menyurat" value={address} onChange={(e: any) => setAddress(e.target.value)} />
+          </div>
+
+          <Button 
+            onClick={() => { 
+              updateData({ settings: { 
+                  ...data.settings, 
+                  schoolName, 
+                  clubName, 
+                  address, 
+                  logoUrl, 
+                  bombaLogoUrl, 
+                  sheetUrl: data.settings?.sheetUrl || '' 
+              } as any }); 
+              alert("Profil & Logo dikemaskini."); 
+            }} 
+            className="md:col-span-2 h-14"
+          >
+            Kemaskini Profil Global
+          </Button>
+        </div>
+      </FormCard>
+
+      <FormCard title="Zon Bahaya (Danger Zone)">
+          <div className="p-6 bg-red-950/20 border border-red-900/40 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6">
+             <div className="flex items-center gap-6">
+                <div className="p-4 bg-red-600/10 rounded-2xl shrink-0">
+                   <AlertTriangle className="w-8 h-8 text-red-600" />
+                </div>
+                <div>
+                   <h4 className="font-black text-white uppercase text-sm tracking-widest mb-1">Factory Reset Sistem</h4>
+                   <p className="text-[10px] text-red-400 font-bold uppercase leading-relaxed max-w-md">
+                     Tindakan ini akan memadam SEMUA rekod (Ahli, Guru, Kehadiran, Aktiviti) secara kekal. 
+                     Hanya Tetapan Sekolah akan dikekalkan. Sila Export Backup dahulu.
+                   </p>
+                </div>
+             </div>
+             <Button variant="danger" onClick={factoryReset} className="w-full md:w-auto px-8 h-14 shadow-none border-red-600/50 hover:bg-red-600">
+                Lakukan Reset Penuh
+             </Button>
+          </div>
+      </FormCard>
+    </div>
+  );
+};
+
+export default Settings;

@@ -1,6 +1,7 @@
 import React from 'react';
 import { SystemData, ReportType, Student } from '../../../types';
 import BombaHeader from '../headers/BombaHeader';
+import SchoolHeader from '../headers/SchoolHeader';
 
 interface Props {
   data: SystemData;
@@ -151,7 +152,12 @@ const PrintBorangBomba: React.FC<Props> = ({ data, type, targetId }) => {
 
   return (
     <div className="w-full">
-      <BombaHeader data={data} />
+      {/* 
+          LOGIC FIX: Lampiran E adalah surat rasmi sekolah, jadi guna SchoolHeader. 
+          Yang lain adalah borang Bomba, guna BombaHeader.
+      */}
+      {type === 'LAMPIRAN_E' ? <SchoolHeader data={data} /> : <BombaHeader data={data} />}
+      
       {type === 'PENDAFTARAN' && renderLampiranA()}
       {type === 'LAMPIRAN_B' && renderLampiranB()}
       {type === 'LAMPIRAN_E' && renderLampiranE()}
