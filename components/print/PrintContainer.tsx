@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import React from 'react';
+import { Printer, ArrowLeft } from 'lucide-react';
 import { SystemData, ReportType } from '../../types';
 
 // Import Templates
@@ -19,17 +19,6 @@ interface PrintProps {
 const PrintContainer: React.FC<PrintProps> = ({ type, data, targetId, onClose }) => {
   const orientation = (type === 'KEHADIRAN' || type === 'AHLI') ? 'landscape' : 'portrait';
 
-  useEffect(() => {
-    // Kita beri masa sedikit untuk imej (logo sekolah) load jika ada
-    const timer = setTimeout(() => {
-      window.print();
-      // Selepas dialog print tutup, kita tutup component ini
-      onClose();
-    }, 800);
-
-    return () => clearTimeout(timer);
-  }, []);
-
   const renderContent = () => {
     switch(type) {
       case 'AHLI': return <PrintSenaraiAhli data={data} />;
@@ -46,82 +35,52 @@ const PrintContainer: React.FC<PrintProps> = ({ type, data, targetId, onClose })
   };
 
   return (
-    <div id="print-wrapper" className="fixed inset-0 z-[9999] bg-white">
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center py-10 font-sans text-black">
        
-       {/* LOADING SCREEN (HANYA DI PAPARAN SKRIN, HILANG BILA PRINT) */}
-       <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/95 z-[10000] print:hidden">
-          <Loader2 className="w-16 h-16 text-red-600 animate-spin mb-6" />
-          <h2 className="text-2xl font-black text-slate-900 uppercase tracking-widest">Menjana Dokumen...</h2>
-          <p className="text-slate-500 mt-2 font-sans font-medium">Sila tunggu dialog pencetak muncul.</p>
+       {/* HEADER: BUTANG KAWALAN (AKAN HILANG BILA PRINT) */}
+       <div className="no-print fixed top-0 left-0 right-0 bg-white shadow-md p-4 flex justify-between items-center z-50">
+          <div className="flex items-center gap-4">
+             <button onClick={onClose} className="flex items-center gap-2 text-slate-600 hover:text-black font-bold">
+                <ArrowLeft className="w-5 h-5" /> KEMBALI
+             </button>
+             <span className="text-sm font-bold bg-gray-200 px-3 py-1 rounded text-gray-700">MOD CETAKAN: {type}</span>
+          </div>
+          <button 
+            onClick={() => window.print()} 
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg transition-all"
+          >
+             <Printer className="w-5 h-5" /> CETAK SEKARANG
+          </button>
        </div>
 
-       {/* KAWASAN YANG AKAN DICETAK */}
-       <div className="printable-content bg-white p-10 min-h-screen text-black font-serif">
+       {/* KERTAS PUTIH (DOKUMEN) */}
+       <div 
+         className="bg-white shadow-2xl p-[20mm] mt-12"
+         style={{
+           width: orientation === 'landscape' ? '297mm' : '210mm',
+           minHeight: orientation === 'landscape' ? '210mm' : '297mm', 
+         }}
+       >
           {renderContent()}
        </div>
 
-       {/* CSS KHAS UNTUK PRINT */}
        <style>{`
           @media print {
              @page { 
-               size: A4 ${orientation}; 
-               margin: 10mm; 
+                size: A4 ${orientation}; 
+                margin: 10mm; 
              }
-             
-             /* 1. Reset Asas */
-             html, body {
-               height: auto !important;
-               overflow: visible !important;
-               background: white !important;
-               margin: 0 !important;
-               padding: 0 !important;
+             body { 
+                background: white; 
              }
-
-             /* 2. Sembunyikan semua elemen lain selain root (App.tsx dah handle print:hidden utk layout utama) */
-             /* Tetapi untuk keselamatan, kita sembunyikan siblings jika ada */
-             body > *:not(#root) {
-               display: none !important;
+             .no-print { 
+                display: none !important; 
              }
-
-             /* 3. Setup Wrapper Print */
-             /* Kita ubah dari fixed (screen) ke absolute (print) supaya boleh scroll/multiple pages */
-             #print-wrapper {
-               position: absolute !important;
-               top: 0 !important;
-               left: 0 !important;
-               width: 100% !important;
-               height: auto !important;
-               z-index: 9999 !important;
-               background: white !important;
-               display: block !important;
-               overflow: visible !important;
-             }
-
-             /* 4. Setup Content */
-             .printable-content {
-               width: 100% !important;
-               margin: 0 !important;
-               padding: 0 !important; /* Margin page dah handle padding */
-             }
-
-             /* 5. Pastikan warna hitam pekat (Jimat dakwat & jelas) */
-             * { 
-                -webkit-print-color-adjust: exact !important; 
-                print-color-adjust: exact !important; 
-                color: black !important;
-                text-shadow: none !important;
+             .shadow-2xl {
                 box-shadow: none !important;
+                margin-top: 0 !important;
+                padding: 0 !important;
              }
-
-             /* 6. Table Fixes */
-             table { width: 100%; border-collapse: collapse; }
-             tr { page-break-inside: avoid; }
-             
-             /* 7. Utility Classes */
-             .print\\:hidden { display: none !important; }
-             .no-print { display: none !important; }
-             .break-inside-avoid { break-inside: avoid; }
-             .page-break-inside-avoid { page-break-inside: avoid; }
           }
        `}</style>
     </div>

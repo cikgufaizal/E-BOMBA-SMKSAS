@@ -24,6 +24,7 @@ const App: React.FC = () => {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error' | 'success'>('idle');
   const [isInitializing, setIsInitializing] = useState(true);
   
+  // State Print
   const [printConfig, setPrintConfig] = useState<{ isOpen: boolean; type: ReportType | null; targetId?: string }>({
     isOpen: false,
     type: null
@@ -74,6 +75,21 @@ const App: React.FC = () => {
     setTimeout(() => setSyncStatus('idle'), 2000);
   };
 
+  // --- LOGIC UTAMA FIX PRINT ---
+  // Jika sedang print, kita pulangkan PrintContainer SAHAJA.
+  // Layout Dashboard TIDAK AKAN WUJUD dalam DOM.
+  if (printConfig.isOpen && printConfig.type) {
+    return (
+      <PrintContainer 
+        type={printConfig.type} 
+        data={data} 
+        targetId={printConfig.targetId}
+        onClose={() => setPrintConfig({ isOpen: false, type: null })} 
+      />
+    );
+  }
+
+  // Paparan Biasa (Dashboard)
   return (
     <>
       {isInitializing && (
@@ -86,38 +102,23 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* MODUL CETAKAN (DILUAR LAYOUT UTAMA) */}
-      {/* Ini akan visible semasa print */}
-      {printConfig.isOpen && printConfig.type && (
-        <PrintContainer 
-          type={printConfig.type} 
-          data={data} 
-          targetId={printConfig.targetId}
-          onClose={() => setPrintConfig({ isOpen: false, type: null })} 
-        />
-      )}
-
-      {/* LAYOUT UTAMA APLIKASI */}
-      {/* className="print:hidden" adalah KEYWORD PENTING Tailwind untuk sembunyikan UI semasa print */}
-      <div className="print:hidden h-full">
-        <Layout 
-          data={data} 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
-          syncStatus={syncStatus} 
-          onSync={() => pullFromCloud()}
-        >
-          {activeTab === 'dashboard' && <Dashboard data={data} />}
-          {activeTab === 'pendaftaran' && <PendaftaranIndex data={data} updateData={handleUpdateData} onPrint={(id, type = 'PENDAFTARAN') => setPrintConfig({ isOpen: true, type: type as ReportType, targetId: id })} />}
-          {activeTab === 'guru' && <GuruManager data={data} updateData={handleUpdateData} />}
-          {activeTab === 'ahli' && <AhliManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'AHLI' })} />}
-          {activeTab === 'ajk' && <AJKManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'AJK' })} />}
-          {activeTab === 'kehadiran' && <KehadiranManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'KEHADIRAN' })} />}
-          {activeTab === 'aktiviti' && <AktivitiManager data={data} updateData={handleUpdateData} onPrint={(id) => setPrintConfig({ isOpen: true, type: 'AKTIVITI', targetId: id })} />}
-          {activeTab === 'rancangan' && <RancanganManager data={data} updateData={handleUpdateData} />}
-          {activeTab === 'settings' && <Settings data={data} updateData={handleUpdateData} onForcePull={() => pullFromCloud(false)} />}
-        </Layout>
-      </div>
+      <Layout 
+        data={data} 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        syncStatus={syncStatus} 
+        onSync={() => pullFromCloud()}
+      >
+        {activeTab === 'dashboard' && <Dashboard data={data} />}
+        {activeTab === 'pendaftaran' && <PendaftaranIndex data={data} updateData={handleUpdateData} onPrint={(id, type = 'PENDAFTARAN') => setPrintConfig({ isOpen: true, type: type as ReportType, targetId: id })} />}
+        {activeTab === 'guru' && <GuruManager data={data} updateData={handleUpdateData} />}
+        {activeTab === 'ahli' && <AhliManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'AHLI' })} />}
+        {activeTab === 'ajk' && <AJKManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'AJK' })} />}
+        {activeTab === 'kehadiran' && <KehadiranManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'KEHADIRAN' })} />}
+        {activeTab === 'aktiviti' && <AktivitiManager data={data} updateData={handleUpdateData} onPrint={(id) => setPrintConfig({ isOpen: true, type: 'AKTIVITI', targetId: id })} />}
+        {activeTab === 'rancangan' && <RancanganManager data={data} updateData={handleUpdateData} />}
+        {activeTab === 'settings' && <Settings data={data} updateData={handleUpdateData} onForcePull={() => pullFromCloud(false)} />}
+      </Layout>
     </>
   );
 };
