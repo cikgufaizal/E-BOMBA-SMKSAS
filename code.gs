@@ -1,39 +1,48 @@
 /**
- * SISTEM PENGURUSAN KADET BOMBA - CLOUD CORE v16.0
- * KEMASKINI: 8 FEB (FIXED IMAGE & LOGO PERSISTENCE)
- * Sila pastikan: Deploy -> New Deployment -> Web App -> Execute as: Me -> Who has access: Anyone.
+ * SISTEM PENGURUSAN KADET BOMBA - CLOUD CORE v17.0 (ULTRA-STABLE CHUNKING)
+ * KEMASKINI: 9 FEB (FIXED DATA TRUNCATION ISSUE)
+ * 
+ * Sila pastikan selepas kemas kini: 
+ * 1. Klik 'Deploy' -> 'New Deployment'.
+ * 2. Pilih 'Web App'.
+ * 3. Execute as: 'Me'.
+ * 4. Who has access: 'Anyone'.
  */
 
 function doGet(e) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var backupSheet = ss.getSheetByName("DB_BACKUP") || ss.insertSheet("DB_BACKUP");
     
-    // 1. Ambil Backup Penuh dahulu (Source of Truth untuk data kompleks/Base64)
+    // 1. Ambil semua data dari baris-baris backup dan cantumkan semula (De-chunking)
+    var rows = backupSheet.getDataRange().getValues();
+    var fullJson = "";
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i][0]) fullJson += rows[i][0].toString();
+    }
+
     var backupData = {};
-    var backupSheet = ss.getSheetByName("DB_BACKUP");
-    if (backupSheet) {
-      var val = backupSheet.getRange(1, 1).getValue();
-      if (val && val.toString().startsWith("{")) {
-        backupData = JSON.parse(val);
+    if (fullJson && fullJson.startsWith("{")) {
+      try {
+        backupData = JSON.parse(fullJson);
+      } catch (e) {
+        console.error("JSON Parse Error in Backup:", e);
       }
     }
 
-    // 2. Baca data dari tab-tab manual (Untuk paparan manusia di Sheets)
-    // Jika data di tab wujud, ia akan "override" backup untuk memastikan apa yang user taip di Sheet masuk ke App
+    // 2. Ambil data dari tab manual untuk rujukan manusia (Syncing)
     var teachers = getSheetData(ss, "DATA_GURU", ["id", "nama", "noKP", "jawatan", "telefon"]);
     var students = getSheetData(ss, "DATA_AHLI", ["id", "nama", "noKP", "tingkatan", "kelas", "jantina", "kaum", "noKeahlian", "telefonWaris"]);
     var activities = getSheetData(ss, "DATA_AKTIVITI", ["id", "tarikh", "masa", "nama", "tempat", "ulasan", "photos"]);
-    var committees = getSheetData(ss, "STRUKTUR_ORGANISASI", ["id", "studentId", "jawatan"]);
-    var annualPlans = getSheetData(ss, "RANCANGAN_TAHUNAN", ["id", "bulan", "program", "tempat", "catatan"]);
     
-    // 3. Gabungkan data (Merge logic)
+    // 3. Merge Logic: Pastikan apa yang ada di tab manual selari dengan backup data kompleks
     var finalData = {
       settings: backupData.settings || {},
       teachers: teachers.length > 0 ? teachers : (backupData.teachers || []),
       students: students.length > 0 ? mergeStudentData(students, backupData.students) : (backupData.students || []),
       activities: activities.length > 0 ? mergeActivityData(activities, backupData.activities) : (backupData.activities || []),
-      committees: committees.length > 0 ? committees : (backupData.committees || []),
-      annualPlans: annualPlans.length > 0 ? annualPlans : (backupData.annualPlans || []),
+      committees: backupData.committees || [],
+      annualPlans: backupData.annualPlans || [],
       attendances: backupData.attendances || [],
       lastUpdated: backupData.lastUpdated || new Date().getTime()
     };
@@ -53,18 +62,26 @@ function doPost(e) {
     var payload = JSON.parse(jsonString);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     
-    // 1. Simpan backup penuh (PENTING: Ini menyimpan Base64 Logos & Photos)
+    // 1. Simpan dalam mod CHUNKED (Pecahkan string kepada 45,000 aksara setiap baris)
+    // Had Google Sheets ialah 50,000 aksara per-sel. Kita guna 45,000 untuk keselamatan.
     var backupSheet = ss.getSheetByName("DB_BACKUP") || ss.insertSheet("DB_BACKUP");
-    backupSheet.clear(); 
-    backupSheet.getRange(1, 1).setValue(jsonString);
-    backupSheet.getRange(1, 2).setValue("Last Updated: " + new Date().toLocaleString());
+    backupSheet.clear();
     
-    // 2. Kemaskini tab-tab manual untuk rujukan manusia
+    var chunkSize = 45000;
+    var chunks = [];
+    for (var i = 0; i < jsonString.length; i += chunkSize) {
+      chunks.push([jsonString.substring(i, i + chunkSize)]);
+    }
+    
+    // Tulis ke sheet (Setiap chunk satu baris)
+    if (chunks.length > 0) {
+      backupSheet.getRange(1, 1, chunks.length, 1).setValues(chunks);
+    }
+    
+    // 2. Kemaskini tab rujukan manusia (Human Readable Tabs)
     if (payload.teachers) updateSheetFromData(ss, "DATA_GURU", payload.teachers, ["id", "nama", "noKP", "jawatan", "telefon"]);
     if (payload.students) updateSheetFromData(ss, "DATA_AHLI", payload.students, ["id", "nama", "noKP", "tingkatan", "kelas", "jantina", "kaum", "noKeahlian", "telefonWaris"]);
     if (payload.activities) updateSheetFromData(ss, "DATA_AKTIVITI", payload.activities, ["id", "tarikh", "masa", "nama", "tempat", "ulasan", "photos"]);
-    if (payload.annualPlans) updateSheetFromData(ss, "RANCANGAN_TAHUNAN", payload.annualPlans, ["id", "bulan", "program", "tempat", "catatan"]);
-    if (payload.committees) updateSheetFromData(ss, "STRUKTUR_ORGANISASI", payload.committees, ["id", "studentId", "jawatan"]);
 
     return ContentService.createTextOutput("SUCCESS");
   } catch (err) {
@@ -72,18 +89,18 @@ function doPost(e) {
   }
 }
 
-// --- LOGIK GABUNGAN (PENTING UNTUK GAMBAR) ---
+// --- LOGIK GABUNGAN (PENTING UNTUK KESTABILAN DATA) ---
 
 function mergeStudentData(sheetStudents, backupStudents) {
   if (!backupStudents) return sheetStudents;
   return sheetStudents.map(function(s) {
     var b = backupStudents.find(function(x) { return x.id === s.id });
     if (b) {
-      // Kekalkan data kompleks (Health & Alamat) yang tak masuk dalam Columns Sheet
       s.health = b.health;
       s.alamat = b.alamat;
       s.namaWaris = b.namaWaris;
       s.noKPWaris = b.noKPWaris;
+      s.telefonWaris = b.telefonWaris;
     }
     return s;
   });
@@ -94,11 +111,11 @@ function mergeActivityData(sheetActs, backupActs) {
   return sheetActs.map(function(a) {
     var b = backupActs.find(function(x) { return x.id === a.id });
     if (b) {
-      // Jika lajur 'photos' di sheet kosong (sebab limit character Sheets), ambil dari backup JSON
+      // Jika lajur 'photos' di sheet kosong atau rosak, tarik dari JSON backup
       if (!a.photos || a.photos === "" || a.photos === "[]") {
         a.photos = b.photos;
       } else if (typeof a.photos === 'string' && a.photos.startsWith("[")) {
-        a.photos = JSON.parse(a.photos);
+        try { a.photos = JSON.parse(a.photos); } catch(e) {}
       }
     }
     return a;
@@ -141,8 +158,11 @@ function updateSheetFromData(ss, sheetName, data, headers) {
   var rows = data.map(function(item) {
     return headers.map(function(h) { 
       var val = item[h];
-      // Tukar array (photos) kepada string untuk simpan dalam sel
-      if (Array.isArray(val)) return JSON.stringify(val);
+      // Jika data adalah array (imej), hadkan simpanan di tab rujukan jika terlalu besar
+      if (Array.isArray(val)) {
+        var str = JSON.stringify(val);
+        return str.length > 40000 ? "[IMEJ BESAR - LIHAT DALAM APP]" : str;
+      }
       return val || ""; 
     });
   });

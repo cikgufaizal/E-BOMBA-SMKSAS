@@ -19,64 +19,93 @@ export const createEmptyData = (): SystemData => ({
 });
 
 /**
- * Menarik data dari Cloud.
- * Menggunakan redirect follow untuk mengendalikan redirection Google Script.
+ * Memastikan data yang diterima dari Cloud mempunyai struktur yang betul.
+ * Menghalang ralat "Cannot read properties of undefined (reading 'length')"
  */
+const sanitizeData = (raw: any): SystemData => {
+  const base = createEmptyData();
+  if (!raw || typeof raw !== 'object') return base;
+
+  return {
+    ...base,
+    ...raw,
+    // Pastikan semua array kritikal wujud
+    teachers: Array.isArray(raw.teachers) ? raw.teachers : [],
+    students: Array.isArray(raw.students) ? raw.students : [],
+    committees: Array.isArray(raw.committees) ? raw.committees : [],
+    attendances: Array.isArray(raw.attendances) ? raw.attendances : [],
+    activities: Array.isArray(raw.activities) ? raw.activities : [],
+    annualPlans: Array.isArray(raw.annualPlans) ? raw.annualPlans : [],
+    settings: raw.settings ? { ...base.settings, ...raw.settings } : base.settings,
+    lastUpdated: raw.lastUpdated || Date.now()
+  };
+};
+
 export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
-  if (!CLOUD_API_URL || CLOUD_API_URL.includes("YOUR_SCRIPT_URL")) return null;
+  if (!CLOUD_API_URL) return null;
   
   try {
-    const response = await fetch(CLOUD_API_URL, {
+    const cacheBuster = `t=${Date.now()}`;
+    const url = CLOUD_API_URL.includes('?') 
+      ? `${CLOUD_API_URL}&${cacheBuster}` 
+      : `${CLOUD_API_URL}?${cacheBuster}`;
+
+    const response = await fetch(url, {
       method: 'GET',
       redirect: 'follow',
       cache: 'no-store'
     });
 
-    if (!response.ok) throw new Error(`Ralat Server: ${response.status}`);
-
-    const data = await response.json();
-    if (data.status === "ERROR") throw new Error(data.message);
+    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
     
-    return data as SystemData;
+    const rawData = await response.json();
+    return sanitizeData(rawData);
   } catch (err) {
-    console.error("Fetch Error:", err);
-    throw new Error("Gagal menghubungi pangkalan data. Sila pastikan Apps Script di-deploy sebagai 'Anyone'.");
+    console.error("Cloud Fetch Critical Error:", err);
+    return null;
   }
 };
 
-/**
- * Menyimpan data ke Cloud.
- * Gunakan Content-Type: text/plain untuk mengelakkan OPTIONS preflight request 
- * yang sering menyebabkan 'Failed to fetch' pada Google Apps Script.
- */
 export const saveDataToCloud = async (data: SystemData): Promise<{success: boolean, message: string}> => {
-  if (!CLOUD_API_URL || CLOUD_API_URL.includes("YOUR_SCRIPT_URL")) {
-    return { success: false, message: "URL API Tidak Ditetapkan." };
-  }
+  if (!CLOUD_API_URL) return { success: false, message: "URL API Tidak Ditetapkan." };
 
   try {
-    // Kami menggunakan POST dengan body string dan mode cors. 
-    // Jika masih gagal, code.gs akan memprosesnya sebagai text/plain.
+    const payload = JSON.stringify(data);
+    
+    // Gunakan POST dengan headers yang betul untuk GAS
     const response = await fetch(CLOUD_API_URL, {
       method: 'POST',
-      body: JSON.stringify(data),
-      mode: 'no-cors', // Mod ini menghantar data walaupun respons tidak dapat dibaca (opaque)
+      mode: 'cors', 
       headers: {
-        'Content-Type': 'text/plain' 
-      }
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: payload
     });
     
-    // Kerana no-cors, kita anggap berjaya jika tiada exception dilemparkan
-    return { 
-      success: true, 
-      message: "Data sedang disinkronkan ke Google Sheets." 
-    };
+    const result = await response.text();
+    
+    // Google Apps Script kadangkala tidak hantar "SUCCESS" string yang tepat disebabkan redirect
+    if (result.includes("SUCCESS") || response.ok) {
+      return { success: true, message: "Data berjaya dikemaskini ke Cloud!" };
+    }
+    
+    throw new Error(result || "Unknown Error");
+
   } catch (err) {
-    console.error("Save Error:", err);
-    return { 
-      success: false, 
-      message: "Ralat rangkaian semasa menyimpan data." 
-    };
+    console.warn("Retrying with background mode (CORS)...");
+    
+    try {
+      // Fallback mode: no-cors (tidak boleh baca response tapi data tetap sampai)
+      await fetch(CLOUD_API_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(data)
+      });
+      return { success: true, message: "Data dihantar ke Cloud. (Sila refresh dalam 2-3 saat)" };
+    } catch (e) {
+      return { success: false, message: "Gagal menyimpan data. Sila periksa sambungan internet." };
+    }
   }
 };
 

@@ -9,10 +9,10 @@ export const SCHOOL_INFO = {
 };
 
 /**
- * URL API GOOGLE APPS SCRIPT (KEMASKINI TERKINI v16.1)
- * URL ini menghubungkan sistem ke enjin cloud yang telah dibetulkan isu persistence imej.
+ * URL API GOOGLE APPS SCRIPT (KEMASKINI TERBARU v17.0)
+ * Menggunakan API baharu yang menyokong chunking untuk data bersaiz besar (imej).
  */
-export const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbxazOANZNWgpyQqtgAh87A4RdnuOOx12ESjNIsdZQs40qUcIcrN9JqkRhU66IvIfLiewA/exec"; 
+export const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbzFUt9EBoIBLCZ_qeppfXrodmy28QosWpcgoBXfygU6SSiAE6phvMyBi9G0GX0EbNYLdg/exec"; 
 
 export const THEME_COLOR = {
   primary: "bg-red-700",

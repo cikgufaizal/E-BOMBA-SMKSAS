@@ -18,7 +18,6 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
   const [debugResult, setDebugResult] = useState<string | null>(null);
   
   const [schoolName, setSchoolName] = useState(data.settings?.schoolName || '');
-  const [clubName, setClubName] = useState(data.settings?.clubName || '');
   const [address, setAddress] = useState(data.settings?.address || '');
   const [logoUrl, setLogoUrl] = useState(data.settings?.logoUrl || '');
   const [bombaLogoUrl, setBombaLogoUrl] = useState(data.settings?.bombaLogoUrl || '');
@@ -27,21 +26,12 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
   const bombaLogoInputRef = useRef<HTMLInputElement>(null);
 
   const dataSize = JSON.stringify(data).length;
+  const isOverLimit = dataSize > 500000; // 500k as safe warning limit for multi-row storage
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (password === 'CEB1003') setIsAuthorized(true);
     else { alert("Akses Ditolak!"); setPassword(''); }
-  };
-
-  const runDiagnostics = async () => {
-    setDebugResult("Mengesahkan sambungan...");
-    const res = await fetchDataFromCloud();
-    if (res) {
-      setDebugResult(`BERJAYA: Awan responsif. Saiz pangkalan data: ${JSON.stringify(res).length} aksara.`);
-    } else {
-      setDebugResult("GAGAL: Google Script tidak memulangkan data yang sah.");
-    }
   };
 
   const pushToCloud = async () => {
@@ -54,8 +44,8 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'school' | 'bomba') => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 1 * 1024 * 1024) {
-        alert("Saiz fail terlalu besar! Had 1MB.");
+      if (file.size > 0.5 * 1024 * 1024) {
+        alert("Fail terlalu besar! Had 500KB untuk kestabilan cloud.");
         return;
       }
       const reader = new FileReader();
@@ -89,14 +79,19 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
           <Shield className="w-8 h-8 text-red-600" />
           <div>
             <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">System Intelligence Core</h2>
-            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">Data Size: {dataSize} / 1,000,000 chars</p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className={`text-[9px] font-black uppercase tracking-widest ${isOverLimit ? 'text-red-500 animate-pulse' : 'text-slate-500'}`}>
+                Payload Size: {dataSize.toLocaleString()} / 1,000,000 chars
+              </p>
+              {isOverLimit && <AlertTriangle className="w-3 h-3 text-red-500" />}
+            </div>
           </div>
         </div>
         <Button variant="secondary" onClick={() => setIsAuthorized(false)}>Secured Exit</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <FormCard title="Cloud Handshake (Chunking)">
+        <FormCard title="Cloud Synchronization">
            <div className="space-y-4">
               <Button onClick={onForcePull} variant="secondary" className="w-full">
                 <DownloadCloud className="w-4 h-4" /> Pull From Cloud
@@ -104,49 +99,40 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
               <Button onClick={pushToCloud} className="w-full" disabled={isSaving}>
                 {isSaving ? <RefreshCw className="animate-spin w-4 h-4" /> : <UploadCloud className="w-4 h-4" />} Push To Cloud
               </Button>
-              <div className="mt-4 pt-4 border-t border-white/5">
-                <button onClick={runDiagnostics} className="w-full py-3 text-[9px] font-black text-slate-500 uppercase tracking-widest hover:text-red-500 transition-colors flex items-center justify-center gap-2">
-                  <Search className="w-3 h-3" /> Jalankan Diagnostik Sambungan
-                </button>
-                {debugResult && (
-                  <div className="mt-3 p-4 bg-slate-950 rounded-xl border border-white/5 text-center">
-                    <p className="text-[9px] font-bold text-red-400 uppercase tracking-wider">{debugResult}</p>
-                  </div>
-                )}
-              </div>
            </div>
         </FormCard>
 
-        <FormCard title="Local Backup (Offline)">
+        <FormCard title="Local Data Control">
           <div className="space-y-4">
             <Button onClick={() => {
               const dataStr = JSON.stringify(data, null, 2);
-              const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+              const blob = new Blob([dataStr], { type: "application/json" });
+              const url = URL.createObjectURL(blob);
               const link = document.createElement('a');
-              link.setAttribute('href', dataUri);
-              link.setAttribute('download', `BACKUP_KADET_BOMBA_${Date.now()}.json`);
+              link.href = url;
+              link.download = `BACKUP_KADET_BOMBA_${new Date().toISOString().split('T')[0]}.json`;
               link.click();
             }} variant="success" className="w-full">
-              <FileDown className="w-4 h-4" /> Download Backup
+              <FileDown className="w-4 h-4" /> Export JSON
             </Button>
             <input type="file" className="hidden" id="import-json" onChange={(e: any) => {
               const reader = new FileReader();
-              reader.readAsText(e.target.files[0], "UTF-8");
               reader.onload = (event: any) => {
                 try {
                   const imported = JSON.parse(event.target.result);
-                  if (confirm("Overwrite current data?")) updateData(imported);
-                } catch (err) { alert("Invalid file."); }
+                  if (confirm("Gantikan semua data sedia ada?")) updateData(imported);
+                } catch (err) { alert("Format fail tidak sah."); }
               };
+              reader.readAsText(e.target.files[0]);
             }} accept=".json" />
             <Button onClick={() => document.getElementById('import-json')?.click()} variant="secondary" className="w-full">
-              <FileUp className="w-4 h-4" /> Restore Backup
+              <FileUp className="w-4 h-4" /> Import JSON
             </Button>
           </div>
         </FormCard>
       </div>
 
-      <FormCard title="Profil Global & Logo">
+      <FormCard title="Official Branding">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-4">
             <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Logo Sekolah</label>
@@ -154,8 +140,8 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
               <div className="w-20 h-20 bg-slate-900 rounded-2xl border-2 border-dashed border-slate-800 flex items-center justify-center overflow-hidden">
                 {logoUrl ? <img src={logoUrl} className="w-full h-full object-contain p-2" /> : <ImageIcon className="w-6 h-6 text-slate-700" />}
               </div>
-              <input type="file" ref={schoolLogoInputRef} onChange={(e) => handleLogoUpload(e, 'school')} className="hidden" />
-              <Button variant="secondary" onClick={() => schoolLogoInputRef.current?.click()} className="flex-1 py-3 text-[9px]">Tukar Logo</Button>
+              <input type="file" ref={schoolLogoInputRef} onChange={(e) => handleLogoUpload(e, 'school')} className="hidden" accept="image/*" />
+              <Button variant="secondary" onClick={() => schoolLogoInputRef.current?.click()} className="flex-1 py-3 text-[9px]">Pilih Fail</Button>
             </div>
           </div>
 
@@ -165,8 +151,8 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
               <div className="w-20 h-20 bg-slate-900 rounded-2xl border-2 border-dashed border-slate-800 flex items-center justify-center overflow-hidden">
                 {bombaLogoUrl ? <img src={bombaLogoUrl} className="w-full h-full object-contain p-2" /> : <ImageIcon className="w-6 h-6 text-slate-700" />}
               </div>
-              <input type="file" ref={bombaLogoInputRef} onChange={(e) => handleLogoUpload(e, 'bomba')} className="hidden" />
-              <Button variant="secondary" onClick={() => bombaLogoInputRef.current?.click()} className="flex-1 py-3 text-[9px]">Tukar Logo</Button>
+              <input type="file" ref={bombaLogoInputRef} onChange={(e) => handleLogoUpload(e, 'bomba')} className="hidden" accept="image/*" />
+              <Button variant="secondary" onClick={() => bombaLogoInputRef.current?.click()} className="flex-1 py-3 text-[9px]">Pilih Fail</Button>
             </div>
           </div>
 
@@ -177,32 +163,14 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
 
           <Button 
             onClick={() => {
-              updateData({ settings: { ...data.settings, schoolName, clubName, address, logoUrl, bombaLogoUrl, sheetUrl: CLOUD_API_URL } as any });
-              alert("Profil dikemaskini.");
+              updateData({ settings: { ...data.settings, schoolName, address, logoUrl, bombaLogoUrl } as any });
+              alert("Tetapan disimpan secara lokal. Sila Push ke Cloud.");
             }} 
             className="md:col-span-2 h-14"
           >
-            Update Official Profile
+            Sahkan Perubahan Profil
           </Button>
         </div>
-      </FormCard>
-
-      <FormCard title="Factory Reset">
-          <div className="p-8 bg-red-950/20 border border-red-900/40 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6">
-             <div className="flex items-center gap-6">
-                <AlertTriangle className="w-10 h-10 text-red-600" />
-                <div>
-                   <h4 className="font-black text-white uppercase text-sm mb-1">Padam Semua Data</h4>
-                   <p className="text-[10px] text-red-400 font-bold uppercase tracking-widest leading-relaxed">Operasi ini akan memadam semua data kekal di Cloud.</p>
-                </div>
-             </div>
-             <Button variant="danger" onClick={() => {
-               if (prompt("Type 'RESET' to confirm:") === 'RESET') {
-                 updateData({ teachers: [], students: [], committees: [], attendances: [], activities: [], annualPlans: [], lastUpdated: Date.now() });
-                 alert("Sistem telah direset.");
-               }
-             }} className="w-full md:w-auto h-14">RESET SYSTEM</Button>
-          </div>
       </FormCard>
     </div>
   );

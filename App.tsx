@@ -42,15 +42,19 @@ const App: React.FC = () => {
         setSyncStatus('success');
         if (isInitial) setIsLoading(false);
       } else {
-        throw new Error("API RESPONSE NULL");
+        // Jika cloud kosong atau ralat, kita teruskan dengan data kosong yang selamat
+        console.warn("Cloud data empty or failed, using local fallback.");
+        if (isInitial) setIsLoading(false);
       }
     } catch (err) {
+      console.error("Critical Pull Error:", err);
       setSyncStatus('error');
       if (isInitial) {
-        setError("Sambungan pangkalan data gagal. Sistem beralih ke mod Offline.");
+        setError("Handshake Gagal. Sistem menggunakan mod Kecemasan.");
+        setIsLoading(false); // Pastikan loading tamat walaupun ralat
       }
     } finally {
-      if (!isInitial) setTimeout(() => setSyncStatus('idle'), 3000);
+      setTimeout(() => setSyncStatus('idle'), 3000);
     }
   }, []);
 
@@ -59,11 +63,18 @@ const App: React.FC = () => {
   }, [pullData]);
 
   const handleUpdateData = async (newData: Partial<SystemData>) => {
+    // 1. Update local state segera (Optimistic Update)
     const updated = { ...data, ...newData, lastUpdated: Date.now() };
     setData(updated); 
+    
+    // 2. Hantar ke Cloud di latar belakang
     setSyncStatus('syncing');
-    const res = await saveDataToCloud(updated);
-    setSyncStatus(res.success ? 'success' : 'error');
+    try {
+      const res = await saveDataToCloud(updated);
+      setSyncStatus(res.success ? 'success' : 'error');
+    } catch (e) {
+      setSyncStatus('error');
+    }
     setTimeout(() => setSyncStatus('idle'), 2000);
   };
 
@@ -82,47 +93,20 @@ const App: React.FC = () => {
     <>
       {isLoading && (
         <div className="fixed inset-0 z-[200] bg-[#020617] flex flex-col items-center justify-center p-10 overflow-hidden">
-          {/* BACKGROUND EFFECTS */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(239,68,68,0.05)_0%,transparent_70%)]"></div>
-          <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#ffffff05 1px, transparent 0)', backgroundSize: '40px 40px' }}></div>
           
-          <div className="relative mb-16 group">
+          <div className="relative mb-16">
             <div className="w-32 h-32 border-4 border-white/5 border-t-red-600 rounded-[2.5rem] animate-[spin_1.5s_linear_infinite] shadow-[0_0_30px_rgba(239,68,68,0.2)]"></div>
             <div className="absolute inset-0 flex items-center justify-center">
                <Cpu className="w-12 h-12 text-red-600 drop-shadow-[0_0_15px_rgba(239,68,68,0.6)] animate-pulse" />
             </div>
-            <div className="absolute -inset-4 border border-red-600/10 rounded-[3rem] animate-ping opacity-20"></div>
           </div>
           
           <div className="text-center space-y-8 max-w-sm relative z-10">
-            <div>
-               <h2 className="text-[12px] font-black text-white uppercase tracking-[0.6em] mb-2">Initialize Core</h2>
-               <div className="h-1 w-48 bg-white/5 mx-auto rounded-full overflow-hidden">
-                  <div className="h-full bg-red-600 animate-[shimmer_2s_infinite_linear] w-[60%]"></div>
-               </div>
+            <h2 className="text-[12px] font-black text-white uppercase tracking-[0.6em] mb-2">Syncing Command Center</h2>
+            <div className="h-1 w-48 bg-white/5 mx-auto rounded-full overflow-hidden">
+               <div className="h-full bg-red-600 animate-[shimmer_2s_infinite_linear] w-[60%]"></div>
             </div>
-            
-            {error ? (
-              <div className="p-10 glass-panel rounded-[3rem] border-red-500/20 space-y-6">
-                <WifiOff className="w-10 h-10 text-red-500 mx-auto" />
-                <p className="text-[11px] text-red-200 font-black uppercase tracking-widest">{error}</p>
-                <div className="flex flex-col gap-3">
-                  <button onClick={() => pullData(true)} className="w-full py-5 bg-red-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-red-900/40 flex items-center justify-center gap-3">
-                    <RefreshCw className="w-4 h-4" /> Retry Handshake
-                  </button>
-                  <button onClick={() => setIsLoading(false)} className="w-full py-5 bg-slate-800 text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em]">
-                    Bypass to Local Mode
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                 <p className="text-[9px] text-slate-500 font-black uppercase tracking-[0.3em] leading-relaxed animate-pulse">
-                    Membaca tab DATA_GURU, DATA_AHLI dan DATA_AKTIVITI...
-                 </p>
-                 <p className="text-[8px] font-mono text-slate-700 uppercase tracking-widest">Encrypting WebSocket Connection [OK]</p>
-              </div>
-            )}
           </div>
         </div>
       )}
