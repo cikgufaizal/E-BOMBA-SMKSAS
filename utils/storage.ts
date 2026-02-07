@@ -20,54 +20,60 @@ export const createEmptyData = (): SystemData => ({
 
 /**
  * Menarik data dari Cloud.
- * Guna fetch paling ringkas untuk Google Script (Tanpa headers pelik).
+ * Menggunakan konfigurasi paling asas untuk mengelakkan isu preflight CORS.
  */
 export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
   if (!CLOUD_API_URL || CLOUD_API_URL.includes("YOUR_SCRIPT_URL")) return null;
   
   try {
-    // Tambah timestamp unik untuk elak cache browser
-    const response = await fetch(`${CLOUD_API_URL}?t=${Date.now()}`, {
+    const response = await fetch(CLOUD_API_URL, {
       method: 'GET',
-      redirect: 'follow'
+      mode: 'cors', // Google Script menyokong CORS jika di-deploy dengan betul
+      redirect: 'follow',
+      cache: 'no-store'
     });
 
-    if (!response.ok) throw new Error("HTTP Status: " + response.status);
+    if (!response.ok) throw new Error(`Server memulangkan kod: ${response.status}`);
 
     const data = await response.json();
-    
-    // Jika data memulangkan status ralat dari Apps Script
-    if (data.status === "ERROR") {
-      console.error("Backend Script Error:", data.message);
-      return null;
-    }
+    if (data.status === "ERROR") throw new Error(data.message);
     
     return data as SystemData;
   } catch (err) {
-    console.error("Ralat Rangkaian (Fetch Failure):", err);
+    console.warn("Gagal menghubungi API Cloud. Menggunakan mod fail-safe.");
     throw err;
   }
 };
 
 /**
  * Menyimpan data ke Cloud.
+ * Mod 'no-cors' digunakan untuk memastikan data dihantar tanpa sekatan browser,
+ * walaupun respons tidak dapat dibaca secara langsung.
  */
 export const saveDataToCloud = async (data: SystemData): Promise<{success: boolean, message: string}> => {
   if (!CLOUD_API_URL || CLOUD_API_URL.includes("YOUR_SCRIPT_URL")) {
-    return { success: false, message: "URL API Tidak Sah." };
+    return { success: false, message: "URL API Tidak Ditetapkan." };
   }
 
   try {
-    // Guna mode no-cors untuk POST pantas tanpa isu preflight
     await fetch(CLOUD_API_URL, {
       method: 'POST',
-      mode: 'no-cors',
-      body: JSON.stringify(data)
+      mode: 'no-cors', // Memintas isu CORS preflight untuk penghantaran data
+      body: JSON.stringify(data),
+      headers: {
+        'Content-Type': 'text/plain', // Gunakan text/plain untuk mengelakkan preflight
+      }
     });
     
-    return { success: true, message: "Berjaya! Data sedang dikemaskini dalam Spreadsheet." };
+    return { 
+      success: true, 
+      message: "Data telah dihantar ke Cloud. Sila semak Google Sheet anda dalam beberapa saat." 
+    };
   } catch (err) {
-    return { success: false, message: "Gagal menyimpan. Sila semak sambungan internet." };
+    return { 
+      success: false, 
+      message: "Gagal menghantar data. Sila semak sambungan internet anda." 
+    };
   }
 };
 

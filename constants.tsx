@@ -10,9 +10,8 @@ export const SCHOOL_INFO = {
 
 /**
  * URL API GOOGLE APPS SCRIPT (KEMASKINI 7 FEB)
- * Menggunakan URL baharu yang dibekalkan pengguna.
  */
-export const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbxxfv22WpfMrOOpfqyG_jP3cX1A0h1Rk49P008iU3FP-egTy1m6bAczh5hrMxPU_4p9Yg/exec".trim(); 
+export const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbwxfv22WpfMrOOpfqyG_jP3cX1A0h1Rk49P008iU3FP-egTy1m6bAczh5hrMxPU_4p9Yg/exec"; 
 
 export const THEME_COLOR = {
   primary: "bg-red-700",

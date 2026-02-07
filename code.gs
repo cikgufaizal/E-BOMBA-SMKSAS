@@ -1,24 +1,20 @@
 /**
- * SISTEM PENGURUSAN KADET BOMBA - CLOUD CORE v13.0 (TAB-MAPPING)
- * Kemaskini 7 Feb: Membaca data manual dari tab Spreadsheet.
+ * SISTEM PENGURUSAN KADET BOMBA - CLOUD CORE v14.0 (FIXED)
+ * Pastikan Deploy: New Deployment -> Web App -> Me -> Anyone.
  */
 
 function doGet(e) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     
-    // 1. Baca data dari tab manual (Mapping ikut screenshot)
+    // Tarik data dari tab manual (Mapping ikut screenshot anda)
     var teachers = getSheetData(ss, "DATA_GURU", ["id", "nama", "jawatan", "telefon"]);
     var students = getSheetData(ss, "DATA_AHLI", ["id", "nama", "noKP", "tingkatan", "kelas", "jantina", "kaum"]);
     var activities = getSheetData(ss, "DATA_AKTIVITI", ["tarikh", "masa", "nama", "tempat", "ulasan"]);
     var committees = getSheetData(ss, "STRUKTUR_ORGANISASI", ["jawatan", "nama", "tingkatan", "kelas"]);
     var annualPlans = getSheetData(ss, "RANCANGAN_TAHUNAN", ["bulan", "program", "tempat", "catatan"]);
     
-    // 2. Baca log kehadiran (Manual log hanya ada nombor, aplikasi guna IDs)
-    // Jadi kita tarik sebagai rujukan sahaja
-    var attendancesRaw = getSheetData(ss, "LOG_KEHADIRAN", ["tarikh", "hadir", "jumlah"]);
-    
-    // 3. Cuba tarik data penuh (JSON) dari DB_BACKUP jika ada
+    // Ambil data backup sebagai fallback
     var backupData = null;
     var backupSheet = ss.getSheetByName("DB_BACKUP");
     if (backupSheet) {
@@ -28,7 +24,6 @@ function doGet(e) {
       }
     }
 
-    // GABUNGKAN DATA: Utamakan tab manual jika ada isi
     var finalData = {
       teachers: teachers.length > 0 ? teachers : (backupData ? backupData.teachers : []),
       students: students.length > 0 ? students : (backupData ? backupData.students : []),
@@ -53,12 +48,12 @@ function doPost(e) {
     var payload = JSON.parse(e.postData.contents);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     
-    // SIMPAN BACKUP (JSON Penuh)
+    // SIMPAN BACKUP JSON
     var backupSheet = ss.getSheetByName("DB_BACKUP") || ss.insertSheet("DB_BACKUP");
     backupSheet.getRange(1, 1).setValue(e.postData.contents);
     backupSheet.getRange(1, 2).setValue("Last Sync: " + new Date().toLocaleString());
     
-    // KEMASKINI TAB MANUAL (Supaya user boleh tengok dalam Sheet)
+    // KEMASKINI TAB MANUAL (Guna clearContents untuk kekalkan warna header)
     updateSheetFromData(ss, "DATA_GURU", payload.teachers, ["id", "nama", "jawatan", "telefon"]);
     updateSheetFromData(ss, "DATA_AHLI", payload.students, ["id", "nama", "noKP", "tingkatan", "kelas", "jantina", "kaum"]);
     updateSheetFromData(ss, "DATA_AKTIVITI", payload.activities, ["tarikh", "masa", "nama", "tempat", "ulasan"]);
@@ -69,8 +64,6 @@ function doPost(e) {
     return ContentService.createTextOutput("ERROR: " + err.toString());
   }
 }
-
-// --- HELPER FUNCTIONS ---
 
 function getSheetData(ss, sheetName, headers) {
   var sheet = ss.getSheetByName(sheetName);
@@ -85,11 +78,7 @@ function getSheetData(ss, sheetName, headers) {
     headers.forEach(function(h, idx) {
       var val = values[i][idx];
       if (val !== undefined && val !== "") hasData = true;
-      
-      // Auto-ID jika ID kosong tapi nama ada
-      if (h === "id" && (!val || val === "")) {
-        val = "id-" + (i + 100); 
-      }
+      if (h === "id" && (!val || val === "")) val = "id-" + (i + 100); 
       obj[h] = val;
     });
     if (hasData) results.push(obj);
@@ -100,11 +89,17 @@ function getSheetData(ss, sheetName, headers) {
 function updateSheetFromData(ss, sheetName, data, headers) {
   if (!data) return;
   var sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
-  sheet.clear();
   
-  // Header
-  sheet.getRange(1, 1, 1, headers.length).setValues([headers.map(h => h.toUpperCase())]);
-  sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#ef4444").setFontColor("white");
+  // Hanya padam isi, bukan format (warna merah header akan kekal)
+  if (sheet.getLastRow() > 1) {
+    sheet.getRange(2, 1, sheet.getLastRow(), sheet.getLastColumn()).clearContent();
+  }
+  
+  // Tulis Header jika kosong
+  if (sheet.getRange(1, 1).getValue() === "") {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers.map(h => h.toUpperCase())])
+         .setFontWeight("bold").setBackground("#ef4444").setFontColor("white");
+  }
   
   if (data.length > 0) {
     var rows = data.map(function(item) {
