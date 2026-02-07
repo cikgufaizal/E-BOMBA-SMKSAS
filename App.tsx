@@ -32,13 +32,19 @@ const App: React.FC = () => {
 
   const pullFromCloud = useCallback(async (isInitial = false) => {
     if (!isInitial) setSyncStatus('syncing');
+    
     const cloudData = await fetchDataFromCloud();
     
     if (cloudData) {
       const cloudTime = cloudData.lastUpdated || 0;
-      const localTime = data.lastUpdated || 0;
+      // Gunakan loadData() terkini untuk perbandingan tepat
+      const currentLocal = loadData();
+      const localTime = currentLocal.lastUpdated || 0;
 
-      if (cloudTime > localTime || data.students.length === 0) {
+      // SYNC LOGIC:
+      // 1. Jika data cloud lebih baru (laptop lain update)
+      // 2. ATAU jika lokal kosong (laptop baru/incognito)
+      if (cloudTime > localTime || currentLocal.students.length === 0) {
         setData(cloudData);
         saveData(cloudData);
         setSyncStatus('success');
@@ -46,21 +52,23 @@ const App: React.FC = () => {
         setSyncStatus('idle');
       }
     } else {
-      setSyncStatus('error');
+      // Jika fail tarik data semasa startup, jangan terus error (mungkin sheet baru)
+      if (!isInitial) setSyncStatus('error');
     }
     
     if (isInitial) setIsInitializing(false);
     setTimeout(() => setSyncStatus('idle'), 2000);
-  }, [data.lastUpdated, data.students.length]);
-
-  useEffect(() => {
-    pullFromCloud(true);
   }, []);
 
   useEffect(() => {
+    pullFromCloud(true);
+  }, [pullFromCloud]);
+
+  // Auto-sync setiap 2 minit jika ada perubahan di cloud (laptop lain)
+  useEffect(() => {
     const interval = setInterval(() => {
       pullFromCloud(false);
-    }, 60000); 
+    }, 120000); 
     return () => clearInterval(interval);
   }, [pullFromCloud]);
 
@@ -75,9 +83,6 @@ const App: React.FC = () => {
     setTimeout(() => setSyncStatus('idle'), 2000);
   };
 
-  // --- LOGIC UTAMA FIX PRINT ---
-  // Jika sedang print, kita pulangkan PrintContainer SAHAJA.
-  // Layout Dashboard TIDAK AKAN WUJUD dalam DOM.
   if (printConfig.isOpen && printConfig.type) {
     return (
       <PrintContainer 
@@ -89,7 +94,6 @@ const App: React.FC = () => {
     );
   }
 
-  // Paparan Biasa (Dashboard)
   return (
     <>
       {isInitializing && (
@@ -98,7 +102,7 @@ const App: React.FC = () => {
             <div className="w-24 h-24 border-2 border-red-600/10 border-t-red-600 rounded-full animate-spin"></div>
             <ShieldCheck className="w-8 h-8 text-red-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
-          <h2 className="mt-8 text-[10px] font-black text-white uppercase tracking-[0.4em] animate-pulse">Initializing Security Systems...</h2>
+          <h2 className="mt-8 text-[10px] font-black text-white uppercase tracking-[0.4em] animate-pulse">Establishing Cloud Handshake...</h2>
         </div>
       )}
 

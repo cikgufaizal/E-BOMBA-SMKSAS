@@ -9,7 +9,8 @@ export const SCHOOL_INFO = {
 };
 
 /**
- * URL API TERBAHARU (AKfycbwKT4rLpe7B-0oTpX8BHeV2_7c5XjeRRkUXIJjYKlb5e467ek_HzBex2IH-5nHyoemYlQ)
+ * URL API GOOGLE APPS SCRIPT
+ * Pastikan script di-deploy sebagai Web App: Execute as "Me", Access "Anyone"
  */
 export const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbwKT4rLpe7B-0oTpX8BHeV2_7c5XjeRRkUXIJjYKlb5e467ek_HzBex2IH-5nHyoemYlQ/exec".trim(); 
 
