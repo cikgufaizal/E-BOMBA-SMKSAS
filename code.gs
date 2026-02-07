@@ -1,6 +1,5 @@
-
 /**
- * SISTEM PENGURUSAN KADET BOMBA - CLOUD CORE v10.0
+ * SISTEM PENGURUSAN KADET BOMBA - CLOUD CORE v10.1
  * -----------------------------------------------------------------------------
  * MENYIMPAN DATA DALAM BARIS SPREADSHEET (HUMAN READABLE)
  */
@@ -55,7 +54,15 @@ function doPost(e) {
     
     if (contents.activities) {
       updateRows(ss, 'AKTIVITI', ['ID', 'TARIKH', 'NAMA', 'TEMPAT', 'MASA', 'ULASAN', 'GAMBAR_RAW'], 
-        contents.activities.map(a => [a.id, a.tarikh, a.nama, a.tempat, a.masa, a.ulasan, JSON.stringify(a.photos || [])]));
+        contents.activities.map(a => {
+          var photosJson = JSON.stringify(a.photos || []);
+          // PERLINDUNGAN: Had sel Google Sheets ialah 50,000 aksara.
+          // Jika gambar terlalu besar, kita ringkaskan string tersebut.
+          if (photosJson.length > 49000) {
+            photosJson = "IMAGE_TOO_LARGE_FOR_CELL_VIEW_BUT_SAVED_IN_JSON_STATE";
+          }
+          return [a.id, a.tarikh, a.nama, a.tempat, a.masa, a.ulasan, photosJson];
+        }));
     }
 
     if (contents.attendances) {

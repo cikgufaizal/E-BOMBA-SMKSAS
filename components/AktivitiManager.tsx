@@ -1,6 +1,5 @@
-
 import React, { useState, useRef } from 'react';
-import { Plus, Trash2, Printer, MapPin, Clock, Image as ImageIcon, X } from 'lucide-react';
+import { Plus, Trash2, Printer, MapPin, Clock, Image as ImageIcon, X, Loader2 } from 'lucide-react';
 import { SystemData, Activity } from '../types';
 import { FormCard, Input, Button, Table, InlineConfirm } from './CommonUI';
 
@@ -20,9 +19,11 @@ const AktivitiManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
     photos: []
   });
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fungsi Kompres Gambar (Resize ke max 600px & Quality 0.6)
+  // Fungsi Kompres Gambar Lebih Agresif (Max 400px & Quality 0.5)
+  // Ini penting untuk pastikan saiz string Base64 muat dalam had sel Google Sheets (50k chars)
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -30,16 +31,20 @@ const AktivitiManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
         const img = new Image();
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 600;
+          const MAX_WIDTH = 400; // Dikurangkan dari 600 ke 400
           const scaleSize = MAX_WIDTH / img.width;
           canvas.width = MAX_WIDTH;
           canvas.height = img.height * scaleSize;
 
           const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+          if (ctx) {
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          }
           
-          // Tukar ke JPEG quality 0.6 untuk jimat storage
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+          // Mampatan kualiti 0.5 adalah optimum untuk laporan
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
           resolve(dataUrl);
         };
         img.src = event.target?.result as string;
@@ -50,27 +55,39 @@ const AktivitiManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
+    if (!files || files.length === 0) return;
 
     const currentPhotos = formData.photos || [];
     if (currentPhotos.length + files.length > 2) {
       alert("Maksimum 2 keping gambar sahaja dibenarkan.");
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
-    const newPhotos: string[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      if (file.size > 2 * 1024 * 1024) { // 2MB Limit Input
-        alert(`Gambar ${file.name} terlalu besar (>2MB). Sila pilih gambar lain.`);
-        continue;
+    setIsProcessingImage(true);
+    try {
+      const newPhotos: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.size > 5 * 1024 * 1024) { // 5MB Limit Input
+          alert(`Gambar ${file.name} terlalu besar. Sila guna gambar bawah 5MB.`);
+          continue;
+        }
+        const compressed = await compressImage(file);
+        newPhotos.push(compressed);
       }
-      const compressed = await compressImage(file);
-      newPhotos.push(compressed);
-    }
 
-    setFormData({ ...formData, photos: [...currentPhotos, ...newPhotos] });
-    if (fileInputRef.current) fileInputRef.current.value = '';
+      setFormData(prev => ({ 
+        ...prev, 
+        photos: [...(prev.photos || []), ...newPhotos] 
+      }));
+    } catch (err) {
+      console.error("Gagal memproses gambar:", err);
+      alert("Ralat semasa memproses gambar.");
+    } finally {
+      setIsProcessingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const removePhoto = (index: number) => {
@@ -80,18 +97,38 @@ const AktivitiManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
   };
 
   const addAktiviti = () => {
-    if (!formData.nama || !formData.tarikh) return;
+    if (!formData.nama || !formData.tarikh) {
+      alert("Sila isi Nama Aktiviti dan Tarikh.");
+      return;
+    }
+    
+    if (isProcessingImage) {
+      alert("Sila tunggu sehingga gambar selesai diproses.");
+      return;
+    }
+
     const newAct: Activity = {
       id: crypto.randomUUID(),
       tarikh: formData.tarikh!,
       masa: formData.masa || '',
-      nama: formData.nama,
+      nama: formData.nama.toUpperCase(),
       tempat: formData.tempat || '',
       ulasan: formData.ulasan || '',
       photos: formData.photos || []
     };
+
     updateData({ activities: [...data.activities, newAct] });
-    setFormData({ ...formData, nama: '', ulasan: '', photos: [] });
+    
+    // Reset form
+    setFormData({
+      tarikh: new Date().toISOString().split('T')[0],
+      masa: '14:00',
+      nama: '',
+      tempat: 'Bilik Robotik',
+      ulasan: '',
+      photos: []
+    });
+    alert("Rekod aktiviti berjaya disimpan!");
   };
 
   const getAttendanceStats = (date: string) => {
@@ -114,28 +151,43 @@ const AktivitiManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
           
           {/* UPLOAD GAMBAR */}
           <div className="md:col-span-2">
-             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Gambar Laporan (Max 2 Keping)</label>
+             <div className="flex justify-between items-center mb-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 block">Gambar Laporan (Maks 2)</label>
+                {isProcessingImage && (
+                  <span className="flex items-center gap-2 text-[10px] text-red-500 font-black animate-pulse uppercase">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Sedang Memproses...
+                  </span>
+                )}
+             </div>
+             
              <div className="flex flex-wrap gap-4">
                 {formData.photos?.map((photo, idx) => (
-                  <div key={idx} className="w-24 h-24 relative group rounded-xl overflow-hidden border border-slate-700">
+                  <div key={idx} className="w-24 h-24 relative group rounded-xl overflow-hidden border border-slate-700 bg-slate-800 shadow-lg">
                     <img src={photo} alt="Preview" className="w-full h-full object-cover" />
-                    <button onClick={() => removePhoto(idx)} className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all text-white">
+                    <button 
+                      onClick={() => removePhoto(idx)} 
+                      className="absolute inset-0 bg-red-600/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all text-white"
+                    >
                       <X className="w-6 h-6" />
                     </button>
                   </div>
                 ))}
+                
                 {(formData.photos?.length || 0) < 2 && (
                   <button 
+                    type="button"
+                    disabled={isProcessingImage}
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-24 h-24 bg-slate-900 border-2 border-dashed border-slate-700 rounded-xl flex flex-col items-center justify-center text-slate-500 hover:text-red-500 hover:border-red-500 transition-all gap-1"
+                    className={`w-24 h-24 bg-slate-950 border-2 border-dashed border-slate-800 rounded-xl flex flex-col items-center justify-center text-slate-500 transition-all gap-1 ${isProcessingImage ? 'opacity-50 cursor-not-allowed' : 'hover:text-red-500 hover:border-red-500 hover:bg-red-500/5'}`}
                   >
                     <ImageIcon className="w-6 h-6" />
-                    <span className="text-[9px] font-bold uppercase">Upload</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest">Tambah</span>
                   </button>
                 )}
+                
                 <input 
                   type="file" 
-                  accept="image/*" 
+                  accept="image/jpeg,image/png" 
                   multiple 
                   className="hidden" 
                   ref={fileInputRef}
@@ -145,16 +197,23 @@ const AktivitiManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
           </div>
 
           <div className="md:col-span-2 space-y-2">
-             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Ulasan / Catatan</label>
+             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Ulasan / Catatan Aktiviti</label>
              <textarea 
-               className="w-full px-4 py-3 bg-slate-950/50 border border-slate-800 rounded-xl text-slate-200 placeholder:text-slate-600 focus:ring-2 focus:ring-red-600/50 focus:border-red-600 transition-all outline-none h-32"
+               className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 placeholder:text-slate-700 focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all outline-none h-32 text-sm font-medium"
                placeholder="Masukkan laporan aktiviti di sini..."
                value={formData.ulasan}
                onChange={(e) => setFormData({...formData, ulasan: e.target.value})}
              />
           </div>
           <div className="md:col-span-2">
-            <Button onClick={addAktiviti} className="w-full py-4"><Plus className="w-4 h-4" /> Simpan Rekod Aktiviti</Button>
+            <Button 
+              onClick={addAktiviti} 
+              disabled={isProcessingImage || !formData.nama}
+              className="w-full py-4 shadow-xl"
+            >
+              {isProcessingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              {isProcessingImage ? 'MEMPROSES GAMBAR...' : 'SIMPAN REKOD AKTIVITI'}
+            </Button>
           </div>
         </div>
       </FormCard>
@@ -163,41 +222,41 @@ const AktivitiManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
         headers={['Tarikh', 'Masa/Tempat', 'Aktiviti', 'Gambar', 'Tindakan']}
         data={data.activities.sort((a,b) => b.tarikh.localeCompare(a.tarikh))}
         renderRow={(act: Activity) => (
-          <tr key={act.id} className="hover:bg-slate-900/50 transition-colors">
+          <tr key={act.id} className="group hover:bg-slate-900/50 transition-colors border-b border-white/[0.02]">
             <td className="px-6 py-4">
-              <p className="font-bold text-slate-200 uppercase">{act.tarikh}</p>
+              <p className="font-bold text-slate-200 uppercase text-xs">{act.tarikh}</p>
             </td>
             <td className="px-6 py-4 space-y-1">
-              <div className="flex items-center gap-2 text-[10px] text-slate-500 uppercase font-bold"><Clock className="w-3 h-3" /> {act.masa}</div>
-              <div className="flex items-center gap-2 text-[10px] text-slate-500 uppercase font-bold"><MapPin className="w-3 h-3" /> {act.tempat}</div>
+              <div className="flex items-center gap-2 text-[10px] text-slate-500 uppercase font-black"><Clock className="w-3 h-3 text-red-500" /> {act.masa}</div>
+              <div className="flex items-center gap-2 text-[10px] text-slate-500 uppercase font-black"><MapPin className="w-3 h-3 text-red-500" /> {act.tempat}</div>
             </td>
             <td className="px-6 py-4">
-               <p className="font-bold text-red-500 uppercase">{act.nama}</p>
-               <p className="text-[10px] text-slate-500 line-clamp-1 italic">{act.ulasan}</p>
-               <span className="text-[9px] font-black text-slate-600 mt-1 block">KEHADIRAN: {getAttendanceStats(act.tarikh)}</span>
+               <p className="font-black text-slate-200 uppercase text-xs tracking-tight group-hover:text-red-500 transition-colors">{act.nama}</p>
+               <p className="text-[10px] text-slate-500 line-clamp-1 italic mt-0.5">{act.ulasan || 'Tiada ulasan'}</p>
+               <span className="text-[9px] font-black text-slate-600 mt-2 block uppercase tracking-widest">KEHADIRAN: {getAttendanceStats(act.tarikh)}</span>
             </td>
             <td className="px-6 py-4">
                {act.photos && act.photos.length > 0 ? (
-                 <div className="flex -space-x-2">
+                 <div className="flex -space-x-3">
                    {act.photos.map((p, i) => (
-                     <div key={i} className="w-8 h-8 rounded-full border border-slate-900 overflow-hidden ring-2 ring-slate-800">
+                     <div key={i} className="w-10 h-10 rounded-xl border-2 border-slate-900 overflow-hidden ring-2 ring-slate-800 shadow-lg transform hover:scale-110 hover:z-10 transition-transform bg-slate-800">
                         <img src={p} className="w-full h-full object-cover" alt="Thumb" />
                      </div>
                    ))}
                  </div>
                ) : (
-                 <span className="text-[9px] text-slate-600 italic">Tiada</span>
+                 <span className="text-[9px] text-slate-700 font-bold uppercase italic">Tiada Gambar</span>
                )}
             </td>
             <td className="px-6 py-4">
               <div className="flex gap-2">
-                <button onClick={() => onPrint(act.id)} className="p-2 text-slate-500 hover:text-emerald-500 transition-colors" title="Cetak Laporan">
+                <button onClick={() => onPrint(act.id)} className="p-2.5 bg-slate-800/50 rounded-xl text-slate-500 hover:text-emerald-500 transition-all" title="Cetak Laporan">
                   <Printer className="w-5 h-5" />
                 </button>
                 {deletingId === act.id ? (
                   <InlineConfirm onConfirm={() => updateData({ activities: data.activities.filter(a => a.id !== act.id) })} onCancel={() => setDeletingId(null)} />
                 ) : (
-                  <button onClick={() => setDeletingId(act.id)} className="p-2 text-slate-500 hover:text-red-500 transition-colors">
+                  <button onClick={() => setDeletingId(act.id)} className="p-2.5 bg-slate-800/50 rounded-xl text-slate-500 hover:text-red-500 transition-all">
                     <Trash2 className="w-5 h-5" />
                   </button>
                 )}

@@ -17,13 +17,13 @@ const PrintSenaraiAhli: React.FC<Props> = ({ data }) => {
       <SchoolHeader data={data} />
       
       {/* TAJUK DOKUMEN */}
-      <div className="text-center mb-6 mt-4 break-inside-avoid page-break-inside-avoid">
+      <div className="text-center mb-6 mt-4 break-inside-avoid">
         <h2 className="text-[12pt] font-bold uppercase tracking-wider underline">SENARAI NAMA PENUH KEAHLIAN PASUKAN</h2>
         <p className="text-[11pt] font-bold uppercase mt-1">SESI PERSEKOLAHAN TAHUN {currentYear}</p>
       </div>
 
       {/* MAKLUMAT RINGKAS */}
-      <div className="flex justify-between items-end mb-2 text-[10pt] font-bold uppercase border-b-2 border-black pb-2 break-inside-avoid page-break-inside-avoid">
+      <div className="flex justify-between items-end mb-2 text-[10pt] font-bold uppercase border-b-2 border-black pb-2 break-inside-avoid">
          <div className="w-2/3">GURU PENASIHAT: {guruPenasihat}</div>
          <div className="w-1/3 text-right">JUMLAH AHLI: {sortedStudents.length} ORANG</div>
       </div>
@@ -43,7 +43,7 @@ const PrintSenaraiAhli: React.FC<Props> = ({ data }) => {
         </thead>
         <tbody>
           {sortedStudents.map((s, idx) => (
-            <tr key={s.id} className="break-inside-avoid page-break-inside-avoid">
+            <tr key={s.id} className="break-inside-avoid">
               <td className="border border-black px-2 py-1.5 text-center">{idx + 1}</td>
               <td className="border border-black px-2 py-1.5 uppercase font-semibold">{s.nama}</td>
               <td className="border border-black px-2 py-1.5 text-center font-mono">{s.noKP}</td>
@@ -62,7 +62,7 @@ const PrintSenaraiAhli: React.FC<Props> = ({ data }) => {
       </table>
 
       {/* RUANG TANDATANGAN */}
-      <div className="mt-16 flex justify-between px-8 break-inside-avoid page-break-inside-avoid">
+      <div className="mt-16 flex justify-between px-8 break-inside-avoid">
          <div className="text-center w-[250px]">
             <p className="font-bold uppercase text-[10pt] mb-16">Disediakan Oleh:</p>
             <div className="border-b border-black w-full mb-2"></div>

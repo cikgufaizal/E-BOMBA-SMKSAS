@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Printer, Search, Edit2, X } from 'lucide-react';
+import { Plus, Trash2, Printer, Search, Edit2, X, AlertCircle } from 'lucide-react';
 import { SystemData, CommitteeMember, JawatanAJK, Student } from '../types';
 import { FormCard, Select, Button, Table, InlineConfirm } from './CommonUI';
 
@@ -65,7 +65,10 @@ const AJKManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
   return (
     <div className="animate-in fade-in duration-500">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-bold text-slate-200 uppercase tracking-tighter">Struktur Organisasi</h2>
+        <div>
+          <h2 className="text-lg font-bold text-slate-200 uppercase tracking-tighter">Struktur Organisasi</h2>
+          <p className="text-[10px] text-slate-500 font-bold uppercase">Urus pelantikan Jawatankuasa Pelajar</p>
+        </div>
         {!editingId && (
           <Button onClick={onPrint} variant="success">
             <Printer className="w-4 h-4" />
@@ -82,7 +85,7 @@ const AJKManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
               <Search className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
               <input
                 type="text"
-                className="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-red-600 outline-none text-slate-200"
+                className="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-red-600 outline-none text-slate-200 uppercase text-xs font-bold"
                 placeholder="Taip nama ahli..."
                 value={selectedStudent ? selectedStudent.nama : search}
                 onChange={(e) => {
@@ -137,13 +140,21 @@ const AJKManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
         })}
         renderRow={(ajk: CommitteeMember, idx: number) => {
           const student = getStudentInfo(ajk.studentId);
-          if (!student) return null;
           return (
             <tr key={ajk.id} className="hover:bg-slate-900/50">
               <td className="px-6 py-4 text-xs font-bold text-slate-600">{idx + 1}</td>
               <td className="px-6 py-4">
-                <p className="font-bold text-slate-200 uppercase">{student.nama}</p>
-                <p className="text-[10px] text-slate-500 font-bold">{student.noKP}</p>
+                {student ? (
+                  <>
+                    <p className="font-bold text-slate-200 uppercase">{student.nama}</p>
+                    <p className="text-[10px] text-slate-500 font-bold">{student.noKP}</p>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2 text-rose-500">
+                    <AlertCircle className="w-4 h-4" />
+                    <p className="text-xs font-black uppercase italic">Pelajar Tidak Dijumpai (Sila Lantik Semula)</p>
+                  </div>
+                )}
               </td>
               <td className="px-6 py-4">
                 <span className="px-2 py-1 bg-red-900/20 text-red-500 text-[10px] font-black rounded-md border border-red-800/20 uppercase tracking-widest">
@@ -151,7 +162,7 @@ const AJKManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
                 </span>
               </td>
               <td className="px-6 py-4 text-sm font-black text-slate-400 tracking-tighter">
-                {student.tingkatan} {student.kelas}
+                {student ? `${student.tingkatan} ${student.kelas}` : '-'}
               </td>
               <td className="px-6 py-4">
                 <div className="flex items-center gap-2">
