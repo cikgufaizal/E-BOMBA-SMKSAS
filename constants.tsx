@@ -9,8 +9,7 @@ export const SCHOOL_INFO = {
 };
 
 /**
- * URL API KEKAL (HARDCODED)
- * Sistem akan sentiasa merujuk URL ini secara automatik.
+ * URL API TERBAHARU (AKfycbwKT4rLpe7B-0oTpX8BHeV2_7c5XjeRRkUXIJjYKlb5e467ek_HzBex2IH-5nHyoemYlQ)
  */
 export const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbwKT4rLpe7B-0oTpX8BHeV2_7c5XjeRRkUXIJjYKlb5e467ek_HzBex2IH-5nHyoemYlQ/exec".trim(); 
 
