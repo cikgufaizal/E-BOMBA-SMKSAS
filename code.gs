@@ -1,73 +1,69 @@
 /**
- * SISTEM PENGURUSAN KADET BOMBA - CLOUD CORE v10.1
+ * SISTEM PENGURUSAN KADET BOMBA - CLOUD CORE v10.8
  * -----------------------------------------------------------------------------
- * MENYIMPAN DATA DALAM BARIS SPREADSHEET (HUMAN READABLE)
+ * Folder ID Rujukan (Untuk kegunaan masa hadapan):
+ * Images: 1U2scG4tzvTSNGQrqg00zpam4kUQUxDiy
+ * Main: 1zl7ObhbrN_ZOLSfid8WSylWzzbpa8srL
+ * -----------------------------------------------------------------------------
+ * ARAHAN PENTING:
+ * 1. Deploy as Web App
+ * 2. Execute as: Me (E-mel anda)
+ * 3. Who has access: Anyone (Wajib pilih 'Anyone' untuk bypass isu login di peranti lain)
  */
 
 const SYNC_SHEET = "DATABASE_SYNC";
 
 function doGet(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(SYNC_SHEET);
-  if (!sheet) return createJsonResponse({ status: "EMPTY", lastUpdated: 0 });
+  var sheet = ss.getSheetByName(SYNC_SHEET) || ss.insertSheet(SYNC_SHEET);
   
-  var data = sheet.getRange(1, 1).getValue();
-  if (!data) return createJsonResponse({ status: "EMPTY", lastUpdated: 0 });
+  var dataRaw = sheet.getRange(1, 1).getValue();
   
-  return ContentService.createTextOutput(data)
-    .setMimeType(ContentService.MimeType.JSON);
+  // Jika sel kosong, pulangkan struktur data asas yang sah
+  if (!dataRaw || dataRaw.toString().trim() === "") {
+    return createJsonResponse({ 
+      status: "EMPTY", 
+      lastUpdated: 0, 
+      students: [], 
+      teachers: [], 
+      committees: [], 
+      attendances: [], 
+      activities: [], 
+      annualPlans: [] 
+    });
+  }
+  
+  try {
+    // Pulangkan data JSON yang disimpan dalam format JSON murni
+    return ContentService.createTextOutput(dataRaw.toString())
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return createJsonResponse({ status: "ERROR", message: err.toString() });
+  }
 }
 
 function doPost(e) {
   try {
-    if (!e.postData || !e.postData.contents) return ContentService.createTextOutput("FAILED: NO_DATA");
-    var contents = JSON.parse(e.postData.contents);
+    if (!e.postData || !e.postData.contents) {
+      return ContentService.createTextOutput("FAILED: NO_DATA");
+    }
     
-    // Handshake Test
-    if (contents.test) return ContentService.createTextOutput("CONNECTED");
-
+    var contents = JSON.parse(e.postData.contents);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var syncSheet = ss.getSheetByName(SYNC_SHEET) || ss.insertSheet(SYNC_SHEET);
     
-    // 1. SEMAK TIMESTAMP UNTUK ELAK DATA LAMA PADAM DATA BARU
-    var oldDataRaw = syncSheet.getRange(1, 1).getValue();
-    if (oldDataRaw) {
-      var oldData = JSON.parse(oldDataRaw);
-      if (contents.lastUpdated && oldData.lastUpdated && contents.lastUpdated < oldData.lastUpdated) {
-        return ContentService.createTextOutput("FAILED: OLDER_VERSION_IGNORE");
-      }
-    }
-
-    // 2. SIMPAN STATE UTAMA (SUMBER UNTUK APP)
-    syncSheet.clear().getRange(1, 1).setValue(e.postData.contents);
+    // 1. Simpan JSON Utama di sel A1 (Source of Truth)
+    syncSheet.getRange(1, 1).setValue(e.postData.contents);
     
-    // 3. PECAHKAN DATA KE BARIS SPREADSHEET (UNTUK CIKGU BACA)
+    // 2. Kemaskini Tab Visual (Optional: Supaya anda boleh lihat data di Sheets)
     if (contents.students) {
-      updateRows(ss, 'AHLI', ['ID', 'NAMA', 'NO KP', 'TING.', 'KELAS', 'JANTINA', 'KAUM'], 
-        contents.students.map(s => [s.id, s.nama, s.noKP, s.tingkatan, s.kelas, s.jantina, s.kaum]));
-    }
-    
-    if (contents.teachers) {
-      updateRows(ss, 'GURU', ['ID', 'NAMA', 'JAWATAN', 'TELEFON'], 
-        contents.teachers.map(t => [t.id, t.nama, t.jawatan, t.telefon]));
+      updateRows(ss, 'SENARAI_AHLI', ['ID', 'NAMA', 'NO KP', 'TING.', 'KELAS', 'NO AHLI', 'KAUM'], 
+        contents.students.map(s => [s.id, s.nama, s.noKP, s.tingkatan, s.kelas, s.noKeahlian || '-', s.kaum]));
     }
     
     if (contents.activities) {
-      updateRows(ss, 'AKTIVITI', ['ID', 'TARIKH', 'NAMA', 'TEMPAT', 'MASA', 'ULASAN', 'GAMBAR_RAW'], 
-        contents.activities.map(a => {
-          var photosJson = JSON.stringify(a.photos || []);
-          // PERLINDUNGAN: Had sel Google Sheets ialah 50,000 aksara.
-          // Jika gambar terlalu besar, kita ringkaskan string tersebut.
-          if (photosJson.length > 49000) {
-            photosJson = "IMAGE_TOO_LARGE_FOR_CELL_VIEW_BUT_SAVED_IN_JSON_STATE";
-          }
-          return [a.id, a.tarikh, a.nama, a.tempat, a.masa, a.ulasan, photosJson];
-        }));
-    }
-
-    if (contents.attendances) {
-      updateRows(ss, 'KEHADIRAN', ['ID', 'TARIKH', 'BIL_HADIR'], 
-        contents.attendances.map(att => [att.id, att.tarikh, (att.presents ? att.presents.length : 0)]));
+      updateRows(ss, 'LOG_AKTIVITI', ['ID', 'TARIKH', 'NAMA', 'TEMPAT', 'MASA', 'ULASAN'], 
+        contents.activities.map(a => [a.id, a.tarikh, a.nama, a.tempat, a.masa, a.ulasan]));
     }
 
     return ContentService.createTextOutput("SUCCESS");

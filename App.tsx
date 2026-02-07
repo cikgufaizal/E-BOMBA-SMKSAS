@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, AlertCircle, RefreshCw } from 'lucide-react';
 import { loadData, saveData, fetchDataFromCloud, saveDataToCloud } from './utils/storage';
 import { SystemData, ReportType } from './types';
 
@@ -23,8 +23,8 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error' | 'success'>('idle');
   const [isInitializing, setIsInitializing] = useState(true);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
   
-  // State Print
   const [printConfig, setPrintConfig] = useState<{ isOpen: boolean; type: ReportType | null; targetId?: string }>({
     isOpen: false,
     type: null
@@ -36,14 +36,13 @@ const App: React.FC = () => {
     const cloudData = await fetchDataFromCloud();
     
     if (cloudData) {
-      const cloudTime = cloudData.lastUpdated || 0;
-      // Gunakan loadData() terkini untuk perbandingan tepat
       const currentLocal = loadData();
+      const cloudTime = cloudData.lastUpdated || 0;
       const localTime = currentLocal.lastUpdated || 0;
 
-      // SYNC LOGIC:
-      // 1. Jika data cloud lebih baru (laptop lain update)
-      // 2. ATAU jika lokal kosong (laptop baru/incognito)
+      // PENTING: Ambil data Cloud jika:
+      // 1. Data Cloud lebih baru (lastUpdated lebih besar)
+      // 2. ATAU Local memang kosong (Laptop Baru / Incognito)
       if (cloudTime > localTime || currentLocal.students.length === 0) {
         setData(cloudData);
         saveData(cloudData);
@@ -52,25 +51,25 @@ const App: React.FC = () => {
         setSyncStatus('idle');
       }
     } else {
-      // Jika fail tarik data semasa startup, jangan terus error (mungkin sheet baru)
-      if (!isInitial) setSyncStatus('error');
+      if (isInitial && data.students.length === 0) {
+        setSyncMessage("Sistem gagal menarik data Cloud. Sila benarkan cookies atau log masuk akaun Google.");
+      }
+      setSyncStatus('error');
     }
     
-    if (isInitial) setIsInitializing(false);
-    setTimeout(() => setSyncStatus('idle'), 2000);
-  }, []);
+    if (isInitial) {
+      setTimeout(() => setIsInitializing(false), 2000);
+    }
+    
+    setTimeout(() => {
+      setSyncStatus('idle');
+      if (!isInitial) setSyncMessage(null);
+    }, 4000);
+  }, [data.students.length]);
 
   useEffect(() => {
     pullFromCloud(true);
-  }, [pullFromCloud]);
-
-  // Auto-sync setiap 2 minit jika ada perubahan di cloud (laptop lain)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      pullFromCloud(false);
-    }, 120000); 
-    return () => clearInterval(interval);
-  }, [pullFromCloud]);
+  }, []);
 
   const handleUpdateData = async (newData: Partial<SystemData>) => {
     const updated = { ...data, ...newData, lastUpdated: Date.now() };
@@ -97,12 +96,28 @@ const App: React.FC = () => {
   return (
     <>
       {isInitializing && (
-        <div className="fixed inset-0 z-[200] bg-brand-dark flex flex-col items-center justify-center">
-          <div className="relative">
-            <div className="w-24 h-24 border-2 border-red-600/10 border-t-red-600 rounded-full animate-spin"></div>
-            <ShieldCheck className="w-8 h-8 text-red-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+        <div className="fixed inset-0 z-[200] bg-brand-dark flex flex-col items-center justify-center p-10">
+          <div className="relative mb-10">
+            <div className="w-28 h-28 border-2 border-red-600/10 border-t-red-600 rounded-full animate-spin"></div>
+            <ShieldCheck className="w-10 h-10 text-red-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
-          <h2 className="mt-8 text-[10px] font-black text-white uppercase tracking-[0.4em] animate-pulse">Establishing Cloud Handshake...</h2>
+          <div className="text-center space-y-4">
+            <h2 className="text-[12px] font-black text-white uppercase tracking-[0.5em] animate-pulse">Establishing Cloud Handshake</h2>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Memuatkan pangkalan data dari Google Cloud...</p>
+          </div>
+          
+          {syncMessage && (
+             <div className="mt-12 max-w-sm text-center p-6 bg-amber-600/10 border border-amber-600/20 rounded-3xl flex flex-col items-center gap-4 animate-in fade-in slide-in-from-bottom-4">
+                <AlertCircle className="w-6 h-6 text-amber-500" />
+                <p className="text-[10px] font-black text-amber-200 uppercase leading-relaxed tracking-widest">{syncMessage}</p>
+                <button 
+                  onClick={() => pullFromCloud(false)}
+                  className="px-6 py-2 bg-amber-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2"
+                >
+                  <RefreshCw className="w-3 h-3" /> Cuba Lagi
+                </button>
+             </div>
+          )}
         </div>
       )}
 

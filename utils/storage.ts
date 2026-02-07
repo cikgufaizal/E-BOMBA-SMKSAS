@@ -20,17 +20,15 @@ const createEmptyData = (): SystemData => ({
   }
 });
 
+/**
+ * Memuatkan data dari Local Storage (Cache Cepat)
+ */
 export const loadData = (): SystemData => {
   if (typeof window === 'undefined') return createEmptyData();
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     try {
-      const parsed = JSON.parse(saved);
-      // Sentiasa paksa URL API yang terkini dari constants
-      if (parsed.settings) {
-        parsed.settings.sheetUrl = CLOUD_API_URL;
-      }
-      return parsed;
+      return JSON.parse(saved);
     } catch (e) {
       return createEmptyData();
     }
@@ -38,47 +36,66 @@ export const loadData = (): SystemData => {
   return createEmptyData();
 };
 
+/**
+ * Menarik data dari Cloud (Source of Truth)
+ */
 export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
   if (!CLOUD_API_URL) return null;
   
   try {
-    // Tambah cache-buster timestamp untuk elak data basi di Incognito
+    // Tambah timestamp unik untuk memaksa Google & Browser memberikan data TERBARU
     const url = `${CLOUD_API_URL}?t=${Date.now()}`;
     
     const response = await fetch(url, {
       method: 'GET',
       mode: 'cors',
       cache: 'no-store',
-      redirect: 'follow',
+      redirect: 'follow', // Penting: Google Apps Script melakukan redirect ke URL baru
+      headers: {
+        'Accept': 'application/json',
+      }
     });
 
     if (!response.ok) {
-      console.error(`Sync Fail: HTTP ${response.status}`);
+      console.error(`Sync Error: HTTP ${response.status}`);
+      return null;
+    }
+
+    // Elakkan crash jika Cloud memulangkan HTML (cth: halaman login Google yang disekat)
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("text/html")) {
+      console.warn("Handshake Blocked: Sila benarkan cookies pada browser anda.");
       return null;
     }
 
     const cloudData = await response.json();
     
-    // Status EMPTY bermaksud sheet wujud tapi tiada data
-    if (cloudData && typeof cloudData === 'object' && cloudData.status !== "EMPTY") {
+    // Pastikan data yang diterima adalah objek yang sah
+    if (cloudData && typeof cloudData === 'object' && cloudData.status !== "ERROR") {
       return cloudData as SystemData;
     }
     
     return null;
   } catch (err) {
-    console.error("Network Error / CORS Issue:", err);
+    console.error("Critical Cloud Fetch Failure:", err);
     return null;
   }
 };
 
+/**
+ * Menyimpan data ke Cloud dan Local
+ */
 export const saveDataToCloud = async (data: SystemData): Promise<{success: boolean, message: string}> => {
   if (!CLOUD_API_URL) return { success: false, message: "URL API Tidak Sah" };
 
   try {
     const dataToSend = { ...data, lastUpdated: Date.now() };
     
-    // Gunakan mode 'no-cors' dengan content-type text/plain 
-    // untuk mengelakkan isu preflight OPTIONS pada Google Apps Script
+    // Simpan ke Local dahulu supaya UX nampak pantas
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSend));
+
+    // Kirim ke Google Apps Script
+    // Menggunakan no-cors untuk memintas isu preflight OPTIONS yang sering gagal di sesetengah browser
     await fetch(CLOUD_API_URL, {
       method: 'POST',
       mode: 'no-cors',
@@ -89,13 +106,10 @@ export const saveDataToCloud = async (data: SystemData): Promise<{success: boole
       body: JSON.stringify(dataToSend)
     });
     
-    // Simpan ke local storage sebagai cache pantas
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSend));
-    
     return { success: true, message: "Data berjaya dihantar ke Cloud." };
   } catch (err) {
-    console.error("Gagal Save ke Cloud:", err);
-    return { success: false, message: "Ralat sambungan Cloud." };
+    console.error("Save to Cloud Error:", err);
+    return { success: false, message: "Ralat Cloud. Data hanya disimpan secara lokal." };
   }
 };
 

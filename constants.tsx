@@ -9,10 +9,10 @@ export const SCHOOL_INFO = {
 };
 
 /**
- * URL API GOOGLE APPS SCRIPT
+ * URL API GOOGLE APPS SCRIPT (DIKEMASKINI)
  * Pastikan script di-deploy sebagai Web App: Execute as "Me", Access "Anyone"
  */
-export const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbwKT4rLpe7B-0oTpX8BHeV2_7c5XjeRRkUXIJjYKlb5e467ek_HzBex2IH-5nHyoemYlQ/exec".trim(); 
+export const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbxXs5ChRkYN0OfLqiCTm2-cDvUznkxaH6FskkaiMA3A7bUCsMAV692dVhxIkwVeZrZCjg/exec".trim(); 
 
 export const THEME_COLOR = {
   primary: "bg-red-700",
