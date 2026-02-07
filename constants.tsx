@@ -9,8 +9,7 @@ export const SCHOOL_INFO = {
 };
 
 /**
- * URL API GOOGLE APPS SCRIPT
- * Pastikan script di-deploy sebagai Web App: Execute as "Me", Access "Anyone"
+ * URL API GOOGLE APPS SCRIPT BARU
  */
 export const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbxXs5ChRkYN0OfLqiCTm2-cDvUznkxaH6FskkaiMA3A7bUCsMAV692dVhxIkwVeZrZCjg/exec".trim(); 
 

@@ -1,9 +1,6 @@
 import { SystemData } from '../types';
 import { CLOUD_API_URL, SCHOOL_INFO } from '../constants';
 
-/**
- * Struktur data kosong untuk permulaan sesi
- */
 export const createEmptyData = (): SystemData => ({
   teachers: [],
   students: [],
@@ -22,11 +19,13 @@ export const createEmptyData = (): SystemData => ({
 });
 
 /**
- * Menarik data dari Cloud (Google Sheets)
- * Menggunakan cache: 'no-store' untuk memastikan data sentiasa segar
+ * Menarik data dari Cloud dengan cantuman automatik di backend
  */
 export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
-  if (!CLOUD_API_URL) return null;
+  if (!CLOUD_API_URL || CLOUD_API_URL.includes("YOUR_SCRIPT_URL")) {
+    console.error("URL API tidak sah.");
+    return null;
+  }
   
   try {
     const url = `${CLOUD_API_URL}?t=${Date.now()}`;
@@ -35,52 +34,78 @@ export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
       mode: 'cors',
       cache: 'no-store',
       redirect: 'follow',
-      headers: {
-        'Accept': 'application/json',
-      }
+      headers: { 'Accept': 'application/json' }
     });
 
-    if (!response.ok) throw new Error("Gagal akses Cloud");
+    if (!response.ok) throw new Error(`Google Server Error: ${response.status}`);
 
-    const cloudData = await response.json();
+    const rawText = await response.text();
     
-    // Validasi struktur data yang diterima
-    if (cloudData && typeof cloudData === 'object' && cloudData.status !== "ERROR") {
-      return cloudData as SystemData;
+    if (rawText.trim().startsWith("<!DOCTYPE")) {
+      console.error("DEBUG: Google memulangkan HTML bukannya JSON. Sila semak deployment 'Anyone' access.");
+      return null;
     }
-    return null;
+
+    if (!rawText || rawText.trim() === "" || rawText === "null") {
+      return createEmptyData();
+    }
+
+    try {
+      const cloudData = JSON.parse(rawText);
+      if (cloudData.status === "ERROR") {
+        console.error("Cloud Error Message:", cloudData.message);
+        return null;
+      }
+      if (cloudData.status === "NEW_SESSION") return createEmptyData();
+      return cloudData as SystemData;
+    } catch (parseError) {
+      console.error("DEBUG: JSON Rosak walaupun chunking aktif. Sila semak log Google Script.");
+      return null;
+    }
   } catch (err) {
-    console.error("Cloud Fetch Error:", err);
+    console.error("Network Fetch Error:", err);
     return null;
   }
 };
 
 /**
- * Menyimpan data ke Cloud
+ * Menyimpan data ke Cloud. 
+ * Kini had ditingkatkan ke 500,000 aksara kerana backend menyokong multi-row.
  */
-export const saveDataToCloud = async (data: SystemData): Promise<{success: boolean, message: string}> => {
-  if (!CLOUD_API_URL) return { success: false, message: "URL API Tidak Sah" };
+export const saveDataToCloud = async (data: SystemData): Promise<{success: boolean, message: string, size?: number}> => {
+  if (!CLOUD_API_URL || CLOUD_API_URL.includes("YOUR_SCRIPT_URL")) {
+    return { success: false, message: "URL API Tidak Sah." };
+  }
 
   try {
     const dataToSend = { ...data, lastUpdated: Date.now() };
-    
-    const response = await fetch(CLOUD_API_URL, {
+    const jsonString = JSON.stringify(dataToSend);
+    const dataSize = jsonString.length;
+
+    // Had baru: 500k aksara (Lebih dari cukup untuk ribuan ahli + gambar)
+    if (dataSize > 495000) {
+       return { 
+         success: false, 
+         message: `DATA TERLALU BESAR (${dataSize} chars). Sila buang gambar yang tidak perlu.` 
+       };
+    }
+
+    await fetch(CLOUD_API_URL, {
       method: 'POST',
-      mode: 'no-cors', // Penting untuk bypass CORS preflight pada Google Script
-      cache: 'no-store',
-      headers: {
-        'Content-Type': 'text/plain',
-      },
-      body: JSON.stringify(dataToSend)
+      mode: 'no-cors', 
+      headers: { 'Content-Type': 'text/plain' },
+      body: jsonString
     });
     
-    return { success: true, message: "Data berjaya diselaraskan ke Google Sheets." };
+    return { 
+      success: true, 
+      message: "Data dihantar ke Google Sheets (Multi-Row Mode). Sila tunggu 5 saat sebelum refresh.",
+      size: dataSize
+    };
   } catch (err) {
-    console.error("Cloud Save Error:", err);
-    return { success: false, message: "Ralat rangkaian. Sila cuba sebentar lagi." };
+    return { success: false, message: "Ralat rangkaian semasa menyimpan." };
   }
 };
 
-// Fungsi placeholder untuk kekalkan kompatibiliti komponen lama jika perlu
 export const loadData = () => createEmptyData();
-export const saveData = (data: SystemData) => {}; // Tidak lagi simpan ke localStorage
+export const saveData = (data: SystemData) => {}; 
