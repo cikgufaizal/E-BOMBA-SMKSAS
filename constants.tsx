@@ -9,10 +9,10 @@ export const SCHOOL_INFO = {
 };
 
 /**
- * URL API GOOGLE APPS SCRIPT (KEMASKINI TERKINI)
- * Menggunakan API ID: AKfycbyd_fXub_iIsgsnlb8kZCaJgvEn5eFpKnS1jh4tyyIBqLbYgiPCU1_NLt9sNoh_SffmkQ
+ * URL API GOOGLE APPS SCRIPT (KEMASKINI TERKINI v16.1)
+ * URL ini menghubungkan sistem ke enjin cloud yang telah dibetulkan isu persistence imej.
  */
-export const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbyd_fXub_iIsgsnlb8kZCaJgvEn5eFpKnS1jh4tyyIBqLbYgiPCU1_NLt9sNoh_SffmkQ/exec"; 
+export const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbxazOANZNWgpyQqtgAh87A4RdnuOOx12ESjNIsdZQs40qUcIcrN9JqkRhU66IvIfLiewA/exec"; 
 
 export const THEME_COLOR = {
   primary: "bg-red-700",
