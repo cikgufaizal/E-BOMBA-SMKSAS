@@ -9,7 +9,7 @@ export const SCHOOL_INFO = {
 };
 
 /**
- * URL API GOOGLE APPS SCRIPT BARU
+ * URL API GOOGLE APPS SCRIPT RASMI
  */
 export const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbxXs5ChRkYN0OfLqiCTm2-cDvUznkxaH6FskkaiMA3A7bUCsMAV692dVhxIkwVeZrZCjg/exec".trim(); 
 

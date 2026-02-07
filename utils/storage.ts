@@ -19,7 +19,8 @@ export const createEmptyData = (): SystemData => ({
 });
 
 /**
- * Menarik data dari Cloud dengan cantuman automatik di backend
+ * Menarik data dari Cloud.
+ * Backend (code.gs) akan mencantumkan baris A1, A2, A3... secara automatik.
  */
 export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
   if (!CLOUD_API_URL || CLOUD_API_URL.includes("YOUR_SCRIPT_URL")) {
@@ -42,7 +43,7 @@ export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
     const rawText = await response.text();
     
     if (rawText.trim().startsWith("<!DOCTYPE")) {
-      console.error("DEBUG: Google memulangkan HTML bukannya JSON. Sila semak deployment 'Anyone' access.");
+      console.error("Sila pastikan Deployment Google Script diset kepada 'Anyone'.");
       return null;
     }
 
@@ -52,25 +53,22 @@ export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
 
     try {
       const cloudData = JSON.parse(rawText);
-      if (cloudData.status === "ERROR") {
-        console.error("Cloud Error Message:", cloudData.message);
-        return null;
-      }
+      if (cloudData.status === "ERROR") return null;
       if (cloudData.status === "NEW_SESSION") return createEmptyData();
       return cloudData as SystemData;
     } catch (parseError) {
-      console.error("DEBUG: JSON Rosak walaupun chunking aktif. Sila semak log Google Script.");
+      console.error("JSON Rosak. Backend mungkin gagal mencantumkan baris dengan betul.");
       return null;
     }
   } catch (err) {
-    console.error("Network Fetch Error:", err);
+    console.error("Fetch Error:", err);
     return null;
   }
 };
 
 /**
- * Menyimpan data ke Cloud. 
- * Kini had ditingkatkan ke 500,000 aksara kerana backend menyokong multi-row.
+ * Menyimpan data ke Cloud.
+ * Backend akan memecahkan JSON ini kepada beberapa baris (Chunking).
  */
 export const saveDataToCloud = async (data: SystemData): Promise<{success: boolean, message: string, size?: number}> => {
   if (!CLOUD_API_URL || CLOUD_API_URL.includes("YOUR_SCRIPT_URL")) {
@@ -82,11 +80,11 @@ export const saveDataToCloud = async (data: SystemData): Promise<{success: boole
     const jsonString = JSON.stringify(dataToSend);
     const dataSize = jsonString.length;
 
-    // Had baru: 500k aksara (Lebih dari cukup untuk ribuan ahli + gambar)
-    if (dataSize > 495000) {
+    // Had baru dinaikkan ke 1 Juta aksara (Multi-Row Support)
+    if (dataSize > 990000) {
        return { 
          success: false, 
-         message: `DATA TERLALU BESAR (${dataSize} chars). Sila buang gambar yang tidak perlu.` 
+         message: `DATA TERLALU BESAR (${dataSize} chars). Had maksima 1MB.` 
        };
     }
 
@@ -99,7 +97,7 @@ export const saveDataToCloud = async (data: SystemData): Promise<{success: boole
     
     return { 
       success: true, 
-      message: "Data dihantar ke Google Sheets (Multi-Row Mode). Sila tunggu 5 saat sebelum refresh.",
+      message: "Data dihantar berjaya (Chunking Mode Active).",
       size: dataSize
     };
   } catch (err) {
