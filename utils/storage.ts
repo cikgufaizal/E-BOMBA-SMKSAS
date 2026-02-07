@@ -20,7 +20,7 @@ export const createEmptyData = (): SystemData => ({
 
 /**
  * Menarik data dari Cloud.
- * Menggunakan konfigurasi paling asas untuk mengelakkan isu preflight CORS.
+ * Menggunakan redirect follow untuk mengendalikan redirection Google Script.
  */
 export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
   if (!CLOUD_API_URL || CLOUD_API_URL.includes("YOUR_SCRIPT_URL")) return null;
@@ -28,27 +28,26 @@ export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
   try {
     const response = await fetch(CLOUD_API_URL, {
       method: 'GET',
-      mode: 'cors', // Google Script menyokong CORS jika di-deploy dengan betul
       redirect: 'follow',
       cache: 'no-store'
     });
 
-    if (!response.ok) throw new Error(`Server memulangkan kod: ${response.status}`);
+    if (!response.ok) throw new Error(`Ralat Server: ${response.status}`);
 
     const data = await response.json();
     if (data.status === "ERROR") throw new Error(data.message);
     
     return data as SystemData;
   } catch (err) {
-    console.warn("Gagal menghubungi API Cloud. Menggunakan mod fail-safe.");
-    throw err;
+    console.error("Fetch Error:", err);
+    throw new Error("Gagal menghubungi pangkalan data. Sila pastikan Apps Script di-deploy sebagai 'Anyone'.");
   }
 };
 
 /**
  * Menyimpan data ke Cloud.
- * Mod 'no-cors' digunakan untuk memastikan data dihantar tanpa sekatan browser,
- * walaupun respons tidak dapat dibaca secara langsung.
+ * Gunakan Content-Type: text/plain untuk mengelakkan OPTIONS preflight request 
+ * yang sering menyebabkan 'Failed to fetch' pada Google Apps Script.
  */
 export const saveDataToCloud = async (data: SystemData): Promise<{success: boolean, message: string}> => {
   if (!CLOUD_API_URL || CLOUD_API_URL.includes("YOUR_SCRIPT_URL")) {
@@ -56,23 +55,27 @@ export const saveDataToCloud = async (data: SystemData): Promise<{success: boole
   }
 
   try {
-    await fetch(CLOUD_API_URL, {
+    // Kami menggunakan POST dengan body string dan mode cors. 
+    // Jika masih gagal, code.gs akan memprosesnya sebagai text/plain.
+    const response = await fetch(CLOUD_API_URL, {
       method: 'POST',
-      mode: 'no-cors', // Memintas isu CORS preflight untuk penghantaran data
       body: JSON.stringify(data),
+      mode: 'no-cors', // Mod ini menghantar data walaupun respons tidak dapat dibaca (opaque)
       headers: {
-        'Content-Type': 'text/plain', // Gunakan text/plain untuk mengelakkan preflight
+        'Content-Type': 'text/plain' 
       }
     });
     
+    // Kerana no-cors, kita anggap berjaya jika tiada exception dilemparkan
     return { 
       success: true, 
-      message: "Data telah dihantar ke Cloud. Sila semak Google Sheet anda dalam beberapa saat." 
+      message: "Data sedang disinkronkan ke Google Sheets." 
     };
   } catch (err) {
+    console.error("Save Error:", err);
     return { 
       success: false, 
-      message: "Gagal menghantar data. Sila semak sambungan internet anda." 
+      message: "Ralat rangkaian semasa menyimpan data." 
     };
   }
 };

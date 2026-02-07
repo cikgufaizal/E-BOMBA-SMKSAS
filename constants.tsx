@@ -9,9 +9,10 @@ export const SCHOOL_INFO = {
 };
 
 /**
- * URL API GOOGLE APPS SCRIPT (KEMASKINI 7 FEB)
+ * URL API GOOGLE APPS SCRIPT (KEMASKINI TERKINI)
+ * Menggunakan API ID: AKfycbyd_fXub_iIsgsnlb8kZCaJgvEn5eFpKnS1jh4tyyIBqLbYgiPCU1_NLt9sNoh_SffmkQ
  */
-export const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbwxfv22WpfMrOOpfqyG_jP3cX1A0h1Rk49P008iU3FP-egTy1m6bAczh5hrMxPU_4p9Yg/exec"; 
+export const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbyd_fXub_iIsgsnlb8kZCaJgvEn5eFpKnS1jh4tyyIBqLbYgiPCU1_NLt9sNoh_SffmkQ/exec"; 
 
 export const THEME_COLOR = {
   primary: "bg-red-700",

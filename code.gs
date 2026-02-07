@@ -1,20 +1,21 @@
 /**
- * SISTEM PENGURUSAN KADET BOMBA - CLOUD CORE v14.0 (FIXED)
- * Pastikan Deploy: New Deployment -> Web App -> Me -> Anyone.
+ * SISTEM PENGURUSAN KADET BOMBA - CLOUD CORE v15.0
+ * KEMASKINI: 7 FEB (FIXED FETCH FAILURE)
+ * Sila pastikan: Deploy -> New Deployment -> Web App -> Execute as: Me -> Who has access: Anyone.
  */
 
 function doGet(e) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     
-    // Tarik data dari tab manual (Mapping ikut screenshot anda)
+    // Baca data dari tab-tab manual
     var teachers = getSheetData(ss, "DATA_GURU", ["id", "nama", "jawatan", "telefon"]);
     var students = getSheetData(ss, "DATA_AHLI", ["id", "nama", "noKP", "tingkatan", "kelas", "jantina", "kaum"]);
     var activities = getSheetData(ss, "DATA_AKTIVITI", ["tarikh", "masa", "nama", "tempat", "ulasan"]);
     var committees = getSheetData(ss, "STRUKTUR_ORGANISASI", ["jawatan", "nama", "tingkatan", "kelas"]);
     var annualPlans = getSheetData(ss, "RANCANGAN_TAHUNAN", ["bulan", "program", "tempat", "catatan"]);
     
-    // Ambil data backup sebagai fallback
+    // Backup Fallback
     var backupData = null;
     var backupSheet = ss.getSheetByName("DB_BACKUP");
     if (backupSheet) {
@@ -45,19 +46,21 @@ function doGet(e) {
 
 function doPost(e) {
   try {
-    var payload = JSON.parse(e.postData.contents);
+    // Sokongan untuk data yang dihantar sebagai JSON string (text/plain)
+    var jsonString = e.postData.contents;
+    var payload = JSON.parse(jsonString);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     
-    // SIMPAN BACKUP JSON
+    // 1. Simpan backup penuh
     var backupSheet = ss.getSheetByName("DB_BACKUP") || ss.insertSheet("DB_BACKUP");
-    backupSheet.getRange(1, 1).setValue(e.postData.contents);
-    backupSheet.getRange(1, 2).setValue("Last Sync: " + new Date().toLocaleString());
+    backupSheet.getRange(1, 1).setValue(jsonString);
+    backupSheet.getRange(1, 2).setValue("Updated: " + new Date().toLocaleString());
     
-    // KEMASKINI TAB MANUAL (Guna clearContents untuk kekalkan warna header)
-    updateSheetFromData(ss, "DATA_GURU", payload.teachers, ["id", "nama", "jawatan", "telefon"]);
-    updateSheetFromData(ss, "DATA_AHLI", payload.students, ["id", "nama", "noKP", "tingkatan", "kelas", "jantina", "kaum"]);
-    updateSheetFromData(ss, "DATA_AKTIVITI", payload.activities, ["tarikh", "masa", "nama", "tempat", "ulasan"]);
-    updateSheetFromData(ss, "RANCANGAN_TAHUNAN", payload.annualPlans, ["bulan", "program", "tempat", "catatan"]);
+    // 2. Kemaskini tab-tab manual
+    if (payload.teachers) updateSheetFromData(ss, "DATA_GURU", payload.teachers, ["id", "nama", "jawatan", "telefon"]);
+    if (payload.students) updateSheetFromData(ss, "DATA_AHLI", payload.students, ["id", "nama", "noKP", "tingkatan", "kelas", "jantina", "kaum"]);
+    if (payload.activities) updateSheetFromData(ss, "DATA_AKTIVITI", payload.activities, ["tarikh", "masa", "nama", "tempat", "ulasan"]);
+    if (payload.annualPlans) updateSheetFromData(ss, "RANCANGAN_TAHUNAN", payload.annualPlans, ["bulan", "program", "tempat", "catatan"]);
 
     return ContentService.createTextOutput("SUCCESS");
   } catch (err) {
@@ -65,11 +68,14 @@ function doPost(e) {
   }
 }
 
+// --- HELPERS ---
+
 function getSheetData(ss, sheetName, headers) {
   var sheet = ss.getSheetByName(sheetName);
   if (!sheet) return [];
-  var values = sheet.getDataRange().getValues();
-  if (values.length <= 1) return [];
+  var range = sheet.getDataRange();
+  if (range.getLastRow() <= 1) return [];
+  var values = range.getValues();
   
   var results = [];
   for (var i = 1; i < values.length; i++) {
@@ -87,24 +93,23 @@ function getSheetData(ss, sheetName, headers) {
 }
 
 function updateSheetFromData(ss, sheetName, data, headers) {
-  if (!data) return;
+  if (!data || data.length === 0) return;
   var sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
   
-  // Hanya padam isi, bukan format (warna merah header akan kekal)
+  // Padam data lama kecuali header
   if (sheet.getLastRow() > 1) {
-    sheet.getRange(2, 1, sheet.getLastRow(), sheet.getLastColumn()).clearContent();
+    sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).clearContent();
   }
   
-  // Tulis Header jika kosong
-  if (sheet.getRange(1, 1).getValue() === "") {
-    sheet.getRange(1, 1, 1, headers.length).setValues([headers.map(h => h.toUpperCase())])
-         .setFontWeight("bold").setBackground("#ef4444").setFontColor("white");
+  // Pastikan header wujud
+  if (sheet.getLastRow() === 0 || sheet.getRange(1, 1).getValue() === "") {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers.map(function(h){ return h.toUpperCase(); })])
+         .setBackground("#ef4444").setFontColor("white").setFontWeight("bold");
   }
   
-  if (data.length > 0) {
-    var rows = data.map(function(item) {
-      return headers.map(function(h) { return item[h] || ""; });
-    });
-    sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
-  }
+  // Masukkan data baru
+  var rows = data.map(function(item) {
+    return headers.map(function(h) { return item[h] || ""; });
+  });
+  sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
 }
