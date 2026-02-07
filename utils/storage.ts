@@ -20,7 +20,7 @@ export const createEmptyData = (): SystemData => ({
 
 /**
  * Menarik data dari Cloud.
- * Backend (code.gs) akan mencantumkan baris A1, A2, A3... secara automatik.
+ * Nota: Backend (code.gs) akan mencantumkan pecahan baris A1, A2, A3... secara automatik.
  */
 export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
   if (!CLOUD_API_URL || CLOUD_API_URL.includes("YOUR_SCRIPT_URL")) {
@@ -42,8 +42,9 @@ export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
 
     const rawText = await response.text();
     
+    // Elakkan error jika Google pulangkan HTML (Login required)
     if (rawText.trim().startsWith("<!DOCTYPE")) {
-      console.error("Sila pastikan Deployment Google Script diset kepada 'Anyone'.");
+      console.error("ALAMAK: Google memulangkan HTML. Sila pastikan deployment 'Anyone'.");
       return null;
     }
 
@@ -53,11 +54,14 @@ export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
 
     try {
       const cloudData = JSON.parse(rawText);
-      if (cloudData.status === "ERROR") return null;
+      if (cloudData.status === "ERROR") {
+        console.error("Cloud Error:", cloudData.message);
+        return null;
+      }
       if (cloudData.status === "NEW_SESSION") return createEmptyData();
       return cloudData as SystemData;
     } catch (parseError) {
-      console.error("JSON Rosak. Backend mungkin gagal mencantumkan baris dengan betul.");
+      console.error("JSON Error: Kemungkinan data terpotong di Google Sheets. Sila gunakan kod .gs yang menyokong chunking.");
       return null;
     }
   } catch (err) {
@@ -68,7 +72,7 @@ export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
 
 /**
  * Menyimpan data ke Cloud.
- * Backend akan memecahkan JSON ini kepada beberapa baris (Chunking).
+ * Data dipecahkan kepada ketul-ketulan (Chunking) untuk melepasi had 50k aksara per sel.
  */
 export const saveDataToCloud = async (data: SystemData): Promise<{success: boolean, message: string, size?: number}> => {
   if (!CLOUD_API_URL || CLOUD_API_URL.includes("YOUR_SCRIPT_URL")) {
@@ -80,14 +84,15 @@ export const saveDataToCloud = async (data: SystemData): Promise<{success: boole
     const jsonString = JSON.stringify(dataToSend);
     const dataSize = jsonString.length;
 
-    // Had baru dinaikkan ke 1 Juta aksara (Multi-Row Support)
+    // Had maksima 1 Juta aksara (Sangat besar untuk sistem sekolah)
     if (dataSize > 990000) {
        return { 
          success: false, 
-         message: `DATA TERLALU BESAR (${dataSize} chars). Had maksima 1MB.` 
+         message: `DATA TERLALU BESAR (${dataSize} chars). Sila buang gambar laporan yang lama.` 
        };
     }
 
+    // Gunakan POST untuk menghantar data besar
     await fetch(CLOUD_API_URL, {
       method: 'POST',
       mode: 'no-cors', 
@@ -97,11 +102,11 @@ export const saveDataToCloud = async (data: SystemData): Promise<{success: boole
     
     return { 
       success: true, 
-      message: "Data dihantar berjaya (Chunking Mode Active).",
+      message: "Data berjaya dihantar ke Cloud. Sila tunggu 5 saat untuk pangkalan data dikemaskini.",
       size: dataSize
     };
   } catch (err) {
-    return { success: false, message: "Ralat rangkaian semasa menyimpan." };
+    return { success: false, message: "Ralat rangkaian semasa menyimpan ke Cloud." };
   }
 };
 
