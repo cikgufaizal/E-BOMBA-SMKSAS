@@ -1,4 +1,3 @@
-
 import { SystemData } from '../types';
 import { CLOUD_API_URL, SCHOOL_INFO } from '../constants';
 
@@ -20,77 +19,39 @@ export const createEmptyData = (): SystemData => ({
 });
 
 /**
- * Menarik data dari Cloud dengan perlindungan cache yang lebih ketat.
+ * Menarik data dari Cloud.
+ * Guna fetch paling ringkas untuk elakkan ralat CORS.
  */
 export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
-  if (!CLOUD_API_URL || CLOUD_API_URL.includes("YOUR_SCRIPT_URL")) {
-    console.error("URL API tidak sah.");
-    return null;
-  }
+  if (!CLOUD_API_URL || CLOUD_API_URL.includes("YOUR_SCRIPT_URL")) return null;
   
   try {
-    // Gunakan timestamp yang unik untuk mengelakkan cache browser/cloud
-    const url = `${CLOUD_API_URL}?t=${new Date().getTime()}`;
-    console.log("Mencuba tarik data dari:", url);
-    
-    const response = await fetch(url, {
+    const response = await fetch(`${CLOUD_API_URL}?t=${Date.now()}`, {
       method: 'GET',
-      mode: 'cors',
-      cache: 'no-store',
-      redirect: 'follow',
-      headers: { 
-        'Accept': 'application/json',
-        'Pragma': 'no-cache',
-        'Cache-Control': 'no-cache'
-      }
+      redirect: 'follow', // Wajib untuk Google Apps Script
     });
 
-    if (!response.ok) {
-      console.error(`Ralat Server Google: ${response.status}`);
-      return null;
-    }
+    if (!response.ok) return null;
 
     const rawText = await response.text();
-    console.log("Respons diterima. Panjang karakter:", rawText.length);
     
-    if (rawText.trim().startsWith("<!DOCTYPE")) {
-      console.error("ALAMAK: Google memulangkan HTML (Login Page). Pastikan 'Who has access' diset kepada 'Anyone'.");
+    // Elakkan ralat jika Google minta login (Sebab Deployment tak set kepada "Anyone")
+    if (rawText.includes("<!DOCTYPE") || rawText.includes("google-login")) {
+      console.error("ALAMAK: Google minta Login. Sila set Deployment 'Who has access' kepada 'Anyone'.");
       return null;
     }
 
-    if (!rawText || rawText.trim() === "" || rawText === "null" || rawText === "[]") {
-      console.log("Info: Pangkalan data kosong di Google Sheets.");
+    if (!rawText || rawText.trim() === "" || rawText === "null") {
       return createEmptyData();
     }
 
-    try {
-      const cloudData = JSON.parse(rawText);
-      
-      // Jika backend memulangkan status error
-      if (cloudData.status === "ERROR") {
-        console.error("Cloud Error:", cloudData.message);
-        return null;
-      }
-
-      // Jika session baru (pangkalan data baru dicipta)
-      if (cloudData.status === "NEW_SESSION") {
-        console.log("Memulakan sesi pangkalan data baru.");
-        return createEmptyData();
-      }
-
-      // Pastikan objek mempunyai struktur asas yang betul
-      if (!cloudData.students || !cloudData.teachers) {
-        console.warn("Struktur data tidak lengkap, kemungkinan data terpotong.");
-        return null;
-      }
-      
-      return cloudData as SystemData;
-    } catch (parseError) {
-      console.error("JSON Rosak. Kemungkinan data terpotong di Google Sheets (>50k char).", parseError);
-      return null;
-    }
+    const cloudData = JSON.parse(rawText);
+    if (cloudData.status === "ERROR") return null;
+    if (cloudData.status === "NEW_SESSION") return createEmptyData();
+    
+    return cloudData as SystemData;
   } catch (err) {
-    console.error("Ralat Rangkaian:", err);
+    console.error("Fetch Failure:", err);
     return null;
   }
 };
@@ -98,35 +59,25 @@ export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
 /**
  * Menyimpan data ke Cloud.
  */
-export const saveDataToCloud = async (data: SystemData): Promise<{success: boolean, message: string, size?: number}> => {
+export const saveDataToCloud = async (data: SystemData): Promise<{success: boolean, message: string}> => {
   if (!CLOUD_API_URL || CLOUD_API_URL.includes("YOUR_SCRIPT_URL")) {
     return { success: false, message: "URL API Tidak Sah." };
   }
 
   try {
-    const dataToSend = { ...data, lastUpdated: Date.now() };
-    const jsonString = JSON.stringify(dataToSend);
-    const dataSize = jsonString.length;
-
-    if (dataSize > 990000) {
-       return { success: false, message: `DATA TERLALU BESAR (${dataSize} chars).` };
-    }
-
+    const jsonString = JSON.stringify({ ...data, lastUpdated: Date.now() });
+    
+    // Guna mode no-cors untuk bypass ralat preflight (OPTIONS)
     await fetch(CLOUD_API_URL, {
       method: 'POST',
-      mode: 'no-cors', 
-      headers: { 'Content-Type': 'text/plain' },
+      mode: 'no-cors',
+      cache: 'no-cache',
       body: jsonString
     });
     
-    return { 
-      success: true, 
-      message: "Data berjaya dihantar ke Cloud!",
-      size: dataSize
-    };
+    return { success: true, message: "Data dihantar ke Cloud. Sila tunggu 5 saat untuk kemaskini." };
   } catch (err) {
-    console.error("Save Error:", err);
-    return { success: false, message: "Ralat rangkaian semasa menyimpan." };
+    return { success: false, message: "Gagal menyimpan. Sila semak internet." };
   }
 };
 

@@ -1,6 +1,5 @@
-
-import React, { useState, useEffect, useCallback } from 'react';
-import { ShieldCheck, CloudLightning, RefreshCw, WifiOff, AlertCircle, Database, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Database, RefreshCw, AlertCircle, Wifi } from 'lucide-react';
 import { createEmptyData, fetchDataFromCloud, saveDataToCloud } from './utils/storage';
 import { SystemData, ReportType } from './types';
 
@@ -25,59 +24,45 @@ const App: React.FC = () => {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error' | 'success'>('idle');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
   
   const [printConfig, setPrintConfig] = useState<{ isOpen: boolean; type: ReportType | null; targetId?: string }>({
     isOpen: false,
     type: null
   });
 
-  const pullFromCloud = useCallback(async (isInitial = false) => {
-    if (!isInitial) setSyncStatus('syncing');
-    else setIsLoading(true);
-    
-    console.log(`Sync memulakan (Initial: ${isInitial}, Cubaan: ${retryCount + 1})`);
-    
+  // Fungsi Tarik Data yang Ringkas & Padat
+  const pullData = async (isInitial = false) => {
+    if (isInitial) setIsLoading(true);
+    setSyncStatus('syncing');
+    setError(null);
+
     try {
-      const cloudData = await fetchDataFromCloud();
-      
-      if (cloudData) {
-        // Berjaya dapat data, update state segera
-        setData(cloudData);
+      const result = await fetchDataFromCloud();
+      if (result) {
+        setData(result);
         setSyncStatus('success');
-        setError(null);
-        setIsLoading(false);
-        console.log("Data berjaya diselaraskan!");
+        if (isInitial) setIsLoading(false);
       } else {
-        // Gagal dapat data
-        setSyncStatus('error');
-        if (isInitial && retryCount < 2) {
-          // Auto retry up to 2 times
-          console.warn("Gagal, mencuba semula secara automatik...");
-          setRetryCount(prev => prev + 1);
-          setTimeout(() => pullFromCloud(true), 1500);
-        } else if (isInitial) {
-          setError("Gagal menghubungi pangkalan data Cloud selepas beberapa cubaan. Sila semak sambungan internet atau URL API.");
-          setIsLoading(false);
-        }
+        throw new Error("Gagal menarik data. Sila semak internet atau Deployment Google Script.");
       }
-    } catch (e) {
+    } catch (err) {
       setSyncStatus('error');
-      if (isInitial) setIsLoading(false);
+      if (isInitial) {
+        setError("Sistem gagal menghubungi pangkalan data Cloud. Pastikan Deployment diset kepada 'Anyone'.");
+      }
     } finally {
-      setTimeout(() => setSyncStatus('idle'), 3000);
+      // Tunggu kejap baru tutup loading untuk UX yang lancar
+      if (!isInitial) setTimeout(() => setSyncStatus('idle'), 3000);
     }
-  }, [retryCount]);
+  };
 
   useEffect(() => {
-    // Jalankan sync sebaik sahaja aplikasi dibuka
-    pullFromCloud(true);
+    pullData(true);
   }, []);
 
   const handleUpdateData = async (newData: Partial<SystemData>) => {
     const updated = { ...data, ...newData, lastUpdated: Date.now() };
     setData(updated); 
-
     setSyncStatus('syncing');
     const res = await saveDataToCloud(updated);
     setSyncStatus(res.success ? 'success' : 'error');
@@ -99,40 +84,27 @@ const App: React.FC = () => {
     <>
       {isLoading && (
         <div className="fixed inset-0 z-[200] bg-slate-950 flex flex-col items-center justify-center p-10">
-          <div className="relative mb-12">
-            <div className="w-32 h-32 border-4 border-red-600/10 border-t-red-600 rounded-full animate-spin"></div>
-            <Database className="w-12 h-12 text-red-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+          <div className="relative mb-10">
+            <div className="w-20 h-20 border-4 border-red-600/10 border-t-red-600 rounded-full animate-spin"></div>
+            <Database className="w-8 h-8 text-red-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
-          
-          <div className="text-center space-y-6 max-w-md">
-            <h2 className="text-sm font-black text-white uppercase tracking-[0.6em] animate-pulse">
-              {retryCount > 0 ? `Retrying Sync (${retryCount}/3)...` : 'Connecting to Cloud...'}
-            </h2>
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed">
-              Sila tunggu sebentar. Sistem sedang menarik pangkalan data terkini dari Google Sheets anda.
-            </p>
-            
-            {error && (
-              <div className="mt-8 p-6 bg-amber-600/10 border border-amber-600/20 rounded-[2rem] flex flex-col items-center gap-4 animate-in fade-in slide-in-from-bottom-4">
-                <AlertCircle className="w-6 h-6 text-amber-500" />
-                <p className="text-[10px] font-black text-amber-200 uppercase leading-relaxed tracking-widest text-center">
-                  {error}
-                </p>
-                <div className="flex gap-4">
-                  <button 
-                    onClick={() => { setError(null); setIsLoading(false); }}
-                    className="px-6 py-3 bg-slate-800 text-white rounded-xl text-[9px] font-black uppercase tracking-widest"
-                  >
-                    Guna Data Lokal
-                  </button>
-                  <button 
-                    onClick={() => { setRetryCount(0); pullFromCloud(true); }}
-                    className="px-6 py-3 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2"
-                  >
+          <div className="text-center space-y-5 max-w-sm">
+            <h2 className="text-[10px] font-black text-white uppercase tracking-[0.4em] animate-pulse">Menghubungkan Database...</h2>
+            {error ? (
+              <div className="p-6 bg-red-600/10 border border-red-600/20 rounded-3xl space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                <AlertCircle className="w-6 h-6 text-red-500 mx-auto" />
+                <p className="text-[9px] text-red-300 font-bold uppercase leading-relaxed tracking-wider">{error}</p>
+                <div className="flex flex-col gap-2">
+                  <button onClick={() => pullData(true)} className="px-6 py-3 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
                     <RefreshCw className="w-3 h-3" /> Cuba Lagi
+                  </button>
+                  <button onClick={() => setIsLoading(false)} className="px-6 py-3 bg-slate-800 text-slate-400 rounded-xl text-[9px] font-black uppercase tracking-widest">
+                    Guna Data Tempatan
                   </button>
                 </div>
               </div>
+            ) : (
+              <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.2em] leading-relaxed">Sila tunggu sebentar sementara sistem memuatkan data terkini dari Google Sheets.</p>
             )}
           </div>
         </div>
@@ -143,7 +115,7 @@ const App: React.FC = () => {
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
         syncStatus={syncStatus} 
-        onSync={() => pullFromCloud()}
+        onSync={() => pullData()}
       >
         {activeTab === 'dashboard' && <Dashboard data={data} />}
         {activeTab === 'pendaftaran' && <PendaftaranIndex data={data} updateData={handleUpdateData} onPrint={(id, type = 'PENDAFTARAN') => setPrintConfig({ isOpen: true, type: type as ReportType, targetId: id })} />}
@@ -153,7 +125,7 @@ const App: React.FC = () => {
         {activeTab === 'kehadiran' && <KehadiranManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'KEHADIRAN' })} />}
         {activeTab === 'aktiviti' && <AktivitiManager data={data} updateData={handleUpdateData} onPrint={(id) => setPrintConfig({ isOpen: true, type: 'AKTIVITI', targetId: id })} />}
         {activeTab === 'rancangan' && <RancanganManager data={data} updateData={handleUpdateData} />}
-        {activeTab === 'settings' && <Settings data={data} updateData={handleUpdateData} onForcePull={() => { setRetryCount(0); pullFromCloud(false); }} />}
+        {activeTab === 'settings' && <Settings data={data} updateData={handleUpdateData} onForcePull={() => pullData()} />}
       </Layout>
     </>
   );

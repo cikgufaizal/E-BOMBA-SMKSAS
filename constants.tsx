@@ -9,7 +9,8 @@ export const SCHOOL_INFO = {
 };
 
 /**
- * URL API GOOGLE APPS SCRIPT RASMI (KEMASKINI: AKfycbxXs...)
+ * URL API GOOGLE APPS SCRIPT
+ * Pastikan Deployment diset kepada "Anyone" (Bukan "Anyone with Google Account")
  */
 export const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbxXs5ChRkYN0OfLqiCTm2-cDvUznkxaH6FskkaiMA3A7bUCsMAV692dVhxIkwVeZrZCjg/exec".trim(); 
 
