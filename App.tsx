@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { ShieldCheck, CloudLightning, RefreshCw, WifiOff, AlertCircle, Database } from 'lucide-react';
+import { ShieldCheck, CloudLightning, RefreshCw, WifiOff, AlertCircle, Database, CheckCircle } from 'lucide-react';
 import { createEmptyData, fetchDataFromCloud, saveDataToCloud } from './utils/storage';
 import { SystemData, ReportType } from './types';
 
@@ -24,6 +25,7 @@ const App: React.FC = () => {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error' | 'success'>('idle');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   
   const [printConfig, setPrintConfig] = useState<{ isOpen: boolean; type: ReportType | null; targetId?: string }>({
     isOpen: false,
@@ -34,33 +36,43 @@ const App: React.FC = () => {
     if (!isInitial) setSyncStatus('syncing');
     else setIsLoading(true);
     
+    console.log(`Sync memulakan (Initial: ${isInitial}, Cubaan: ${retryCount + 1})`);
+    
     try {
       const cloudData = await fetchDataFromCloud();
       
       if (cloudData) {
-        // Hanya update jika data mengandungi rekod (elak override data sedia ada dengan kosong)
-        if (cloudData.students.length > 0 || cloudData.teachers.length > 0 || isInitial) {
-          setData(cloudData);
-        }
+        // Berjaya dapat data, update state segera
+        setData(cloudData);
         setSyncStatus('success');
         setError(null);
+        setIsLoading(false);
+        console.log("Data berjaya diselaraskan!");
       } else {
+        // Gagal dapat data
         setSyncStatus('error');
-        if (isInitial) {
-          setError("Pangkalan data Cloud tidak ditemui atau ralat sambungan. Sila semak deployment Google Script anda.");
+        if (isInitial && retryCount < 2) {
+          // Auto retry up to 2 times
+          console.warn("Gagal, mencuba semula secara automatik...");
+          setRetryCount(prev => prev + 1);
+          setTimeout(() => pullFromCloud(true), 1500);
+        } else if (isInitial) {
+          setError("Gagal menghubungi pangkalan data Cloud selepas beberapa cubaan. Sila semak sambungan internet atau URL API.");
+          setIsLoading(false);
         }
       }
     } catch (e) {
       setSyncStatus('error');
+      if (isInitial) setIsLoading(false);
     } finally {
-      if (isInitial) setTimeout(() => setIsLoading(false), 2000);
       setTimeout(() => setSyncStatus('idle'), 3000);
     }
-  }, []);
+  }, [retryCount]);
 
   useEffect(() => {
+    // Jalankan sync sebaik sahaja aplikasi dibuka
     pullFromCloud(true);
-  }, [pullFromCloud]);
+  }, []);
 
   const handleUpdateData = async (newData: Partial<SystemData>) => {
     const updated = { ...data, ...newData, lastUpdated: Date.now() };
@@ -93,9 +105,11 @@ const App: React.FC = () => {
           </div>
           
           <div className="text-center space-y-6 max-w-md">
-            <h2 className="text-sm font-black text-white uppercase tracking-[0.6em] animate-pulse">Accessing Cloud Database</h2>
+            <h2 className="text-sm font-black text-white uppercase tracking-[0.6em] animate-pulse">
+              {retryCount > 0 ? `Retrying Sync (${retryCount}/3)...` : 'Connecting to Cloud...'}
+            </h2>
             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed">
-              Sila tunggu. Sistem sedang memuatkan pangkalan data dari Google Sheets.
+              Sila tunggu sebentar. Sistem sedang menarik pangkalan data terkini dari Google Sheets anda.
             </p>
             
             {error && (
@@ -106,13 +120,13 @@ const App: React.FC = () => {
                 </p>
                 <div className="flex gap-4">
                   <button 
-                    onClick={() => setIsLoading(false)}
+                    onClick={() => { setError(null); setIsLoading(false); }}
                     className="px-6 py-3 bg-slate-800 text-white rounded-xl text-[9px] font-black uppercase tracking-widest"
                   >
                     Guna Data Lokal
                   </button>
                   <button 
-                    onClick={() => pullFromCloud(true)}
+                    onClick={() => { setRetryCount(0); pullFromCloud(true); }}
                     className="px-6 py-3 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2"
                   >
                     <RefreshCw className="w-3 h-3" /> Cuba Lagi
@@ -139,7 +153,7 @@ const App: React.FC = () => {
         {activeTab === 'kehadiran' && <KehadiranManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'KEHADIRAN' })} />}
         {activeTab === 'aktiviti' && <AktivitiManager data={data} updateData={handleUpdateData} onPrint={(id) => setPrintConfig({ isOpen: true, type: 'AKTIVITI', targetId: id })} />}
         {activeTab === 'rancangan' && <RancanganManager data={data} updateData={handleUpdateData} />}
-        {activeTab === 'settings' && <Settings data={data} updateData={handleUpdateData} onForcePull={() => pullFromCloud(false)} />}
+        {activeTab === 'settings' && <Settings data={data} updateData={handleUpdateData} onForcePull={() => { setRetryCount(0); pullFromCloud(false); }} />}
       </Layout>
     </>
   );
