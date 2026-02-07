@@ -20,39 +20,32 @@ export const createEmptyData = (): SystemData => ({
 
 /**
  * Menarik data dari Cloud.
- * Guna fetch paling ringkas untuk elakkan ralat CORS.
+ * Guna fetch paling ringkas untuk Google Script (Tanpa headers pelik).
  */
 export const fetchDataFromCloud = async (): Promise<SystemData | null> => {
   if (!CLOUD_API_URL || CLOUD_API_URL.includes("YOUR_SCRIPT_URL")) return null;
   
   try {
+    // Tambah timestamp unik untuk elak cache browser
     const response = await fetch(`${CLOUD_API_URL}?t=${Date.now()}`, {
       method: 'GET',
-      redirect: 'follow', // Wajib untuk Google Apps Script
+      redirect: 'follow'
     });
 
-    if (!response.ok) return null;
+    if (!response.ok) throw new Error("HTTP Status: " + response.status);
 
-    const rawText = await response.text();
+    const data = await response.json();
     
-    // Elakkan ralat jika Google minta login (Sebab Deployment tak set kepada "Anyone")
-    if (rawText.includes("<!DOCTYPE") || rawText.includes("google-login")) {
-      console.error("ALAMAK: Google minta Login. Sila set Deployment 'Who has access' kepada 'Anyone'.");
+    // Jika data memulangkan status ralat dari Apps Script
+    if (data.status === "ERROR") {
+      console.error("Backend Script Error:", data.message);
       return null;
     }
-
-    if (!rawText || rawText.trim() === "" || rawText === "null") {
-      return createEmptyData();
-    }
-
-    const cloudData = JSON.parse(rawText);
-    if (cloudData.status === "ERROR") return null;
-    if (cloudData.status === "NEW_SESSION") return createEmptyData();
     
-    return cloudData as SystemData;
+    return data as SystemData;
   } catch (err) {
-    console.error("Fetch Failure:", err);
-    return null;
+    console.error("Ralat Rangkaian (Fetch Failure):", err);
+    throw err;
   }
 };
 
@@ -65,19 +58,16 @@ export const saveDataToCloud = async (data: SystemData): Promise<{success: boole
   }
 
   try {
-    const jsonString = JSON.stringify({ ...data, lastUpdated: Date.now() });
-    
-    // Guna mode no-cors untuk bypass ralat preflight (OPTIONS)
+    // Guna mode no-cors untuk POST pantas tanpa isu preflight
     await fetch(CLOUD_API_URL, {
       method: 'POST',
       mode: 'no-cors',
-      cache: 'no-cache',
-      body: jsonString
+      body: JSON.stringify(data)
     });
     
-    return { success: true, message: "Data dihantar ke Cloud. Sila tunggu 5 saat untuk kemaskini." };
+    return { success: true, message: "Berjaya! Data sedang dikemaskini dalam Spreadsheet." };
   } catch (err) {
-    return { success: false, message: "Gagal menyimpan. Sila semak internet." };
+    return { success: false, message: "Gagal menyimpan. Sila semak sambungan internet." };
   }
 };
 

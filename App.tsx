@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Database, RefreshCw, AlertCircle, Wifi } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Database, RefreshCw, AlertCircle, HardDrive, WifiOff } from 'lucide-react';
 import { createEmptyData, fetchDataFromCloud, saveDataToCloud } from './utils/storage';
 import { SystemData, ReportType } from './types';
 
@@ -30,8 +30,7 @@ const App: React.FC = () => {
     type: null
   });
 
-  // Fungsi Tarik Data yang Ringkas & Padat
-  const pullData = async (isInitial = false) => {
+  const pullData = useCallback(async (isInitial = false) => {
     if (isInitial) setIsLoading(true);
     setSyncStatus('syncing');
     setError(null);
@@ -43,22 +42,21 @@ const App: React.FC = () => {
         setSyncStatus('success');
         if (isInitial) setIsLoading(false);
       } else {
-        throw new Error("Gagal menarik data. Sila semak internet atau Deployment Google Script.");
+        throw new Error("Pangkalan data kosong atau API tidak memberi respons.");
       }
     } catch (err) {
       setSyncStatus('error');
       if (isInitial) {
-        setError("Sistem gagal menghubungi pangkalan data Cloud. Pastikan Deployment diset kepada 'Anyone'.");
+        setError("Sistem gagal menarik data. Sila pastikan Apps Script anda di-Deploy sebagai 'Anyone' dan tab-tab manual wujud.");
       }
     } finally {
-      // Tunggu kejap baru tutup loading untuk UX yang lancar
       if (!isInitial) setTimeout(() => setSyncStatus('idle'), 3000);
     }
-  };
+  }, []);
 
   useEffect(() => {
     pullData(true);
-  }, []);
+  }, [pullData]);
 
   const handleUpdateData = async (newData: Partial<SystemData>) => {
     const updated = { ...data, ...newData, lastUpdated: Date.now() };
@@ -84,27 +82,33 @@ const App: React.FC = () => {
     <>
       {isLoading && (
         <div className="fixed inset-0 z-[200] bg-slate-950 flex flex-col items-center justify-center p-10">
-          <div className="relative mb-10">
-            <div className="w-20 h-20 border-4 border-red-600/10 border-t-red-600 rounded-full animate-spin"></div>
-            <Database className="w-8 h-8 text-red-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+          <div className="relative mb-12">
+            <div className="w-24 h-24 border-4 border-red-600/10 border-t-red-600 rounded-full animate-spin"></div>
+            <Database className="w-10 h-10 text-red-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
-          <div className="text-center space-y-5 max-w-sm">
-            <h2 className="text-[10px] font-black text-white uppercase tracking-[0.4em] animate-pulse">Menghubungkan Database...</h2>
+          
+          <div className="text-center space-y-6 max-w-sm">
+            <h2 className="text-[10px] font-black text-white uppercase tracking-[0.4em] animate-pulse">
+              Menghubungkan Database...
+            </h2>
+            
             {error ? (
-              <div className="p-6 bg-red-600/10 border border-red-600/20 rounded-3xl space-y-4 animate-in fade-in slide-in-from-bottom-2">
-                <AlertCircle className="w-6 h-6 text-red-500 mx-auto" />
-                <p className="text-[9px] text-red-300 font-bold uppercase leading-relaxed tracking-wider">{error}</p>
-                <div className="flex flex-col gap-2">
-                  <button onClick={() => pullData(true)} className="px-6 py-3 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
+              <div className="p-8 bg-red-600/10 border border-red-600/20 rounded-[2.5rem] space-y-6">
+                <WifiOff className="w-8 h-8 text-red-500 mx-auto" />
+                <p className="text-[10px] text-red-200 font-bold uppercase tracking-wider">{error}</p>
+                <div className="flex flex-col gap-3">
+                  <button onClick={() => pullData(true)} className="w-full py-4 bg-red-600 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
                     <RefreshCw className="w-3 h-3" /> Cuba Lagi
                   </button>
-                  <button onClick={() => setIsLoading(false)} className="px-6 py-3 bg-slate-800 text-slate-400 rounded-xl text-[9px] font-black uppercase tracking-widest">
-                    Guna Data Tempatan
+                  <button onClick={() => setIsLoading(false)} className="w-full py-4 bg-slate-800 text-slate-400 rounded-2xl text-[9px] font-black uppercase tracking-widest">
+                    Abaikan & Guna Data Lokal
                   </button>
                 </div>
               </div>
             ) : (
-              <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.2em] leading-relaxed">Sila tunggu sebentar sementara sistem memuatkan data terkini dari Google Sheets.</p>
+              <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.2em] leading-relaxed">
+                Membaca tab DATA_GURU, DATA_AHLI dan DATA_AKTIVITI terus dari Google Sheets anda.
+              </p>
             )}
           </div>
         </div>
