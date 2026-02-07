@@ -21,59 +21,45 @@ const Layout: React.FC<LayoutProps> = ({
   const [isSidebarOpen, setSidebarOpen] = useState(true);
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'pendaftaran', label: 'Pendaftaran Bomba', icon: FileText },
-    { id: 'guru', label: 'Guru Pembimbing', icon: GraduationCap },
-    { id: 'ahli', label: 'Pangkalan Ahli', icon: Users },
-    { id: 'ajk', label: 'Struktur AJK', icon: UserSquare2 },
+    { id: 'dashboard', label: 'Command Center', icon: LayoutDashboard },
+    { id: 'pendaftaran', label: 'Pendaftaran Dokumen', icon: FileText },
+    { id: 'guru', label: 'Direktori Pegawai', icon: GraduationCap },
+    { id: 'ahli', label: 'Database Anggota', icon: Users },
+    { id: 'ajk', label: 'Struktur Taktikal', icon: UserSquare2 },
     { id: 'kehadiran', label: 'Log Kehadiran', icon: CalendarCheck },
-    { id: 'aktiviti', label: 'Laporan Aktiviti', icon: ActivityIcon },
-    { id: 'rancangan', label: 'Rancangan', icon: ClipboardList },
-    { id: 'settings', label: 'Tetapan Admin', icon: SettingsIcon },
+    { id: 'aktiviti', label: 'Rekod Operasi', icon: ActivityIcon },
+    { id: 'rancangan', label: 'Pelan Tahunan', icon: ClipboardList },
+    { id: 'settings', label: 'Sistem Core', icon: SettingsIcon },
   ];
 
   return (
-    <div className="flex h-screen bg-brand-dark text-slate-200 overflow-hidden font-sans selection:bg-red-500/30">
-      {/* SYNC PROGRESS BAR */}
-      {syncStatus === 'syncing' && (
-        <div className="fixed top-0 left-0 right-0 h-0.5 bg-red-600/20 z-[100]">
-          <div className="h-full bg-red-600 animate-[shimmer_1.5s_infinite_linear] w-[40%] shadow-[0_0_10px_#ef4444]"></div>
-        </div>
-      )}
+    <div className="flex h-screen bg-[#020617] text-slate-200 overflow-hidden font-sans">
+      {/* GLOBAL HUD OVERLAY */}
+      <div className="fixed inset-0 pointer-events-none border-[20px] border-white/[0.01] z-[100]"></div>
 
-      {/* SIDEBAR */}
-      <aside className={`fixed md:static inset-y-0 left-0 z-40 w-80 bg-slate-900 border-r border-white/[0.05] flex flex-col transform transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0 md:w-24'}`}>
-        <div className="p-10 shrink-0">
-          <div className="flex items-center justify-between mb-10">
+      {/* SIDEBAR TACTICAL */}
+      <aside className={`fixed md:static inset-y-0 left-0 z-50 w-72 bg-[#020617] border-r border-white/[0.05] flex flex-col transform transition-all duration-700 cubic-bezier(0.4, 0, 0.2, 1) ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0 md:w-20'}`}>
+        <div className="p-8 shrink-0">
+          <div className="flex items-center justify-between mb-12">
             <div className="flex items-center gap-3">
-               {data.settings?.logoUrl ? (
-                 <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/10 bg-white/5 p-1 shadow-lg">
-                   <img src={data.settings.logoUrl} alt="School Logo" className="w-full h-full object-contain" />
-                 </div>
-               ) : (
-                 <div className="relative">
-                   <div className="w-3 h-3 bg-red-600 rounded-full"></div>
-                   <div className="w-3 h-3 bg-red-600 rounded-full absolute inset-0 animate-ping opacity-75"></div>
-                 </div>
-               )}
-               <span className={`text-[10px] font-black text-slate-500 uppercase tracking-widest ${!isSidebarOpen && 'md:hidden'}`}>System Online</span>
+              <div className="relative">
+                <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(239,68,68,0.4)]">
+                  <ShieldCheck className="w-6 h-6 text-white" />
+                </div>
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#020617]"></div>
+              </div>
+              <div className={`${!isSidebarOpen && 'md:hidden'} transition-all duration-300`}>
+                <h2 className="font-black text-lg tracking-tighter leading-none text-white italic">
+                  E-BOMBA <span className="text-red-600">OS</span>
+                </h2>
+                <p className="text-[8px] font-black text-slate-500 uppercase tracking-[0.3em]">Command Hub v10.4</p>
+              </div>
             </div>
-            <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="md:hidden text-slate-400 hover:text-white transition-colors"><X /></button>
-          </div>
-          
-          <div className={`${!isSidebarOpen && 'md:hidden'} animate-slide-up`}>
-            <div className="inline-block px-3 py-1 bg-red-600 text-[9px] font-black rounded-full mb-3 shadow-[0_0_15px_rgba(239,68,68,0.3)]">v10.0 CORE</div>
-            <h2 className="font-extrabold text-2xl text-white tracking-tighter leading-none mb-4 italic">
-              E-KADET<br/><span className="text-red-600 not-italic">BOMBA</span>
-            </h2>
-            <div className="space-y-1 border-l-2 border-red-600/20 pl-4 py-1">
-              <p className="text-[10px] font-extrabold text-slate-300 uppercase tracking-tight">{data.settings?.schoolName || 'SMK SULTAN AHMAD SHAH'}</p>
-              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Cameron Highlands</p>
-            </div>
+            <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="md:hidden text-slate-400"><X /></button>
           </div>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-6 py-4 space-y-2 custom-scrollbar">
+        <nav className="flex-1 overflow-y-auto px-4 space-y-2">
           {menuItems.map((item, idx) => (
             <button 
               key={item.id} 
@@ -81,36 +67,40 @@ const Layout: React.FC<LayoutProps> = ({
                 setActiveTab(item.id);
                 if (window.innerWidth < 768) setSidebarOpen(false);
               }} 
-              className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all group relative overflow-hidden ${activeTab === item.id ? 'bg-red-600 text-white shadow-[0_10px_30px_rgba(239,68,68,0.2)]' : 'text-slate-500 hover:bg-white/[0.03] hover:text-slate-300'}`}
-              style={{ animationDelay: `${idx * 50}ms` }}
+              className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl transition-all group relative ${activeTab === item.id ? 'bg-red-600/10 text-white shadow-inner' : 'text-slate-500 hover:bg-white/[0.03] hover:text-slate-300'}`}
+              style={{ transitionDelay: `${idx * 20}ms` }}
             >
-              <item.icon className={`w-5 h-5 shrink-0 transition-transform duration-500 ${activeTab === item.id ? 'scale-110' : 'group-hover:scale-110 group-hover:rotate-6'}`} />
-              <span className={`font-black text-[10px] uppercase tracking-[0.15em] whitespace-nowrap ${!isSidebarOpen && 'md:hidden'}`}>{item.label}</span>
-              {activeTab === item.id && <div className="absolute right-0 top-0 bottom-0 w-1 bg-white/20"></div>}
+              <item.icon className={`w-5 h-5 shrink-0 transition-all duration-500 ${activeTab === item.id ? 'text-red-500 scale-110 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'group-hover:text-slate-300'}`} />
+              <span className={`font-bold text-[10px] uppercase tracking-[0.2em] whitespace-nowrap ${!isSidebarOpen && 'md:hidden'}`}>{item.label}</span>
+              {activeTab === item.id && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-red-600 rounded-r-full shadow-[0_0_15px_#ef4444]"></div>
+              )}
             </button>
           ))}
         </nav>
         
-        <div className="p-8 border-t border-white/[0.05] mt-auto">
+        <div className="p-8 border-t border-white/[0.05] bg-black/20">
            <div className={`flex items-center gap-4 ${!isSidebarOpen && 'md:justify-center'}`}>
-              <div className={`w-2 h-2 rounded-full ${syncStatus === 'success' ? 'bg-emerald-500' : syncStatus === 'error' ? 'bg-amber-500' : 'bg-red-500 animate-pulse'}`}></div>
-              <span className={`text-[9px] font-bold text-slate-600 uppercase tracking-widest ${!isSidebarOpen && 'md:hidden'}`}>
-                {syncStatus === 'syncing' ? 'Cloud Syncing...' : 'Encrypted Link'}
-              </span>
+              <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse shadow-[0_0_10px_#ef4444]"></div>
+              <div className={`${!isSidebarOpen && 'md:hidden'}`}>
+                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">System Link</p>
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-tighter">Secured / Online</p>
+              </div>
            </div>
         </div>
       </aside>
 
-      {/* MAIN CONTENT AREA */}
-      <main className="flex-1 flex flex-col overflow-hidden bg-brand-dark">
-        <header className="h-24 px-10 flex items-center justify-between border-b border-white/[0.05] z-10 glass-panel">
-          <div className="flex items-center gap-8">
-            <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-3 bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.05] rounded-2xl text-slate-400 transition-all active:scale-90">
+      {/* MAIN VIEWPORT */}
+      <main className="flex-1 flex flex-col overflow-hidden">
+        <header className="h-20 px-8 flex items-center justify-between border-b border-white/[0.05] bg-[#020617]/80 backdrop-blur-xl z-20">
+          <div className="flex items-center gap-6">
+            <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-2.5 bg-white/[0.03] border border-white/[0.05] rounded-lg text-slate-400 hover:bg-white/[0.07] transition-all">
               <Menu className="w-5 h-5" />
             </button>
+            <div className="h-8 w-px bg-white/[0.05]"></div>
             <div>
-              <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] mb-1">Current Module</p>
-              <h1 className="text-xl font-extrabold text-white uppercase tracking-tighter italic">
+              <p className="text-[8px] font-black text-red-600 uppercase tracking-[0.4em] mb-1">Status Report</p>
+              <h1 className="text-sm font-black text-white uppercase tracking-[0.2em]">
                 {menuItems.find(i => i.id === activeTab)?.label}
               </h1>
             </div>
@@ -118,21 +108,25 @@ const Layout: React.FC<LayoutProps> = ({
           
           <div className="flex items-center gap-6">
              <div className="hidden sm:flex flex-col items-end">
-                <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Sync Health</span>
-                <span className={`text-[10px] font-black uppercase flex items-center gap-2 ${syncStatus === 'error' ? 'text-amber-500' : 'text-emerald-500'}`}>
-                   {syncStatus === 'syncing' ? 'Synchronizing...' : 'Healthy (99.9%)'}
-                   <Circle className={`w-1.5 h-1.5 fill-current ${syncStatus === 'syncing' ? 'animate-pulse' : ''}`} />
+                <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Network Health</span>
+                <span className="text-[10px] font-black text-emerald-500 uppercase flex items-center gap-2">
+                   {syncStatus === 'syncing' ? 'Syncing...' : 'Stable'}
+                   <div className={`w-1.5 h-1.5 rounded-full bg-emerald-500 ${syncStatus === 'syncing' ? 'animate-ping' : ''}`}></div>
                 </span>
              </div>
-             <div className="w-px h-8 bg-white/[0.05]"></div>
-             <button onClick={onSync} className="p-4 bg-white/[0.03] border border-white/[0.05] rounded-2xl text-slate-400 hover:text-red-500 hover:border-red-500/30 transition-all group active:scale-90">
-                <RefreshCw className={`w-5 h-5 ${syncStatus === 'syncing' ? 'animate-spin text-red-500' : 'group-hover:rotate-180 duration-700'}`} />
+             <button onClick={onSync} className="relative p-3 bg-slate-900 border border-white/[0.05] rounded-xl text-slate-400 hover:text-red-500 hover:border-red-500/30 transition-all active:scale-95 group">
+                <RefreshCw className={`w-4 h-4 ${syncStatus === 'syncing' ? 'animate-spin text-red-500' : 'group-hover:rotate-180 duration-500'}`} />
+                {syncStatus === 'syncing' && <div className="absolute inset-0 bg-red-600/5 animate-pulse rounded-xl"></div>}
              </button>
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-10 custom-scrollbar scroll-smooth">
-          <div className="max-w-7xl mx-auto pb-20 animate-slide-up">
+        <div className="flex-1 overflow-y-auto p-6 md:p-10 relative scroll-smooth">
+          {/* BACKGROUND DECORATION */}
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-red-600/5 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-blue-600/5 blur-[100px] rounded-full -ml-20 -mb-20 pointer-events-none"></div>
+          
+          <div className="max-w-7xl mx-auto relative z-10 animate-slide-up">
             {children}
           </div>
         </div>

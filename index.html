@@ -3,71 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>E-Kadet Bomba Professional | SMKSAS</title>
+    <title>E-Kadet Bomba Command Center | SMKSAS</title>
     
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#020617">
-    <meta name="description" content="Sistem Pengurusan Unit Beruniform Kadet Bomba SMKSAS">
+    <meta name="description" content="Sistem Operasi Digital Kadet Bomba SMKSAS">
     <link rel="manifest" href="/manifest.json">
     
     <!-- iOS Support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="E-Bomba">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/9101/9101314.png">
+    <meta name="apple-mobile-web-app-title" content="E-Bomba OS">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.sh/512/9101/9101314.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --brand-red: #ef4444;
             --brand-dark: #020617;
+            --brand-card: #0f172a;
         }
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: var(--brand-dark);
             color: #f8fafc;
-            /* overflow: hidden;  <-- BUANG INI, ia kacau print */
-            overflow-x: hidden; /* Ganti dengan ini */
+            overflow-x: hidden;
             -webkit-tap-highlight-color: transparent;
         }
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
         
-        /* CSS KHAS PRINT YANG BERSIH */
-        @media print {
-            @page { size: auto; margin: 0mm; }
-            html, body {
-                background-color: white !important;
-                color: black !important;
-                width: 100%;
-                height: 100%;
-                margin: 0 !important;
-                padding: 0 !important;
-                overflow: visible !important; /* PENTING */
-            }
-            #root {
-                width: 100%;
-                margin: 0;
-            }
-            /* Sembunyikan elemen UI sistem */
-            .no-print { display: none !important; }
+        /* Glassmorphism Ultra */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .red-glow {
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+        }
+
+        /* Tactical HUD Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        ::-webkit-scrollbar-thumb { 
+            background: rgba(239, 68, 68, 0.3); 
+            border-radius: 20px;
+        }
         ::-webkit-scrollbar-thumb:hover { background: #ef4444; }
 
-        .animate-slide-up {
-            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        /* Animations */
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
         }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .scanline {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: rgba(239, 68, 68, 0.1);
+            z-index: 1000;
+            pointer-events: none;
+            animation: scanline 8s linear infinite;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+        }
+        .pulse-red {
+            animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; }
         }
     </style>
     <script>
@@ -79,7 +90,7 @@
                             dark: '#020617',
                             card: '#0f172a',
                             red: '#ef4444',
-                            accent: '#334155'
+                            orange: '#f97316'
                         }
                     },
                     fontFamily: {
@@ -104,6 +115,7 @@
 </script>
 </head>
 <body>
+    <div class="scanline"></div>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>
