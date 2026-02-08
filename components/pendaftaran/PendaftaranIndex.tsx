@@ -3,7 +3,7 @@ import {
   UserPlus, ShieldAlert, FileStack, FileText, 
   ShieldHalf, Landmark, FileCheck 
 } from 'lucide-react';
-import { SystemData, Student, Jantina, Kaum } from '../../types';
+import { SystemData, Student } from '../../types';
 import ViewLampiranA from './views/ViewLampiranA';
 import ViewLampiranB from './views/ViewLampiranB';
 import ViewLampiranE from './views/ViewLampiranE';
@@ -14,12 +14,13 @@ interface Props {
   data: SystemData;
   updateData: (newData: Partial<SystemData>) => void;
   onPrint: (id: string | undefined, type?: any) => void;
+  isReadOnly?: boolean; // PROPS BARU
 }
 
 export type SubModule = 'LAMPIRAN_A' | 'LAMPIRAN_B' | 'LAMPIRAN_D' | 'LAMPIRAN_E' | 'LAMPIRAN_F';
 
-const PendaftaranIndex: React.FC<Props> = ({ data, updateData, onPrint }) => {
-  const [currentView, setCurrentView] = useState<SubModule>('LAMPIRAN_A');
+const PendaftaranIndex: React.FC<Props> = ({ data, updateData, onPrint, isReadOnly = false }) => {
+  const [currentView, setCurrentView] = useState<SubModule>('LAMPIRAN_F'); // Default ke Lampiran F untuk Bomba
   const [isRegisterModalOpen, setRegisterModalOpen] = useState(false);
 
   // Fungsi Simpan dari Modal
@@ -66,14 +67,18 @@ const PendaftaranIndex: React.FC<Props> = ({ data, updateData, onPrint }) => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
             <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter flex items-center gap-4">
               <ShieldAlert className="text-red-600 w-8 h-8" />
-              Hub Dokumentasi
+              Hub Dokumentasi {isReadOnly && <span className="text-xs bg-red-600/20 text-red-500 px-3 py-1 rounded-full not-italic tracking-widest">VIEW ONLY</span>}
             </h2>
-            <button 
-              onClick={() => setRegisterModalOpen(true)}
-              className="bg-red-600 text-white px-8 py-4 rounded-2xl flex items-center gap-3 font-black text-xs uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(239,68,68,0.4)] hover:scale-105 transition-all active:scale-95"
-            >
-              <UserPlus className="w-5 h-5" /> Daftar Ahli Baru
-            </button>
+            
+            {/* Butang Daftar Disorok Jika ReadOnly (Bomba) */}
+            {!isReadOnly && (
+              <button 
+                onClick={() => setRegisterModalOpen(true)}
+                className="bg-red-600 text-white px-8 py-4 rounded-2xl flex items-center gap-3 font-black text-xs uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(239,68,68,0.4)] hover:scale-105 transition-all active:scale-95"
+              >
+                <UserPlus className="w-5 h-5" /> Daftar Ahli Baru
+              </button>
+            )}
         </div>
 
         <div className="flex flex-wrap gap-2">
