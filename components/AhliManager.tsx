@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Printer, Trash2, Upload, AlertTriangle, Search, Edit2 } from 'lucide-react';
+import { Printer, Trash2, Upload, AlertTriangle, Search, Edit2, UserPlus, FileSpreadsheet } from 'lucide-react';
 import { SystemData, Student, Jantina, Kaum } from '../types';
-import { FormCard, Input, Select, Button, Table, InlineConfirm } from './CommonUI';
-import { FORMS } from '../constants';
+import { Button, Table, InlineConfirm } from './CommonUI';
 import CsvImportModal from './common/CsvImportModal';
+import MemberFormModal from './common/MemberFormModal';
 
 interface Props {
   data: SystemData;
@@ -12,40 +12,54 @@ interface Props {
 }
 
 const AhliManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
-  const [formData, setFormData] = useState<Partial<Student>>({
-    nama: '', noKP: '', tingkatan: '1', kelas: '', jantina: Jantina.Lelaki, kaum: Kaum.Melayu
-  });
   const [searchTerm, setSearchTerm] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [showImport, setShowImport] = useState(false);
+  
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
-  const saveAhli = () => {
-    if (!formData.nama || !formData.noKP) return;
-    const cleanKP = formData.noKP.replace(/[^0-9]/g, '');
+  const handleOpenAdd = () => {
+    setEditingStudent(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (student: Student) => {
+    setEditingStudent(student);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveStudent = (formData: Partial<Student>) => {
+    const cleanKP = formData.noKP?.replace(/[^0-9]/g, '') || '';
     
-    if (editingId) {
-      const updatedStudents = data.students.map(s => s.id === editingId ? { ...s, ...formData, noKP: cleanKP } as Student : s);
+    if (editingStudent) {
+      // Edit Mode
+      const updatedStudents = data.students.map(s => 
+        s.id === editingStudent.id ? { ...s, ...formData, noKP: cleanKP } as Student : s
+      );
       updateData({ students: updatedStudents });
-      setEditingId(null);
     } else {
+      // Add Mode
       const isDuplicate = data.students.find(s => s.noKP === cleanKP);
       if (isDuplicate) {
-        alert(`AMARAN: Pelajar dengan No KP ${cleanKP} sudah wujud (${isDuplicate.nama}). Sila gunakan fungsi Edit.`);
+        alert(`AMARAN: Pelajar dengan No KP ${cleanKP} sudah wujud (${isDuplicate.nama}).`);
         return;
       }
       const newAhli: Student = {
+        ...formData as Student,
         id: crypto.randomUUID(),
-        nama: formData.nama.toUpperCase().trim(),
+        nama: formData.nama?.toUpperCase().trim() || '',
         noKP: cleanKP,
-        tingkatan: formData.tingkatan!,
         kelas: formData.kelas?.toUpperCase().trim() || '-',
-        jantina: formData.jantina as Jantina,
-        kaum: formData.kaum as Kaum
+        // Default values if missing
+        health: formData.health || {
+          asma: false, lelahTB: false, kencingManis: false, darahTinggi: false,
+          penglihatan: false, pendengaran: false, kronikLain: false, kecacatan: ''
+        }
       };
       updateData({ students: [...data.students, newAhli] });
     }
-    setFormData({ nama: '', noKP: '', tingkatan: '1', kelas: '', jantina: Jantina.Lelaki, kaum: Kaum.Melayu });
   };
 
   const handleImport = (rows: string[][]) => {
@@ -77,7 +91,11 @@ const AhliManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
 
       const studentData: Student = {
         id: studentMap.get(noKP)?.id || crypto.randomUUID(),
-        nama, noKP, tingkatan: ting, kelas, jantina: finalGender, kaum: finalKaum
+        nama, noKP, tingkatan: ting, kelas, jantina: finalGender, kaum: finalKaum,
+        health: studentMap.get(noKP)?.health || {
+          asma: false, lelahTB: false, kencingManis: false, darahTinggi: false,
+          penglihatan: false, pendengaran: false, kronikLain: false, kecacatan: ''
+        }
       };
 
       if (studentMap.has(noKP)) updatedCount++;
@@ -101,94 +119,117 @@ const AhliManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
   );
 
   return (
-    <div className="animate-in fade-in duration-500">
-      <div className="flex flex-col lg:flex-row justify-between lg:items-center mb-8 gap-6">
+    <div className="animate-in fade-in duration-500 h-full flex flex-col">
+      {/* Header Actions */}
+      <div className="flex flex-col lg:flex-row justify-between lg:items-end mb-8 gap-6">
         <div>
-          <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Pengurusan Keahlian</h2>
-          <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Smart Deduplication Active</p>
+          <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">Pangkalan Data Anggota</h2>
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">
+            Total Rekod: <span className="text-white">{data.students.length}</span> • Disahkan: <span className="text-emerald-500">{data.students.length}</span>
+          </p>
         </div>
-        {!editingId && (
-          <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3">
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-red-500 transition-colors" />
+              <input 
+                type="text" 
+                placeholder="CARI NAMA / MYKAD..." 
+                className="w-full md:w-64 pl-12 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white font-bold text-xs outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all uppercase placeholder:normal-case"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <Button onClick={handleOpenAdd} className="h-11 px-6 shadow-lg shadow-red-900/20">
+              <UserPlus className="w-4 h-4" /> Tambah Ahli
+            </Button>
+            
+            <Button variant="secondary" onClick={() => setShowImport(true)} className="h-11 w-11 p-0 flex items-center justify-center" title="Import CSV">
+              <FileSpreadsheet className="w-4 h-4" />
+            </Button>
+            
+            <Button onClick={onPrint} variant="success" className="h-11 w-11 p-0 flex items-center justify-center" title="Cetak Senarai">
+              <Printer className="w-4 h-4" />
+            </Button>
+            
             {data.students.length > 0 && (
-              <Button variant="danger" onClick={clearAllStudents} className="px-6">
-                <AlertTriangle className="w-4 h-4" /> Reset DB
+              <Button variant="danger" onClick={clearAllStudents} className="h-11 w-11 p-0 flex items-center justify-center" title="Reset Database">
+                <Trash2 className="w-4 h-4" />
               </Button>
             )}
-            <Button variant="secondary" onClick={() => setShowImport(true)}>
-              <Upload className="w-4 h-4" /> Import CSV
-            </Button>
-            <Button onClick={onPrint} variant="success" className="px-8">
-              <Printer className="w-4 h-4" /> Cetak Senarai
-            </Button>
-          </div>
-        )}
+        </div>
       </div>
 
+      {/* Main Table Area */}
+      <div className="flex-1 overflow-hidden rounded-[2rem] border border-white/[0.05] shadow-2xl bg-slate-900/40 backdrop-blur-xl flex flex-col">
+        <div className="overflow-auto flex-1 custom-scrollbar">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-slate-950/80 sticky top-0 z-10 backdrop-blur-md">
+              <tr>
+                {['#', 'NAMA ANGGOTA', 'NO. MYKAD', 'TINGKATAN', 'JANTINA', 'KAUM', 'AKSI'].map((h, i) => (
+                  <th key={i} className="px-6 py-5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] border-b border-white/[0.05]">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/[0.02]">
+              {filteredStudents.length > 0 ? filteredStudents.sort((a,b) => a.nama.localeCompare(b.nama)).map((student, idx) => (
+                <tr key={student.id} className="group hover:bg-white/[0.02] transition-colors">
+                  <td className="px-6 py-4 text-xs font-black text-slate-600">{idx + 1}</td>
+                  <td className="px-6 py-4">
+                    <div className="font-bold text-slate-200 uppercase text-xs tracking-tight group-hover:text-red-400 transition-colors">{student.nama}</div>
+                    {student.noKeahlian && <div className="text-[9px] text-emerald-500 font-mono mt-0.5">{student.noKeahlian}</div>}
+                  </td>
+                  <td className="px-6 py-4 text-xs text-slate-500 font-mono tracking-tighter">{student.noKP}</td>
+                  <td className="px-6 py-4">
+                    <span className="px-2 py-1 bg-slate-800 text-slate-400 text-[9px] font-bold rounded border border-slate-700 uppercase">
+                      {student.tingkatan} {student.kelas}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase">{student.jantina}</td>
+                  <td className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase">{student.kaum}</td>
+                  <td className="px-6 py-4 flex items-center gap-2">
+                    <button onClick={() => handleOpenEdit(student)} className="p-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all">
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    {deletingId === student.id ? (
+                      <InlineConfirm onConfirm={() => { updateData({ students: data.students.filter(s => s.id !== student.id) }); setDeletingId(null); }} onCancel={() => setDeletingId(null)} />
+                    ) : (
+                      <button onClick={() => setDeletingId(student.id)} className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={7} className="px-6 py-20 text-center">
+                    <div className="flex flex-col items-center gap-4 opacity-40">
+                      <UserPlus className="w-12 h-12 text-slate-600" />
+                      <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Tiada Data Dijumpai</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* COMPONENTS */}
       <CsvImportModal 
         isOpen={showImport} 
         onClose={() => setShowImport(false)} 
         onImport={handleImport} 
-        title="Import Ahli (Auto-Detect)"
-        notes={<p className="text-[10px] text-slate-400">Column: Nama, No KP, Tingkatan, Kelas, Jantina (Auto), Kaum</p>}
+        title="Import Ahli Pukal (CSV)"
+        notes={<p className="text-[10px] text-slate-400">Column Order: Nama, No KP, Tingkatan, Kelas, Jantina (Auto), Kaum</p>}
       />
 
-      {editingId || !showImport ? (
-        <FormCard title={editingId ? "Kemaskini Maklumat Ahli" : "Pendaftaran Ahli Baru"}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Input label="Nama Penuh" value={formData.nama} onChange={(e: any) => setFormData({...formData, nama: e.target.value})} />
-            <Input label="No. KP" placeholder="Tanpa tanda -" value={formData.noKP} onChange={(e: any) => setFormData({...formData, noKP: e.target.value})} />
-            <Select label="Tingkatan" value={formData.tingkatan} onChange={(e: any) => setFormData({...formData, tingkatan: e.target.value})} options={FORMS.map(f => ({ value: f, label: `TINGKATAN ${f}` }))} />
-            <Input label="Kelas" value={formData.kelas} onChange={(e: any) => setFormData({...formData, kelas: e.target.value})} />
-            <Select label="Jantina" value={formData.jantina} onChange={(e: any) => setFormData({...formData, jantina: e.target.value})} options={Object.values(Jantina).map(j => ({ value: j, label: j }))} />
-            <Select label="Kaum" value={formData.kaum} onChange={(e: any) => setFormData({...formData, kaum: e.target.value})} options={Object.values(Kaum).map(k => ({ value: k, label: k }))} />
-            <div className="md:col-span-3 flex gap-4 pt-4">
-              <Button onClick={saveAhli} className="flex-1 h-14">{editingId ? 'Simpan Perubahan' : 'Daftar Ahli'}</Button>
-              {editingId && <Button variant="secondary" onClick={() => { setEditingId(null); setFormData({ nama: '', noKP: '', tingkatan: '1', kelas: '', jantina: Jantina.Lelaki, kaum: Kaum.Melayu }); }} className="h-14">Batal</Button>}
-            </div>
-          </div>
-        </FormCard>
-      ) : null}
-
-      <div className="mb-6 relative group">
-        <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600 group-focus-within:text-red-500 transition-colors" />
-        <input 
-          type="text" 
-          placeholder="CARI NAMA AHLI ATAU NO. KP..." 
-          className="w-full pl-16 pr-8 py-5 bg-slate-900/40 backdrop-blur-xl border border-white/[0.05] rounded-[2rem] text-white font-black uppercase tracking-widest text-xs outline-none focus:border-red-600 focus:ring-4 focus:ring-red-600/10 transition-all"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
-
-      <Table
-        headers={['Bil', 'Nama Anggota', 'No. KP', 'Status Ting/Kelas', 'Gender', 'Aksi']}
-        data={filteredStudents.sort((a,b) => a.nama.localeCompare(b.nama))}
-        renderRow={(student: Student, idx: number) => (
-          <tr key={student.id} className="group hover:bg-slate-900/50 transition-all border-b border-slate-800/30">
-            <td className="px-8 py-5 text-xs font-black text-slate-600">{idx + 1}</td>
-            <td className="px-8 py-5">
-              <div className="font-black text-white uppercase text-sm tracking-tight">{student.nama}</div>
-              <div className="text-[10px] text-slate-500 font-bold uppercase">{student.kaum}</div>
-            </td>
-            <td className="px-8 py-5 text-sm text-slate-500 font-mono tracking-tighter">{student.noKP}</td>
-            <td className="px-8 py-5">
-              <span className="px-3 py-1 bg-red-600/10 text-red-500 text-[10px] font-black rounded-lg border border-red-600/20 uppercase">{student.tingkatan} {student.kelas}</span>
-            </td>
-            <td className="px-8 py-5">
-              <span className={`px-3 py-1 text-[9px] font-black rounded-full border uppercase tracking-widest ${student.jantina === Jantina.Perempuan ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' : 'bg-slate-500/10 text-slate-400 border-slate-500/20'}`}>
-                {student.jantina}
-              </span>
-            </td>
-            <td className="px-8 py-5 flex items-center gap-3">
-              <button onClick={() => { setEditingId(student.id); setFormData(student); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-2.5 bg-slate-800/50 rounded-xl text-slate-500 hover:text-emerald-500 transition-all"><Edit2 className="w-4 h-4" /></button>
-              {deletingId === student.id ? (
-                <InlineConfirm onConfirm={() => { updateData({ students: data.students.filter(s => s.id !== student.id) }); setDeletingId(null); }} onCancel={() => setDeletingId(null)} />
-              ) : (
-                <button onClick={() => setDeletingId(student.id)} className="p-2.5 bg-slate-800/50 rounded-xl text-slate-500 hover:text-red-500 transition-all"><Trash2 className="w-4 h-4" /></button>
-              )}
-            </td>
-          </tr>
-        )}
+      <MemberFormModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSave={handleSaveStudent}
+        initialData={editingStudent}
+        mode={editingStudent ? 'EDIT' : 'ADD'}
       />
     </div>
   );
