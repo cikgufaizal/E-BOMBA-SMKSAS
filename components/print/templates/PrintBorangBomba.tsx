@@ -20,72 +20,212 @@ const PrintBorangBomba: React.FC<Props> = ({ data, type, targetId }) => {
     </div>
   );
 
-  // KANDUNGAN LAMPIRAN A
+  // KANDUNGAN LAMPIRAN A (PENDAFTARAN)
   const renderLampiranA = () => {
     const s = data.students.find(x => x.id === targetId);
     if (!s) return <div>Data Pelajar Tidak Dijumpai</div>;
 
-    return (
-      <>
-        <DocumentTitle title="BORANG MAKLUMAT PERIBADI (LAMPIRAN A)" />
-        <div className="text-[11pt] space-y-6 px-4 font-serif text-black">
-          <div className="grid grid-cols-[200px_auto] gap-y-3">
-            <div className="font-bold">1. Nama Penuh</div><div className="uppercase font-bold border-b border-black/50">: {s.nama}</div>
-            <div className="font-bold">2. No. Kad Pengenalan</div><div className="font-bold border-b border-black/50">: {s.noKP}</div>
-            <div className="font-bold">3. Tingkatan</div><div className="uppercase border-b border-black/50">: {s.tingkatan} {s.kelas}</div>
-            <div className="font-bold">4. Jantina</div><div className="uppercase border-b border-black/50">: {s.jantina}</div>
-            <div className="font-bold">5. Kaum</div><div className="uppercase border-b border-black/50">: {s.kaum}</div>
-          </div>
-          <div className="border border-black p-4 mt-6 break-inside-avoid page-break-inside-avoid">
-            <p className="font-bold underline mb-2">PENGAKUAN KESIHATAN</p>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-[10pt]">
-               {Object.entries(s.health || {}).map(([k, v]) => (
-                 k !== 'kecacatan' && (
-                   <div key={k} className="flex justify-between border-b border-black/10 py-1">
-                     <span className="uppercase">{k.replace(/([A-Z])/g, ' $1')}</span>
-                     <span className="font-bold">{v ? 'YA' : 'TIDAK'}</span>
-                   </div>
-                 )
-               ))}
-            </div>
-          </div>
-          <div className="mt-12 break-inside-avoid page-break-inside-avoid">
-            <p className="text-justify leading-relaxed">Saya mengaku bahawa segala maklumat yang diberikan adalah benar.</p>
-            <div className="mt-8 grid grid-cols-2 gap-10">
-               <div className="text-center mt-10">
-                  <div className="border-b border-black h-10 w-3/4 mx-auto"></div>
-                  <p className="mt-2 font-bold uppercase text-[10pt]">Tandatangan Pelajar</p>
-               </div>
-            </div>
-          </div>
+    const schoolName = data.settings?.schoolName || "SMK SULTAN AHMAD SHAH";
+    
+    // Helper untuk checkmark
+    const Check = ({ val }: { val: boolean }) => (
+      <span className="font-bold">{val ? "(/)" : "( )"}</span>
+    );
+    
+    // Helper untuk inverse checkmark (untuk kolom TIADA)
+    const CheckNo = ({ val }: { val: boolean }) => (
+      <span className="font-bold">{!val ? "(/)" : "( )"}</span>
+    );
+
+    const FieldRow = ({ num, label, value, isDotted = true }: any) => (
+      <div className="flex items-end gap-2 mt-2">
+        <div className="w-[28px] text-[11pt]">{num}.</div>
+        <div className="w-[160px] text-[11pt]">{label}</div>
+        <div className={`flex-1 ${isDotted ? 'border-b border-black border-dotted' : 'border-b border-black'} px-2 font-bold uppercase text-[11pt] leading-none pb-1`}>
+          {value}
         </div>
-      </>
+      </div>
+    );
+
+    return (
+      <div className="font-sans text-black leading-tight w-full max-w-[210mm] mx-auto pt-4 pb-10">
+        <div className="flex justify-between items-start">
+           <div></div>
+           <div className="text-[10pt] text-slate-600">Lampiran A</div>
+        </div>
+
+        <div className="text-center mt-2 mb-8">
+           <h2 className="text-[13pt] font-bold tracking-wide">BORANG MAKLUMAT PERIBADI</h2>
+           <div className="text-[10pt] font-bold text-gray-600 mt-1 uppercase">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA</div>
+        </div>
+
+        <div className="mt-5">
+           <FieldRow num="1" label="Nama" value={s.nama} />
+           <FieldRow num="2" label="No. K/P" value={s.noKP} />
+           <FieldRow num="3" label="Nama Sekolah" value={schoolName} />
+           <FieldRow num="4" label="Alamat" value={s.alamat || ''} />
+           
+           <div className="border-b border-black my-4 h-[1px]"></div>
+
+           <FieldRow num="5" label="Umur" value={`${s.umur || ''} TAHUN`} />
+           <FieldRow num="6" label="Tahap" value={s.tahap || ''} />
+           <FieldRow num="7" label="Tingkatan" value={`${s.tingkatan} ${s.kelas}`} />
+
+           <div className="mt-4">
+              <div className="flex items-start gap-2 text-[11pt]">
+                 <div className="w-[28px]">8.</div>
+                 <div className="font-bold">
+                    Adakah anda mempunyai penyakit:-
+                    <span className="text-[9pt] font-normal block text-gray-600">(Tandakan / Pada yang berkenaan)</span>
+                 </div>
+              </div>
+
+              <div className="flex mt-3 mb-2 text-[11pt]">
+                 <div className="flex-1"></div>
+                 <div className="w-[90px] text-center font-bold">ADA</div>
+                 <div className="w-[90px] text-center font-bold">TIADA</div>
+              </div>
+
+              <div className="space-y-2 text-[11pt]">
+                 {[
+                   { l: 'a. Asma', k: 'asma' },
+                   { l: 'b. Lelah / Batuk Kering / TB', k: 'lelahTB' },
+                   { l: 'c. Kencing Manis', k: 'kencingManis' },
+                   { l: 'd. Darah Tinggi', k: 'darahTinggi' },
+                   { l: 'e. Masalah Penglihatan', k: 'penglihatan' },
+                   { l: 'f. Masalah Pendengaran', k: 'pendengaran' },
+                 ].map((d) => (
+                   <div key={d.k} className="flex items-center">
+                      <div className="flex-1 pl-[28px]">{d.l}</div>
+                      <div className="w-[90px] text-center"><Check val={(s.health?.[d.k as keyof typeof s.health] as boolean) || false} /></div>
+                      <div className="w-[90px] text-center"><CheckNo val={(s.health?.[d.k as keyof typeof s.health] as boolean) || false} /></div>
+                   </div>
+                 ))}
+                 
+                 <div className="flex items-start">
+                    <div className="flex-1 pl-[28px]">
+                      g. Penyakit Kronik lain Daripada<br/>
+                      <span className="text-[9pt] text-gray-600">Yang tersenarai di Atas</span>
+                    </div>
+                    <div className="w-[90px] text-center pt-2"><Check val={s.health?.kronikLain || false} /></div>
+                    <div className="w-[90px] text-center pt-2"><CheckNo val={s.health?.kronikLain || false} /></div>
+                 </div>
+              </div>
+
+              <div className="mt-3 pl-[28px]">
+                 <div className="text-[10pt] text-gray-600 mb-1">Nyatakan:</div>
+                 <div className="border-b border-dotted border-black h-5 uppercase font-bold text-[11pt]">{s.masalahKesihatan || ''}</div>
+              </div>
+
+              <div className="mt-4 pl-[28px]">
+                 <div className="text-[11pt]">h. Kecacatan dan Lain-lain</div>
+                 <div className="border-b border-dotted border-black h-5 mt-1 uppercase font-bold text-[11pt]">{s.health?.kecacatan || ''}</div>
+              </div>
+           </div>
+
+           <div className="mt-6 text-[11pt] leading-normal pl-[28px]">
+              Saya mengaku bahawa saya sihat dan berminat menyertai Pasukan Kadet<br/>
+              Bomba dan Penyelamat Malaysia.
+           </div>
+
+           <div className="mt-6 pl-[28px]">
+              <div className="mb-8 text-[11pt]">
+                 Tarikh: <span className="border-b border-black inline-block w-[180px] text-center font-bold">{new Date().toLocaleDateString('en-GB')}</span>
+              </div>
+
+              <div className="flex justify-end mt-8">
+                 <div className="text-center">
+                    <div className="border-b border-black w-[240px] mb-2"></div>
+                    <div className="text-[10pt] text-gray-600">Tandatangan / Nama Kadet</div>
+                    <div className="text-[10pt] font-bold uppercase">({s.nama})</div>
+                 </div>
+              </div>
+           </div>
+        </div>
+      </div>
     );
   };
 
-  // KANDUNGAN LAMPIRAN B
+  // KANDUNGAN LAMPIRAN B (PELEPASAN TANGGUNGJAWAB)
   const renderLampiranB = () => {
     const s = data.students.find(x => x.id === targetId);
     if (!s) return <div>Data Pelajar Tidak Dijumpai</div>;
 
+    const schoolName = data.settings?.schoolName || "SMK SULTAN AHMAD SHAH";
+
     return (
-      <>
-         <DocumentTitle title="SURAT KEBENARAN IBU BAPA / PENJAGA (LAMPIRAN B)" />
-         <div className="text-[11pt] px-4 text-justify leading-relaxed space-y-6 font-serif text-black">
-            <p>Saya, <strong>{s.namaWaris || '................................'}</strong> (No KP: <strong>{s.noKPWaris || '......................'}</strong>), waris kepada pelajar bernama <strong>{s.nama}</strong> (<strong>{s.tingkatan} {s.kelas}</strong>), dengan ini memberi kebenaran kepada anak jagaan saya untuk menyertai aktiviti Pasukan Kadet Bomba.</p>
-            <p>Saya faham bahawa pihak sekolah akan mengambil langkah keselamatan yang sewajarnya. Namun demikian, saya tidak akan mengambil sebarang tindakan undang-undang terhadap pihak sekolah sekiranya berlaku kemalangan di luar jangkaan.</p>
-            <div className="mt-16 grid grid-cols-2 gap-20 break-inside-avoid page-break-inside-avoid">
-               <div className="text-center">
-                  <div className="border-b border-black h-20"></div>
-                  <p className="mt-2 font-bold uppercase">( TANDATANGAN WARIS )</p>
-               </div>
-               <div className="text-center">
-                  <div className="border-b border-black h-20"></div>
-                  <p className="mt-2 font-bold uppercase">( SAKSI )</p>
-               </div>
-            </div>
-         </div>
-      </>
+      <div className="font-sans text-black leading-tight w-full max-w-[210mm] mx-auto pt-4 pb-10">
+        {/* Top Row */}
+        <div className="flex justify-between items-start">
+           <div></div>
+           <div className="text-[10pt] text-gray-600">Lampiran B</div>
+        </div>
+
+        {/* Center Title */}
+        <div className="text-center mt-2 mb-8">
+           <h2 className="text-[11pt] font-bold tracking-wide">JABATAN BOMBA DAN PENYELAMAT MALAYSIA</h2>
+           <div className="text-[10pt] text-gray-600 mt-1">(Borang Pelepasan Tanggungjawab)</div>
+        </div>
+
+        {/* Content */}
+        <div className="mt-6 text-[10pt]">
+           
+           <div className="mb-1">
+             Saya <span className="border-b border-black inline-block min-w-[280px] px-2 font-bold uppercase">{s.namaWaris}</span>
+             &nbsp;&nbsp;No. Kad Pengenalan <span className="border-b border-black inline-block min-w-[220px] px-2 font-bold">{s.noKPWaris}</span>
+           </div>
+           <div className="text-[9pt] text-gray-500 mb-4">(Nama ibu bapa/penjaga)</div>
+
+           <div className="mb-1 flex items-end">
+             <span className="whitespace-nowrap mr-2">Beralamat</span>
+             <span className="border-b border-black inline-block flex-1 px-2 font-bold uppercase leading-tight">{s.alamatWaris || s.alamat}</span>
+           </div>
+           <div className="border-b border-black h-[1px] mb-4"></div>
+
+           <div className="mb-1">
+             dengan ini membenarkan <span className="border-b border-black inline-block min-w-[300px] px-2 font-bold uppercase">{s.nama}</span>
+           </div>
+           <div className="text-[9pt] text-gray-500 mb-4">( Nama Pelajar )</div>
+
+           <div className="mb-2">menyertai:</div>
+
+           <div className="text-center mt-2">
+              <div className="font-bold text-[10pt]">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA DI</div>
+              <div className="mt-2">
+                 ( <span className="border-b border-black inline-block min-w-[320px] px-2 font-bold uppercase">{schoolName}</span> )
+              </div>
+              <div className="text-[9pt] text-gray-500 mt-2">(Nama sekolah)</div>
+           </div>
+
+           <div className="mt-6 text-justify leading-relaxed">
+             Saya sedar bahawa kebenaran ini meliputi aktiviti-aktiviti, lawatan dan<br/>
+             perkhemahan yang dianjurkan oleh sama ada pihak sekolah atau pihak bomba.
+             <br/><br/>
+             Saya sedar bahawa pihak penganjur akan mengambil segala langkah keselamatan,<br/>
+             dengan itu bererti tidak akan mengamalkan sebarang tindakan mahkamah bagi<br/>
+             sebarang kejadian yang di luar kawalan pihak penganjur yang mengakibatkan<br/>
+             kecacatan sementara dan atau kecacatan kekal dan atau kematian ke atas anak /<br/>
+             pelajar jagaan saya semasa dalam perjalanan pergi dan balik untuk menyertai<br/>
+             aktiviti dan atau semasa penglibatannya di dalam aktiviti-aktiviti yang dijalankan.
+             <br/><br/>
+             Saya juga membenarkan anak / pelajar jagaan saya mendapat rawatan perubatan<br/>
+             yang sewajarnya sekiranya berlaku kecemasan.
+           </div>
+
+           <div className="mt-8">
+              <div>
+                 Tarikh: <span className="border-b border-black inline-block min-w-[180px] text-center font-bold">{new Date().toLocaleDateString('en-GB')}</span>
+              </div>
+
+              <div className="flex justify-end mt-12">
+                 <div className="text-center">
+                    <div className="border-b border-black w-[260px] mb-2"></div>
+                    <div className="text-[9pt] text-gray-500">( Ibu / Bapa / Penjaga )</div>
+                 </div>
+              </div>
+           </div>
+        </div>
+      </div>
     );
   };
 
@@ -153,10 +293,13 @@ const PrintBorangBomba: React.FC<Props> = ({ data, type, targetId }) => {
   return (
     <div className="w-full">
       {/* 
-          LOGIC FIX: Lampiran E adalah surat rasmi sekolah, jadi guna SchoolHeader. 
-          Yang lain adalah borang Bomba, guna BombaHeader.
+          LOGIC FIX: 
+          - Lampiran A (PENDAFTARAN) ada header sendiri dalam renderLampiranA.
+          - Lampiran B (LAMPIRAN_B) ada header sendiri dalam renderLampiranB (text only).
+          - Lampiran E guna SchoolHeader.
+          - Yang lain guna BombaHeader.
       */}
-      {type === 'LAMPIRAN_E' ? <SchoolHeader data={data} /> : <BombaHeader data={data} />}
+      {type === 'PENDAFTARAN' || type === 'LAMPIRAN_B' ? null : (type === 'LAMPIRAN_E' ? <SchoolHeader data={data} /> : <BombaHeader data={data} />)}
       
       {type === 'PENDAFTARAN' && renderLampiranA()}
       {type === 'LAMPIRAN_B' && renderLampiranB()}

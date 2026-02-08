@@ -22,7 +22,7 @@ const BombaDashboard: React.FC<Props> = ({ data, onLogout, onPrint, updateData }
             </div>
             <div>
                <h1 className="text-xl font-black text-white italic tracking-tighter uppercase">PORTAL BOMBA</h1>
-               <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">Modul Semakan Dokumen</p>
+               <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">Modul Semakan Dokumen & Analisis</p>
             </div>
          </div>
          
@@ -50,12 +50,12 @@ const BombaDashboard: React.FC<Props> = ({ data, onLogout, onPrint, updateData }
                <div>
                   <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-2">Selamat Datang, Tuan.</h2>
                   <p className="text-xs text-slate-400 font-bold uppercase tracking-wide leading-relaxed max-w-2xl">
-                     Sistem ini memaparkan data pendaftaran dari Unit Kadet Bomba sekolah. Tuan boleh menyemak senarai nama dan mencetak dokumen berkaitan untuk simpanan balai.
+                     Sistem ini memaparkan data pendaftaran dari Unit Kadet Bomba sekolah. Tuan boleh menyemak statistik semasa, senarai nama dan mencetak dokumen berkaitan untuk simpanan balai.
                   </p>
                </div>
             </div>
 
-            {/* DASHBOARD STATS */}
+            {/* DASHBOARD STATS (ADDED) */}
             <Dashboard data={data} />
 
             {/* MODUL DOKUMEN (READ ONLY) */}
@@ -74,7 +74,7 @@ const BombaDashboard: React.FC<Props> = ({ data, onLogout, onPrint, updateData }
       {/* FOOTER */}
       <footer className="py-6 text-center border-t border-white/[0.05]">
          <p className="text-[9px] text-slate-600 font-black uppercase tracking-[0.3em]">
-            E-Bomba OS • Sistem Pengurusan Kadet • Versi Bomba 1.0
+            E-Bomba OS • Sistem Pengurusan Kadet • Versi Bomba 1.1
          </p>
       </footer>
     </div>

@@ -6,6 +6,7 @@ import {
 import { SystemData, Student } from '../../types';
 import ViewLampiranA from './views/ViewLampiranA';
 import ViewLampiranB from './views/ViewLampiranB';
+import ViewLampiranD from './views/ViewLampiranD';
 import ViewLampiranE from './views/ViewLampiranE';
 import ViewLampiranF from './views/ViewLampiranF';
 import MemberFormModal from '../common/MemberFormModal';
@@ -14,20 +15,18 @@ interface Props {
   data: SystemData;
   updateData: (newData: Partial<SystemData>) => void;
   onPrint: (id: string | undefined, type?: any) => void;
-  isReadOnly?: boolean; // PROPS BARU
+  isReadOnly?: boolean;
 }
 
 export type SubModule = 'LAMPIRAN_A' | 'LAMPIRAN_B' | 'LAMPIRAN_D' | 'LAMPIRAN_E' | 'LAMPIRAN_F';
 
 const PendaftaranIndex: React.FC<Props> = ({ data, updateData, onPrint, isReadOnly = false }) => {
-  const [currentView, setCurrentView] = useState<SubModule>('LAMPIRAN_F'); // Default ke Lampiran F untuk Bomba
+  const [currentView, setCurrentView] = useState<SubModule>('LAMPIRAN_F'); 
   const [isRegisterModalOpen, setRegisterModalOpen] = useState(false);
 
-  // Fungsi Simpan dari Modal
   const handleRegisterNew = (formData: Partial<Student>) => {
      const cleanKP = formData.noKP?.replace(/[^0-9]/g, '') || '';
      
-     // Cek Duplicate
      const isDuplicate = data.students.find(s => s.noKP === cleanKP);
      if (isDuplicate) {
         alert(`Ralat: Pelajar ini sudah wujud (${isDuplicate.nama}). Sila kemaskini di Database Anggota.`);
@@ -47,7 +46,6 @@ const PendaftaranIndex: React.FC<Props> = ({ data, updateData, onPrint, isReadOn
      };
 
      updateData({ students: [...data.students, newStudent] });
-     // Auto switch ke Lampiran A view untuk print
      setCurrentView('LAMPIRAN_A');
      alert("Pendaftaran Berjaya! Anda kini boleh mencetak borang.");
   };
@@ -55,9 +53,9 @@ const PendaftaranIndex: React.FC<Props> = ({ data, updateData, onPrint, isReadOn
   const menuButtons = [
     { id: 'LAMPIRAN_A', label: 'Lampiran A', icon: FileText },
     { id: 'LAMPIRAN_B', label: 'Lampiran B', icon: ShieldHalf },
+    { id: 'LAMPIRAN_D', label: 'Lampiran D', icon: FileCheck },
     { id: 'LAMPIRAN_E', label: 'Lampiran E', icon: Landmark },
     { id: 'LAMPIRAN_F', label: 'Lampiran F', icon: FileStack },
-    { id: 'LAMPIRAN_D', label: 'Lampiran D', icon: FileCheck },
   ];
 
   return (
@@ -70,7 +68,6 @@ const PendaftaranIndex: React.FC<Props> = ({ data, updateData, onPrint, isReadOn
               Hub Dokumentasi {isReadOnly && <span className="text-xs bg-red-600/20 text-red-500 px-3 py-1 rounded-full not-italic tracking-widest">VIEW ONLY</span>}
             </h2>
             
-            {/* Butang Daftar Disorok Jika ReadOnly (Bomba) */}
             {!isReadOnly && (
               <button 
                 onClick={() => setRegisterModalOpen(true)}
@@ -102,16 +99,9 @@ const PendaftaranIndex: React.FC<Props> = ({ data, updateData, onPrint, isReadOn
       {/* CONTENT SWITCHER */}
       {currentView === 'LAMPIRAN_A' && <ViewLampiranA data={data} onPrint={onPrint} />}
       {currentView === 'LAMPIRAN_B' && <ViewLampiranB data={data} onPrint={onPrint} />}
+      {currentView === 'LAMPIRAN_D' && <ViewLampiranD data={data} onPrint={onPrint} />}
       {currentView === 'LAMPIRAN_E' && <ViewLampiranE data={data} onPrint={onPrint} />}
       {currentView === 'LAMPIRAN_F' && <ViewLampiranF data={data} updateData={updateData} onPrint={onPrint} />}
-      
-      {currentView === 'LAMPIRAN_D' && (
-        <div className="flex flex-col items-center justify-center py-24 bg-slate-900/40 rounded-[3rem] border-2 border-dashed border-white/[0.05]">
-          <FileCheck className="w-16 h-16 text-slate-700 mb-6" />
-          <h3 className="text-xl font-black text-slate-500 uppercase tracking-widest">Modul Lampiran D</h3>
-          <p className="text-xs text-slate-600 font-bold uppercase mt-2">Sedia untuk pembangunan seterusnya.</p>
-        </div>
-      )}
 
       {/* SHARED REGISTRATION MODAL */}
       <MemberFormModal 

@@ -7,7 +7,13 @@ import PrintSenaraiAhli from './templates/PrintSenaraiAhli';
 import PrintKehadiran from './templates/PrintKehadiran';
 import PrintCartaAJK from './templates/PrintCartaAJK';
 import PrintAktiviti from './templates/PrintAktiviti';
-import PrintBorangBomba from './templates/PrintBorangBomba';
+
+// Import Modular Bomba Forms
+import PrintLampiranA from './templates/PrintLampiranA';
+import PrintLampiranB from './templates/PrintLampiranB';
+import PrintLampiranD from './templates/PrintLampiranD'; 
+import PrintLampiranE from './templates/PrintLampiranE';
+import PrintLampiranF from './templates/PrintLampiranF';
 
 interface PrintProps {
   type: ReportType;
@@ -29,15 +35,19 @@ const PrintContainer: React.FC<PrintProps> = ({ type, data, targetId, onClose })
 
   const renderContent = () => {
     switch(type) {
+      // Modul Sekolah
       case 'AHLI': return <PrintSenaraiAhli data={data} />;
       case 'KEHADIRAN': return <PrintKehadiran data={data} />;
       case 'AJK': return <PrintCartaAJK data={data} />;
       case 'AKTIVITI': return targetId ? <PrintAktiviti data={data} activityId={targetId} /> : <div>Error</div>;
-      case 'PENDAFTARAN': 
-      case 'LAMPIRAN_B':
-      case 'LAMPIRAN_E':
-      case 'LAMPIRAN_F':
-        return <PrintBorangBomba data={data} type={type} targetId={targetId} />;
+      
+      // Modul Bomba (Modular)
+      case 'PENDAFTARAN': return <PrintLampiranA data={data} targetId={targetId} />;
+      case 'LAMPIRAN_B': return <PrintLampiranB data={data} targetId={targetId} />;
+      case 'LAMPIRAN_D': return <PrintLampiranD data={data} />; 
+      case 'LAMPIRAN_E': return <PrintLampiranE data={data} />;
+      case 'LAMPIRAN_F': return <PrintLampiranF data={data} />;
+      
       default: return <div>Not Supported</div>;
     }
   };

@@ -23,6 +23,7 @@ const Layout: React.FC<LayoutProps> = ({
 
   // Filter menu items berdasarkan role
   // GURU: Hide 'pendaftaran' (Modul Bomba) & 'settings' (Tetapan)
+  // ADMIN: Show All
   const menuItems = [
     { id: 'dashboard', label: 'Command Center', icon: LayoutDashboard },
     // Modul Bomba (Dokumen) hanya untuk ADMIN
