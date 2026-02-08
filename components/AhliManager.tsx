@@ -144,17 +144,17 @@ const AhliManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
               <UserPlus className="w-4 h-4" /> Tambah Ahli
             </Button>
             
-            <Button variant="secondary" onClick={() => setShowImport(true)} className="h-11 w-11 p-0 flex items-center justify-center" title="Import CSV">
-              <FileSpreadsheet className="w-4 h-4" />
+            <Button variant="secondary" onClick={() => setShowImport(true)} className="h-11 px-4 flex items-center gap-2" title="Import CSV">
+              <FileSpreadsheet className="w-4 h-4" /> Import CSV
             </Button>
             
-            <Button onClick={onPrint} variant="success" className="h-11 w-11 p-0 flex items-center justify-center" title="Cetak Senarai">
-              <Printer className="w-4 h-4" />
+            <Button onClick={onPrint} variant="success" className="h-11 px-4 flex items-center gap-2" title="Cetak Senarai">
+              <Printer className="w-4 h-4" /> Cetak
             </Button>
             
             {data.students.length > 0 && (
-              <Button variant="danger" onClick={clearAllStudents} className="h-11 w-11 p-0 flex items-center justify-center" title="Reset Database">
-                <Trash2 className="w-4 h-4" />
+              <Button variant="danger" onClick={clearAllStudents} className="h-11 px-4 flex items-center gap-2" title="Reset Database">
+                <Trash2 className="w-4 h-4" /> Reset
               </Button>
             )}
         </div>
