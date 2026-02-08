@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Plus, Trash2, Printer, MapPin, Clock, Image as ImageIcon, X, Loader2 } from 'lucide-react';
 import { SystemData, Activity } from '../types';
 import { FormCard, Input, Button, Table, InlineConfirm } from './CommonUI';
+import { compressImage } from '../utils/imageUtils';
 
 interface Props {
   data: SystemData;
@@ -22,37 +23,6 @@ const AktivitiManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fungsi Kompres Gambar Lebih Agresif (Max 400px & Quality 0.5)
-  // Ini penting untuk pastikan saiz string Base64 muat dalam had sel Google Sheets (50k chars)
-  const compressImage = (file: File): Promise<string> => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 400; // Dikurangkan dari 600 ke 400
-          const scaleSize = MAX_WIDTH / img.width;
-          canvas.width = MAX_WIDTH;
-          canvas.height = img.height * scaleSize;
-
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          }
-          
-          // Mampatan kualiti 0.5 adalah optimum untuk laporan
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
-          resolve(dataUrl);
-        };
-        img.src = event.target?.result as string;
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -69,11 +39,8 @@ const AktivitiManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
       const newPhotos: string[] = [];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        if (file.size > 5 * 1024 * 1024) { // 5MB Limit Input
-          alert(`Gambar ${file.name} terlalu besar. Sila guna gambar bawah 5MB.`);
-          continue;
-        }
-        const compressed = await compressImage(file);
+        // Kita guna utiliti compressImage untuk memastikan saiz < 300KB
+        const compressed = await compressImage(file, 300);
         newPhotos.push(compressed);
       }
 
@@ -155,7 +122,7 @@ const AktivitiManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 block">Gambar Laporan (Maks 2)</label>
                 {isProcessingImage && (
                   <span className="flex items-center gap-2 text-[10px] text-red-500 font-black animate-pulse uppercase">
-                    <Loader2 className="w-3 h-3 animate-spin" /> Sedang Memproses...
+                    <Loader2 className="w-3 h-3 animate-spin" /> Mengoptimumkan Gambar (Maks 300KB)...
                   </span>
                 )}
              </div>
@@ -212,7 +179,7 @@ const AktivitiManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
               className="w-full py-4 shadow-xl"
             >
               {isProcessingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-              {isProcessingImage ? 'MEMPROSES GAMBAR...' : 'SIMPAN REKOD AKTIVITI'}
+              {isProcessingImage ? 'SEDANG MEMPROSES...' : 'SIMPAN REKOD AKTIVITI'}
             </Button>
           </div>
         </div>

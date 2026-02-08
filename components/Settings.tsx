@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { CheckCircle2, RefreshCw, Lock, Shield, Search, UploadCloud, DownloadCloud, FileDown, FileUp, Image as ImageIcon, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, RefreshCw, Lock, Shield, Search, UploadCloud, DownloadCloud, FileDown, FileUp, Image as ImageIcon, AlertTriangle, Loader2 } from 'lucide-react';
 import { SystemData } from '../types';
 import { FormCard, Input, Button } from './CommonUI';
 import { saveDataToCloud, fetchDataFromCloud } from '../utils/storage';
 import { CLOUD_API_URL } from '../constants';
+import { compressImage } from '../utils/imageUtils';
 
 interface Props {
   data: SystemData;
@@ -15,7 +16,7 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
   const [password, setPassword] = useState('');
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [debugResult, setDebugResult] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   const [schoolName, setSchoolName] = useState(data.settings?.schoolName || '');
   const [address, setAddress] = useState(data.settings?.address || '');
@@ -41,19 +42,21 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
     alert(res.message);
   };
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'school' | 'bomba') => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'school' | 'bomba') => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 0.5 * 1024 * 1024) {
-        alert("Fail terlalu besar! Had 500KB untuk kestabilan cloud.");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (type === 'school') setLogoUrl(reader.result as string);
-        else setBombaLogoUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    setIsProcessing(true);
+    try {
+      // Auto compress to 300KB
+      const compressed = await compressImage(file, 300);
+      if (type === 'school') setLogoUrl(compressed);
+      else setBombaLogoUrl(compressed);
+    } catch (err) {
+      console.error("Ralat memproses logo:", err);
+      alert("Gagal memproses gambar.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -135,24 +138,30 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
       <FormCard title="Official Branding">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-4">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Logo Sekolah</label>
+            <div className="flex justify-between items-center">
+               <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Logo Sekolah</label>
+               {isProcessing && <span className="text-[9px] text-red-500 font-bold animate-pulse">Memproses...</span>}
+            </div>
             <div className="flex items-center gap-4 p-4 bg-slate-950/50 border border-white/[0.05] rounded-[2rem]">
               <div className="w-20 h-20 bg-slate-900 rounded-2xl border-2 border-dashed border-slate-800 flex items-center justify-center overflow-hidden">
                 {logoUrl ? <img src={logoUrl} className="w-full h-full object-contain p-2" /> : <ImageIcon className="w-6 h-6 text-slate-700" />}
               </div>
               <input type="file" ref={schoolLogoInputRef} onChange={(e) => handleLogoUpload(e, 'school')} className="hidden" accept="image/*" />
-              <Button variant="secondary" onClick={() => schoolLogoInputRef.current?.click()} className="flex-1 py-3 text-[9px]">Pilih Fail</Button>
+              <Button variant="secondary" onClick={() => schoolLogoInputRef.current?.click()} className="flex-1 py-3 text-[9px]" disabled={isProcessing}>Pilih Fail</Button>
             </div>
           </div>
 
           <div className="space-y-4">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Logo Bomba</label>
+            <div className="flex justify-between items-center">
+               <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Logo Bomba</label>
+               {isProcessing && <span className="text-[9px] text-red-500 font-bold animate-pulse">Memproses...</span>}
+            </div>
             <div className="flex items-center gap-4 p-4 bg-slate-950/50 border border-white/[0.05] rounded-[2rem]">
               <div className="w-20 h-20 bg-slate-900 rounded-2xl border-2 border-dashed border-slate-800 flex items-center justify-center overflow-hidden">
                 {bombaLogoUrl ? <img src={bombaLogoUrl} className="w-full h-full object-contain p-2" /> : <ImageIcon className="w-6 h-6 text-slate-700" />}
               </div>
               <input type="file" ref={bombaLogoInputRef} onChange={(e) => handleLogoUpload(e, 'bomba')} className="hidden" accept="image/*" />
-              <Button variant="secondary" onClick={() => bombaLogoInputRef.current?.click()} className="flex-1 py-3 text-[9px]">Pilih Fail</Button>
+              <Button variant="secondary" onClick={() => bombaLogoInputRef.current?.click()} className="flex-1 py-3 text-[9px]" disabled={isProcessing}>Pilih Fail</Button>
             </div>
           </div>
 
@@ -167,8 +176,9 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
               alert("Tetapan disimpan secara lokal. Sila Push ke Cloud.");
             }} 
             className="md:col-span-2 h-14"
+            disabled={isProcessing}
           >
-            Sahkan Perubahan Profil
+            {isProcessing ? <><Loader2 className="w-4 h-4 animate-spin" /> Sedang Memproses Gambar...</> : 'Sahkan Perubahan Profil'}
           </Button>
         </div>
       </FormCard>

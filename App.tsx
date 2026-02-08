@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Database, RefreshCw, WifiOff, ShieldAlert, Cpu } from 'lucide-react';
+import { Database, RefreshCw, WifiOff, ShieldAlert, Cpu, Terminal, Shield } from 'lucide-react';
 import { createEmptyData, fetchDataFromCloud, saveDataToCloud } from './utils/storage';
 import { SystemData, ReportType } from './types';
 
@@ -23,12 +23,32 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error' | 'success'>('idle');
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   
   const [printConfig, setPrintConfig] = useState<{ isOpen: boolean; type: ReportType | null; targetId?: string }>({
     isOpen: false,
     type: null
   });
+
+  // Simulasi Progress Bar supaya nampak "Real"
+  useEffect(() => {
+    let interval: any;
+    if (isLoading) {
+      setLoadingProgress(0);
+      interval = setInterval(() => {
+        setLoadingProgress(prev => {
+          // Laju pada awal, perlahan di hujung (Simulasi loading data berat)
+          const increment = Math.max(0.5, (95 - prev) / 15);
+          return prev + increment < 98 ? prev + increment : 98;
+        });
+      }, 50);
+    } else {
+      setLoadingProgress(100);
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   const pullData = useCallback(async (isInitial = false) => {
     if (isInitial) setIsLoading(true);
@@ -89,48 +109,88 @@ const App: React.FC = () => {
     );
   }
 
-  return (
-    <>
-      {isLoading && (
-        <div className="fixed inset-0 z-[200] bg-[#020617] flex flex-col items-center justify-center p-10 overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(239,68,68,0.05)_0%,transparent_70%)]"></div>
-          
-          <div className="relative mb-16">
-            <div className="w-32 h-32 border-4 border-white/5 border-t-red-600 rounded-[2.5rem] animate-[spin_1.5s_linear_infinite] shadow-[0_0_30px_rgba(239,68,68,0.2)]"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-               <Cpu className="w-12 h-12 text-red-600 drop-shadow-[0_0_15px_rgba(239,68,68,0.6)] animate-pulse" />
-            </div>
-          </div>
-          
-          <div className="text-center space-y-8 max-w-sm relative z-10">
-            <h2 className="text-[12px] font-black text-white uppercase tracking-[0.6em] mb-2">Syncing Command Center</h2>
-            <div className="h-1 w-48 bg-white/5 mx-auto rounded-full overflow-hidden">
-               <div className="h-full bg-red-600 animate-[shimmer_2s_infinite_linear] w-[60%]"></div>
-            </div>
-          </div>
-        </div>
-      )}
+  // --- TACTICAL LOADING SCREEN ---
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 z-[200] bg-[#020617] flex flex-col items-center justify-center p-8 overflow-hidden font-mono">
+        {/* Background Grid Decoration */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+        <div className="absolute inset-0 bg-radial-gradient(circle_at_center,rgba(239,68,68,0.1)_0%,transparent_70%)"></div>
 
-      <Layout 
-        data={data} 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        syncStatus={syncStatus} 
-        onSync={() => pullData()}
-      >
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000">
-          {activeTab === 'dashboard' && <Dashboard data={data} />}
-          {activeTab === 'pendaftaran' && <PendaftaranIndex data={data} updateData={handleUpdateData} onPrint={(id, type = 'PENDAFTARAN') => setPrintConfig({ isOpen: true, type: type as ReportType, targetId: id })} />}
-          {activeTab === 'guru' && <GuruManager data={data} updateData={handleUpdateData} />}
-          {activeTab === 'ahli' && <AhliManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'AHLI' })} />}
-          {activeTab === 'ajk' && <AJKManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'AJK' })} />}
-          {activeTab === 'kehadiran' && <KehadiranManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'KEHADIRAN' })} />}
-          {activeTab === 'aktiviti' && <AktivitiManager data={data} updateData={handleUpdateData} onPrint={(id) => setPrintConfig({ isOpen: true, type: 'AKTIVITI', targetId: id })} />}
-          {activeTab === 'rancangan' && <RancanganManager data={data} updateData={handleUpdateData} />}
-          {activeTab === 'settings' && <Settings data={data} updateData={handleUpdateData} onForcePull={() => pullData()} />}
+        <div className="relative z-10 w-full max-w-lg space-y-8">
+          {/* Logo & Header */}
+          <div className="flex items-center gap-4 mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+             <div className="w-16 h-16 bg-red-600/10 border border-red-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(239,68,68,0.3)] animate-pulse">
+                <Shield className="w-8 h-8 text-red-500" />
+             </div>
+             <div>
+                <h1 className="text-3xl font-black text-white italic tracking-tighter">E-BOMBA <span className="text-red-600">OS</span></h1>
+                <p className="text-[10px] text-red-500 font-bold uppercase tracking-[0.3em] flex items-center gap-2">
+                   <Terminal className="w-3 h-3" /> System Boot Sequence
+                </p>
+             </div>
+          </div>
+
+          {/* Progress Section */}
+          <div className="space-y-2">
+             <div className="flex justify-between items-end text-xs font-bold uppercase tracking-widest text-slate-400">
+                <span>Loading Core Modules...</span>
+                <span className="text-red-500 text-2xl font-black tabular-nums">{Math.floor(loadingProgress)}%</span>
+             </div>
+             
+             {/* THE BAR */}
+             <div className="h-3 w-full bg-slate-900 border border-slate-800 rounded-full overflow-hidden relative shadow-inner">
+                {/* Fill */}
+                <div 
+                  className="h-full bg-gradient-to-r from-red-800 via-red-600 to-red-500 relative transition-all duration-100 ease-out flex items-center justify-end"
+                  style={{ width: `${loadingProgress}%` }}
+                >
+                   {/* Glowing Leading Edge */}
+                   <div className="h-full w-1 bg-white shadow-[0_0_15px_white] opacity-80"></div>
+                </div>
+                
+                {/* Scanline effect on bar */}
+                <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.1)_50%,transparent_100%)] animate-[shimmer_2s_infinite]"></div>
+             </div>
+
+             <div className="flex justify-between text-[9px] font-mono text-slate-600 uppercase mt-2">
+                <span>Memory: OK</span>
+                <span>Database: SYNCING</span>
+                <span>Security: ACTIVE</span>
+             </div>
+          </div>
         </div>
-      </Layout>
-    </>
+
+        {/* Bottom Status */}
+        <div className="absolute bottom-8 text-center">
+           <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.5em] animate-pulse">
+              Establishing Secure Uplink...
+           </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Layout 
+      data={data} 
+      activeTab={activeTab} 
+      setActiveTab={setActiveTab} 
+      syncStatus={syncStatus} 
+      onSync={() => pullData()}
+    >
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000">
+        {activeTab === 'dashboard' && <Dashboard data={data} />}
+        {activeTab === 'pendaftaran' && <PendaftaranIndex data={data} updateData={handleUpdateData} onPrint={(id, type = 'PENDAFTARAN') => setPrintConfig({ isOpen: true, type: type as ReportType, targetId: id })} />}
+        {activeTab === 'guru' && <GuruManager data={data} updateData={handleUpdateData} />}
+        {activeTab === 'ahli' && <AhliManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'AHLI' })} />}
+        {activeTab === 'ajk' && <AJKManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'AJK' })} />}
+        {activeTab === 'kehadiran' && <KehadiranManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'KEHADIRAN' })} />}
+        {activeTab === 'aktiviti' && <AktivitiManager data={data} updateData={handleUpdateData} onPrint={(id) => setPrintConfig({ isOpen: true, type: 'AKTIVITI', targetId: id })} />}
+        {activeTab === 'rancangan' && <RancanganManager data={data} updateData={handleUpdateData} />}
+        {activeTab === 'settings' && <Settings data={data} updateData={handleUpdateData} onForcePull={() => pullData()} />}
+      </div>
+    </Layout>
   );
 };
 
