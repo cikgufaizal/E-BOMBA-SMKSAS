@@ -4,7 +4,7 @@ import {
   Activity as ActivityIcon, ClipboardList, Settings as SettingsIcon,
   Menu, X, RefreshCw, Circle, FileText, ShieldCheck 
 } from 'lucide-react';
-import { SystemData } from '../types';
+import { SystemData, UserRole } from '../types';
 
 interface LayoutProps {
   data: SystemData;
@@ -13,23 +13,28 @@ interface LayoutProps {
   syncStatus: 'idle' | 'syncing' | 'error' | 'success';
   onSync: () => void;
   children: React.ReactNode;
+  userRole: UserRole; // Added userRole prop
 }
 
 const Layout: React.FC<LayoutProps> = ({ 
-  data, activeTab, setActiveTab, syncStatus, onSync, children 
+  data, activeTab, setActiveTab, syncStatus, onSync, children, userRole 
 }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
 
+  // Filter menu items berdasarkan role
+  // GURU: Hide 'pendaftaran' (Modul Bomba) & 'settings' (Tetapan)
   const menuItems = [
     { id: 'dashboard', label: 'Command Center', icon: LayoutDashboard },
-    { id: 'pendaftaran', label: 'Pendaftaran Dokumen', icon: FileText },
+    // Modul Bomba (Dokumen) hanya untuk ADMIN
+    { id: 'pendaftaran', label: 'Pendaftaran Dokumen', icon: FileText, hidden: userRole === 'GURU' }, 
     { id: 'guru', label: 'Direktori Pegawai', icon: GraduationCap },
     { id: 'ahli', label: 'Database Anggota', icon: Users },
     { id: 'ajk', label: 'Struktur Taktikal', icon: UserSquare2 },
     { id: 'kehadiran', label: 'Log Kehadiran', icon: CalendarCheck },
     { id: 'aktiviti', label: 'Rekod Operasi', icon: ActivityIcon },
     { id: 'rancangan', label: 'Pelan Tahunan', icon: ClipboardList },
-    { id: 'settings', label: 'Sistem Core', icon: SettingsIcon },
+    // Tetapan hanya untuk ADMIN
+    { id: 'settings', label: 'Sistem Core', icon: SettingsIcon, hidden: userRole === 'GURU' }, 
   ];
 
   return (
@@ -52,7 +57,9 @@ const Layout: React.FC<LayoutProps> = ({
                 <h2 className="font-black text-lg tracking-tighter leading-none text-white italic">
                   E-BOMBA <span className="text-red-600">OS</span>
                 </h2>
-                <p className="text-[8px] font-black text-slate-500 uppercase tracking-[0.3em]">Command Hub v10.4</p>
+                <p className="text-[8px] font-black text-slate-500 uppercase tracking-[0.3em]">
+                  {userRole === 'ADMIN' ? 'ADMIN CONSOLE' : 'GURU ACCESS'}
+                </p>
               </div>
             </div>
             <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="md:hidden text-slate-400"><X /></button>
@@ -60,7 +67,7 @@ const Layout: React.FC<LayoutProps> = ({
         </div>
 
         <nav className="flex-1 overflow-y-auto px-4 space-y-2">
-          {menuItems.map((item, idx) => (
+          {menuItems.filter(item => !item.hidden).map((item, idx) => (
             <button 
               key={item.id} 
               onClick={() => {
@@ -101,7 +108,7 @@ const Layout: React.FC<LayoutProps> = ({
             <div>
               <p className="text-[8px] font-black text-red-600 uppercase tracking-[0.4em] mb-1">Status Report</p>
               <h1 className="text-sm font-black text-white uppercase tracking-[0.2em]">
-                {menuItems.find(i => i.id === activeTab)?.label}
+                {menuItems.find(i => i.id === activeTab)?.label || 'Akses Terhad'}
               </h1>
             </div>
           </div>

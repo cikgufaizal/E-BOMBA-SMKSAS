@@ -174,7 +174,7 @@ const App: React.FC = () => {
     );
   }
 
-  // --- 3B. SCHOOL DASHBOARD (FULL ADMIN) ---
+  // --- 3B. SCHOOL DASHBOARD (ADMIN & GURU) ---
   return (
     <Layout 
       data={data} 
@@ -182,17 +182,18 @@ const App: React.FC = () => {
       setActiveTab={setActiveTab} 
       syncStatus={syncStatus} 
       onSync={() => pullData()}
+      userRole={userRole} // PASS USER ROLE KE LAYOUT
     >
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000">
         {activeTab === 'dashboard' && <Dashboard data={data} />}
-        {activeTab === 'pendaftaran' && <PendaftaranIndex data={data} updateData={handleUpdateData} onPrint={(id, type = 'PENDAFTARAN') => setPrintConfig({ isOpen: true, type: type as ReportType, targetId: id })} />}
+        {activeTab === 'pendaftaran' && userRole === 'ADMIN' && <PendaftaranIndex data={data} updateData={handleUpdateData} onPrint={(id, type = 'PENDAFTARAN') => setPrintConfig({ isOpen: true, type: type as ReportType, targetId: id })} />}
         {activeTab === 'guru' && <GuruManager data={data} updateData={handleUpdateData} />}
         {activeTab === 'ahli' && <AhliManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'AHLI' })} />}
         {activeTab === 'ajk' && <AJKManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'AJK' })} />}
         {activeTab === 'kehadiran' && <KehadiranManager data={data} updateData={handleUpdateData} onPrint={() => setPrintConfig({ isOpen: true, type: 'KEHADIRAN' })} />}
         {activeTab === 'aktiviti' && <AktivitiManager data={data} updateData={handleUpdateData} onPrint={(id) => setPrintConfig({ isOpen: true, type: 'AKTIVITI', targetId: id })} />}
         {activeTab === 'rancangan' && <RancanganManager data={data} updateData={handleUpdateData} />}
-        {activeTab === 'settings' && <Settings data={data} updateData={handleUpdateData} onForcePull={() => pullData()} />}
+        {activeTab === 'settings' && userRole === 'ADMIN' && <Settings data={data} updateData={handleUpdateData} onForcePull={() => pullData()} />}
       </div>
     </Layout>
   );

@@ -127,4 +127,4 @@ export interface SystemData {
 
 export type ReportType = 'AHLI' | 'AJK' | 'KEHADIRAN' | 'AKTIVITI' | 'PENDAFTARAN' | 'LAMPIRAN_F' | 'LAMPIRAN_D' | 'LAMPIRAN_E' | 'LAMPIRAN_B';
 
-export type UserRole = 'SCHOOL' | 'BOMBA';
+export type UserRole = 'ADMIN' | 'GURU' | 'BOMBA';

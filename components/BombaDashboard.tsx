@@ -2,6 +2,7 @@ import React from 'react';
 import { LogOut, ShieldCheck } from 'lucide-react';
 import { SystemData, ReportType } from '../types';
 import PendaftaranIndex from './pendaftaran/PendaftaranIndex';
+import Dashboard from './Dashboard';
 
 interface Props {
   data: SystemData;
@@ -53,6 +54,9 @@ const BombaDashboard: React.FC<Props> = ({ data, onLogout, onPrint, updateData }
                   </p>
                </div>
             </div>
+
+            {/* DASHBOARD STATS */}
+            <Dashboard data={data} />
 
             {/* MODUL DOKUMEN (READ ONLY) */}
             <div className="bg-slate-900/30 border border-white/[0.05] rounded-[2.5rem] p-8">

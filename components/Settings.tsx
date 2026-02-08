@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { CheckCircle2, RefreshCw, Lock, Shield, Search, UploadCloud, DownloadCloud, FileDown, FileUp, Image as ImageIcon, AlertTriangle, Loader2 } from 'lucide-react';
+import { CheckCircle2, RefreshCw, Lock, Shield, Search, UploadCloud, DownloadCloud, FileDown, FileUp, Image as ImageIcon, AlertTriangle, Loader2, Eraser, Trash } from 'lucide-react';
 import { SystemData } from '../types';
 import { FormCard, Input, Button } from './CommonUI';
 import { saveDataToCloud, fetchDataFromCloud } from '../utils/storage';
@@ -60,6 +60,38 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
     }
   };
 
+  const handleSystemCleanup = () => {
+    if (!confirm("AMARAN: Proses ini akan membuang rekod 'sampah' (Ghost Data) seperti:\n\n1. Kehadiran pelajar yang telah dibuang sekolah.\n2. Rekod AJK bagi pelajar yang tidak wujud.\n3. Data kosong/rosak.\n\nAdakah anda pasti?")) return;
+
+    setIsProcessing(true);
+    
+    // 1. Dapatkan senarai ID Pelajar yang wujud sahaja
+    const validStudentIds = new Set(data.students.map(s => s.id));
+
+    // 2. Bersihkan Kehadiran (Buang ID dalam array 'presents' jika pelajar tak wujud)
+    let cleanedAttendancesCount = 0;
+    const cleanAttendances = data.attendances.map(att => {
+      const originalCount = att.presents.length;
+      const filteredPresents = att.presents.filter(id => validStudentIds.has(id));
+      if (originalCount !== filteredPresents.length) cleanedAttendancesCount += (originalCount - filteredPresents.length);
+      return { ...att, presents: filteredPresents };
+    });
+
+    // 3. Bersihkan AJK (Buang AJK jika studentId tak wujud)
+    const originalCommitteeCount = data.committees.length;
+    const cleanCommittees = data.committees.filter(c => validStudentIds.has(c.studentId));
+    const cleanedCommitteeCount = originalCommitteeCount - cleanCommittees.length;
+
+    // 4. Update Sistem
+    updateData({
+      attendances: cleanAttendances,
+      committees: cleanCommittees
+    });
+
+    setIsProcessing(false);
+    alert(`PENYELENGGARAAN SELESAI:\n\n- ${cleanedAttendancesCount} rekod kehadiran hantu dibuang.\n- ${cleanedCommitteeCount} jawatan AJK tidak sah dibuang.\n\nPangkalan data kini dioptimumkan.`);
+  };
+
   if (!isAuthorized) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center p-6">
@@ -105,7 +137,25 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
            </div>
         </FormCard>
 
-        <FormCard title="Local Data Control">
+        <FormCard title="System Maintenance">
+          <div className="space-y-4">
+             <div className="p-4 bg-red-900/20 border border-red-500/20 rounded-2xl">
+                <div className="flex items-center gap-3 mb-2">
+                   <AlertTriangle className="w-4 h-4 text-red-500" />
+                   <h4 className="text-[10px] font-black text-red-500 uppercase tracking-widest">Zon Bahaya</h4>
+                </div>
+                <p className="text-[10px] text-slate-400 leading-relaxed">
+                   Gunakan fungsi ini untuk membuang data yang rosak atau tidak lagi relevan (Orphan Data Cleanup).
+                </p>
+             </div>
+             <Button onClick={handleSystemCleanup} className="w-full h-14 bg-red-950/50 hover:bg-red-900 border-red-900 text-red-500 hover:text-white">
+                <Eraser className="w-4 h-4" /> Lakukan Pembersihan (Cleanup)
+             </Button>
+          </div>
+        </FormCard>
+      </div>
+
+      <FormCard title="Local Data Backup">
           <div className="space-y-4">
             <Button onClick={() => {
               const dataStr = JSON.stringify(data, null, 2);
@@ -116,7 +166,7 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
               link.download = `BACKUP_KADET_BOMBA_${new Date().toISOString().split('T')[0]}.json`;
               link.click();
             }} variant="success" className="w-full">
-              <FileDown className="w-4 h-4" /> Export JSON
+              <FileDown className="w-4 h-4" /> Export Backup JSON
             </Button>
             <input type="file" className="hidden" id="import-json" onChange={(e: any) => {
               const reader = new FileReader();
@@ -129,11 +179,10 @@ const Settings: React.FC<Props> = ({ data, updateData, onForcePull }) => {
               reader.readAsText(e.target.files[0]);
             }} accept=".json" />
             <Button onClick={() => document.getElementById('import-json')?.click()} variant="secondary" className="w-full">
-              <FileUp className="w-4 h-4" /> Import JSON
+              <FileUp className="w-4 h-4" /> Import Backup JSON
             </Button>
           </div>
         </FormCard>
-      </div>
 
       <FormCard title="Official Branding">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

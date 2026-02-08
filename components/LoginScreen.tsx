@@ -7,7 +7,7 @@ interface Props {
 }
 
 const LoginScreen: React.FC<Props> = ({ onLogin }) => {
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [selectedRole, setSelectedRole] = useState<'SCHOOL' | 'BOMBA' | null>(null);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
@@ -17,9 +17,11 @@ const LoginScreen: React.FC<Props> = ({ onLogin }) => {
 
     if (selectedRole === 'SCHOOL') {
       if (password === 'CEB1003') {
-        onLogin('SCHOOL');
+        onLogin('ADMIN');
+      } else if (password === 'GURU') {
+        onLogin('GURU');
       } else {
-        setError('KOD AKSES UNIT KOKURIKULUM TIDAK SAH');
+        setError('KOD AKSES TIDAK SAH');
       }
     } else if (selectedRole === 'BOMBA') {
       if (password === 'JBPM') {
@@ -56,7 +58,7 @@ const LoginScreen: React.FC<Props> = ({ onLogin }) => {
                </div>
                <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-2">Unit Sekolah</h3>
                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-center px-8">
-                  Akses Pentadbir (Admin)<br/>Pengurusan Data & Kehadiran
+                  Akses Guru & Pentadbir<br/>(Kata Laluan: CEB1003 / GURU)
                </p>
                <div className="absolute bottom-8 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 text-[10px] font-black text-blue-500 uppercase tracking-widest">
                   Log Masuk <ChevronRight className="w-3 h-3" />

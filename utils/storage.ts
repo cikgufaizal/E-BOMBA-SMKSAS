@@ -108,6 +108,3 @@ export const saveDataToCloud = async (data: SystemData): Promise<{success: boole
     }
   }
 };
-
-export const loadData = () => createEmptyData();
-export const saveData = (data: SystemData) => {};
