@@ -59,9 +59,14 @@ const PrintLampiranF: React.FC<Props> = ({ data }) => {
              {isFirst ? (
                <>
                  <SchoolHeader data={data} />
-                 <div className="absolute right-8 top-[30mm] font-bold text-[9pt] border border-black p-1 px-2">
-                    Lampiran F
+                 
+                 {/* Label Lampiran (Static Flow) */}
+                 <div className="w-full flex justify-end mt-2 mb-1">
+                    <div className="font-bold text-[9pt] border border-black p-1 px-2">
+                       Lampiran F
+                    </div>
                  </div>
+
                  <div className="text-center font-bold mb-4 uppercase">
                     <h2 className="text-[12pt] underline">BORANG PENDAFTARAN KEAHLIAN</h2>
                     <p className="text-[10pt]">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA</p>

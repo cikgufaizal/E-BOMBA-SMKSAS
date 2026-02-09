@@ -35,11 +35,14 @@ const PrintLampiranA: React.FC<Props> = ({ data, targetId }) => {
     <div className="w-full h-[297mm] relative bg-white font-serif text-black p-8 box-border leading-[1.15]" style={{ pageBreakAfter: 'always' }}>
       <BombaHeader data={data} />
 
-      <div className="absolute right-8 top-[30mm] font-bold text-[9pt] border border-black p-1 px-2">
-        Lampiran A
+      {/* Label Lampiran (Fixed Position in Flow) */}
+      <div className="w-full flex justify-end mt-2 mb-1">
+         <div className="font-bold text-[9pt] border border-black p-1 px-2">
+           Lampiran A
+         </div>
       </div>
 
-      <div className="text-center mt-2 mb-4">
+      <div className="text-center mb-4">
          <h2 className="text-[12pt] font-bold tracking-wide underline">BORANG MAKLUMAT PERIBADI</h2>
          <div className="text-[9pt] font-bold mt-0.5 uppercase">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA</div>
       </div>

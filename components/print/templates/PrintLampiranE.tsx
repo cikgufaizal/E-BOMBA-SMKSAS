@@ -22,8 +22,11 @@ const PrintLampiranE: React.FC<Props> = ({ data }) => {
     <div className="w-full h-[297mm] relative bg-white font-serif text-black leading-[1.15] p-8 box-border" style={{ pageBreakAfter: 'always' }}>
       <SchoolHeader data={data} />
       
-      <div className="absolute right-8 top-[35mm] font-bold text-[9pt] border border-black p-1">
-        Lampiran E
+      {/* Label Lampiran */}
+      <div className="w-full flex justify-end mt-2 mb-1">
+         <div className="font-bold text-[9pt] border border-black p-1">
+           Lampiran E
+         </div>
       </div>
 
       <DocumentTitle title="BORANG PERMOHONAN PENUBUHAN / PEMBAHARUAN PASUKAN" />
