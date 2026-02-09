@@ -12,11 +12,11 @@ const PrintLampiranF: React.FC<Props> = ({ data }) => {
   const guruPenasihat = data.teachers.find(t => t.jawatan === JawatanGuru.Penasihat)?.nama || "";
   const pengetua = data.teachers.find(t => t.jawatan.includes('Pengetua') || t.jawatan.includes('Guru Besar'))?.nama || "";
 
-  // Konfigurasi Baris Per Halaman (Dilaraskan untuk muat A4 dengan tepat)
-  // Muka 1 ada SchoolHeader -> muat 12 pelajar
-  // Muka 2 header simple -> muat 22 pelajar
-  const ROWS_PAGE_1 = 12; 
-  const ROWS_PAGE_REST = 22;
+  // Konfigurasi Baris Per Halaman (Dilaraskan untuk muat A4 dengan tepat dan padat)
+  // Muka 1 ada SchoolHeader -> muat 20 pelajar (sebelum ni 12)
+  // Muka 2 header simple -> muat 35 pelajar (sebelum ni 22)
+  const ROWS_PAGE_1 = 20; 
+  const ROWS_PAGE_REST = 35;
 
   const pages = [];
   let remaining = [...sortedStudents];
@@ -30,7 +30,7 @@ const PrintLampiranF: React.FC<Props> = ({ data }) => {
   // Helper untuk baris kosong
   const renderEmptyRows = (count: number) => {
     return Array.from({ length: Math.max(0, count) }).map((_, i) => (
-      <tr key={`empty-${i}`} className="h-[32px]">
+      <tr key={`empty-${i}`} className="h-[25px]">
          <td className="border border-black p-1 text-center"></td>
          <td className="border border-black p-1"></td>
          <td className="border border-black p-1"></td>
@@ -41,7 +41,7 @@ const PrintLampiranF: React.FC<Props> = ({ data }) => {
   };
 
   return (
-    <div className="w-full font-serif text-black bg-white">
+    <div className="w-full font-serif text-black bg-white leading-[1.15]">
       {pages.map((pageData, idx) => {
         const isFirst = idx === 0;
         const isLast = idx === pages.length - 1;
@@ -59,46 +59,47 @@ const PrintLampiranF: React.FC<Props> = ({ data }) => {
              {isFirst ? (
                <>
                  <SchoolHeader data={data} />
-                 <div className="absolute right-8 top-[35mm] font-bold text-[10pt] border border-black p-1 px-2">
+                 <div className="absolute right-8 top-[30mm] font-bold text-[9pt] border border-black p-1 px-2">
                     Lampiran F
                  </div>
-                 <div className="text-center font-bold mb-6 uppercase">
-                    <h2 className="text-[14pt] underline">BORANG PENDAFTARAN KEAHLIAN</h2>
-                    <p className="text-[11pt]">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA</p>
+                 <div className="text-center font-bold mb-4 uppercase">
+                    <h2 className="text-[12pt] underline">BORANG PENDAFTARAN KEAHLIAN</h2>
+                    <p className="text-[10pt]">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA</p>
                  </div>
-                 <div className="mb-4 text-[11pt]">
+                 <div className="mb-2 text-[10pt]">
                     <p>Guru Penasihat: <span className="font-bold uppercase">{guruPenasihat}</span></p>
                  </div>
                </>
              ) : (
-                <div className="mb-6 pt-8 border-b border-black pb-2 flex justify-between items-end">
-                   <span className="font-bold italic">Sambungan Lampiran F...</span>
+                <div className="mb-4 pt-4 border-b border-black pb-1 flex justify-between items-end">
+                   <span className="font-bold italic text-[9pt]">Sambungan Lampiran F...</span>
                    <span className="text-[9pt]">Muka Surat {idx + 1}</span>
                 </div>
              )}
 
              {/* TABLE */}
              <div className="flex-1">
-                 <table className="w-full border-collapse border border-black text-[10pt]">
+                 <table className="w-full border-collapse border border-black text-[9pt]">
                    <thead>
-                     <tr className="bg-gray-100">
-                       <th className="border border-black p-2 w-[50px] text-center">BIL</th>
-                       <th className="border border-black p-2 text-left">NAMA PENUH (HURUF BESAR)</th>
-                       <th className="border border-black p-2 w-[130px] text-center">NO. K/P</th>
-                       <th className="border border-black p-2 w-[120px] text-center">NO. KEAHLIAN</th>
-                       <th className="border border-black p-2 w-[100px] text-center">TINGKATAN</th>
+                     <tr className="bg-gray-100 h-[28px]">
+                       <th className="border border-black p-1 w-[40px] text-center">BIL</th>
+                       <th className="border border-black p-1 px-2 text-left">NAMA PENUH (HURUF BESAR)</th>
+                       <th className="border border-black p-1 w-[110px] text-center">NO. K/P</th>
+                       <th className="border border-black p-1 w-[100px] text-center">NO. KEAHLIAN</th>
+                       <th className="border border-black p-1 w-[80px] text-center">TINGKATAN</th>
                      </tr>
                    </thead>
                    <tbody>
                      {pageData.map((s, i) => (
-                       <tr key={s.id} className="h-[32px]">
+                       <tr key={s.id} className="h-[25px]">
                          <td className="border border-black p-1 text-center">{startBil + i + 1}</td>
                          <td className="border border-black p-1 px-2 font-bold uppercase truncate max-w-[250px]">{s.nama}</td>
                          <td className="border border-black p-1 text-center font-mono">{s.noKP}</td>
-                         <td className="border border-black p-1 text-center font-bold text-red-900">{s.noKeahlian || ''}</td>
+                         <td className="border border-black p-1 text-center font-bold">{s.noKeahlian || ''}</td>
                          <td className="border border-black p-1 text-center uppercase">{s.tingkatan} {s.kelas}</td>
                        </tr>
                      ))}
+                     {/* Render row kosong jika perlu memenuhi kertas */}
                      {renderEmptyRows((isFirst ? ROWS_PAGE_1 : ROWS_PAGE_REST) - pageData.length)}
                    </tbody>
                  </table>
@@ -107,17 +108,17 @@ const PrintLampiranF: React.FC<Props> = ({ data }) => {
              {/* FOOTER (Hanya di muka surat terakhir) */}
              {isLast && (
                <div className="mt-4 flex justify-between items-start">
-                  <div className="text-center w-[250px]">
-                     <p className="font-bold uppercase text-[10pt] mb-16">Disediakan Oleh:</p>
+                  <div className="text-center w-[220px]">
+                     <p className="font-bold uppercase text-[9pt] mb-12">Disediakan Oleh:</p>
                      <div className="border-b border-black w-full mb-1"></div>
-                     <p className="font-bold uppercase text-[10pt]">( {guruPenasihat || 'GURU PENASIHAT'} )</p>
-                     <p className="text-[9pt]">Guru Penasihat</p>
+                     <p className="font-bold uppercase text-[9pt]">( {guruPenasihat || 'GURU PENASIHAT'} )</p>
+                     <p className="text-[8pt]">Guru Penasihat</p>
                   </div>
-                  <div className="text-center w-[250px]">
-                     <p className="font-bold uppercase text-[10pt] mb-16">Disahkan Oleh:</p>
+                  <div className="text-center w-[220px]">
+                     <p className="font-bold uppercase text-[9pt] mb-12">Disahkan Oleh:</p>
                      <div className="border-b border-black w-full mb-1"></div>
-                     <p className="font-bold uppercase text-[10pt]">( {pengetua || 'PENGETUA'} )</p>
-                     <p className="text-[9pt]">Pengetua / Guru Besar</p>
+                     <p className="font-bold uppercase text-[9pt]">( {pengetua || 'PENGETUA'} )</p>
+                     <p className="text-[8pt]">Pengetua / Guru Besar</p>
                   </div>
                </div>
              )}
