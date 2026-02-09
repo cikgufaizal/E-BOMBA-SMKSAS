@@ -32,19 +32,19 @@ const PrintLampiranA: React.FC<Props> = ({ data, targetId }) => {
   );
 
   return (
-    <div className="w-full font-serif text-black leading-tight bg-white">
+    <div className="w-full h-[297mm] relative bg-white font-serif text-black leading-tight p-8 box-border" style={{ pageBreakAfter: 'always' }}>
       <BombaHeader data={data} />
 
-      <div className="absolute right-0 top-[45mm] font-bold text-[10pt] border border-black p-1 px-3">
+      <div className="absolute right-8 top-[35mm] font-bold text-[10pt] border border-black p-1 px-3">
         Lampiran A
       </div>
 
-      <div className="text-center mt-4 mb-8">
+      <div className="text-center mt-6 mb-8">
          <h2 className="text-[14pt] font-bold tracking-wide underline">BORANG MAKLUMAT PERIBADI</h2>
          <div className="text-[10pt] font-bold mt-1 uppercase">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA</div>
       </div>
 
-      <div className="px-4">
+      <div className="px-2">
          <FieldRow num="1" label="Nama Penuh" value={s.nama} />
          <FieldRow num="2" label="No. Kad Pengenalan" value={s.noKP} />
          <FieldRow num="3" label="Nama Sekolah" value={schoolName} />
@@ -114,7 +114,7 @@ const PrintLampiranA: React.FC<Props> = ({ data, targetId }) => {
             "Saya dengan ini mengaku bahawa maklumat yang diberikan di atas adalah benar. Saya sihat tubuh badan dan bersedia untuk menyertai segala aktiviti yang dianjurkan oleh Pasukan Kadet Bomba dan Penyelamat Malaysia dengan kerelaan saya sendiri."
          </div>
 
-         <div className="mt-8 flex justify-between items-end">
+         <div className="mt-12 flex justify-between items-end">
             <div className="text-[11pt]">
                Tarikh: <span className="font-bold">{new Date().toLocaleDateString('ms-MY')}</span>
             </div>

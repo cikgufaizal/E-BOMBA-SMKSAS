@@ -77,8 +77,22 @@
         }
 
         @media print {
-            .no-print { display: none !important; }
-            body { background: white !important; color: black !important; }
+            /* Sembunyikan elemen UI sistem */
+            .no-print, .scanline, button, header, nav, aside { 
+                display: none !important; 
+            }
+            
+            body { 
+                background: white !important; 
+                color: black !important; 
+                overflow: visible !important;
+            }
+
+            /* Pastikan background grafik dicetak (untuk logo/kotak kelabu) */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
         }
     </style>
     <script>

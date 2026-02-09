@@ -14,19 +14,19 @@ const PrintLampiranB: React.FC<Props> = ({ data, targetId }) => {
   const schoolName = data.settings?.schoolName || "SMK SULTAN AHMAD SHAH";
 
   return (
-    <div className="w-full font-serif text-black leading-tight bg-white">
+    <div className="w-full h-[297mm] relative bg-white font-serif text-black leading-tight p-8 box-border" style={{ pageBreakAfter: 'always' }}>
       <BombaHeader data={data} />
       
-      <div className="absolute right-0 top-[45mm] font-bold text-[10pt] border border-black p-1 px-3">
+      <div className="absolute right-8 top-[35mm] font-bold text-[10pt] border border-black p-1 px-3">
         Lampiran B
       </div>
 
-      <div className="text-center mt-4 mb-10">
+      <div className="text-center mt-6 mb-12">
          <h2 className="text-[14pt] font-bold tracking-wide underline">BORANG PELEPASAN TANGGUNGJAWAB</h2>
          <div className="text-[10pt] font-bold mt-1 uppercase">KEBENARAN IBU BAPA / PENJAGA</div>
       </div>
 
-      <div className="px-8 text-[11pt] leading-loose text-justify">
+      <div className="px-4 text-[11pt] leading-loose text-justify">
          
          <p>
            Saya <span className="font-bold uppercase border-b border-black px-2">{s.namaWaris || '................................................'}</span> 
@@ -60,7 +60,7 @@ const PrintLampiranB: React.FC<Props> = ({ data, targetId }) => {
            </p>
          </div>
 
-         <div className="mt-12 grid grid-cols-2 gap-16">
+         <div className="mt-16 grid grid-cols-2 gap-16">
             <div>
                <p className="mb-2">Tarikh: <span className="font-bold">{new Date().toLocaleDateString('ms-MY')}</span></p>
                <div className="h-24 border-b border-black w-full"></div>

@@ -19,10 +19,10 @@ const PrintLampiranE: React.FC<Props> = ({ data }) => {
   );
 
   return (
-    <div className="w-full">
+    <div className="w-full h-[297mm] relative bg-white font-serif text-black leading-tight p-8 box-border" style={{ pageBreakAfter: 'always' }}>
       <SchoolHeader data={data} />
       
-      <div className="absolute right-0 top-[35mm] font-bold text-[10pt] border border-black p-1">
+      <div className="absolute right-8 top-[35mm] font-bold text-[10pt] border border-black p-1">
         Lampiran E
       </div>
 
