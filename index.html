@@ -9,12 +9,13 @@
     <meta name="theme-color" content="#020617">
     <meta name="description" content="Sistem Operasi Digital Kadet Bomba SMKSAS">
     <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/8/87/Jabatan_Bomba_dan_Penyelamat_Malaysia.png">
     
     <!-- iOS Support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="E-Bomba OS">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.sh/512/9101/9101314.png">
+    <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/8/87/Jabatan_Bomba_dan_Penyelamat_Malaysia.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -32,66 +33,118 @@
             -webkit-tap-highlight-color: transparent;
         }
         
-        /* Glassmorphism Ultra */
+        /* --- 1. CYBER BACKGROUND --- */
+        .cyber-grid {
+            position: fixed;
+            top: 0; left: 0; width: 200%; height: 200%;
+            background-image: 
+                linear-gradient(rgba(239, 68, 68, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(239, 68, 68, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            transform: perspective(500px) rotateX(60deg) translateY(-100px) translateZ(-200px);
+            animation: gridMove 20s linear infinite;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        @keyframes gridMove {
+            0% { transform: perspective(500px) rotateX(60deg) translateY(0) translateZ(-200px); }
+            100% { transform: perspective(500px) rotateX(60deg) translateY(40px) translateZ(-200px); }
+        }
+
+        /* --- 2. GLASSMORPHISM PRO --- */
         .glass-panel {
-            background: rgba(15, 23, 42, 0.4);
+            background: rgba(15, 23, 42, 0.7);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        .red-glow {
-            box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+        /* --- 3. ANIMATIONS --- */
+        
+        /* Entrance: Slide Up & Fade */
+        @keyframes slideUpFade {
+            0% { opacity: 0; transform: translateY(30px) scale(0.98); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-enter {
+            animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        /* Tactical HUD Scrollbar */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
-        ::-webkit-scrollbar-thumb { 
-            background: rgba(239, 68, 68, 0.3); 
-            border-radius: 20px;
-        }
-        ::-webkit-scrollbar-thumb:hover { background: #ef4444; }
+        /* Stagger Delays */
+        .stagger-1 { animation-delay: 100ms; }
+        .stagger-2 { animation-delay: 200ms; }
+        .stagger-3 { animation-delay: 300ms; }
+        .stagger-4 { animation-delay: 400ms; }
+        .stagger-5 { animation-delay: 500ms; }
 
-        /* Animations */
+        /* Floating Effect */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* Shine Effect for Buttons */
+        @keyframes shine {
+            0% { left: -100%; }
+            20% { left: 100%; }
+            100% { left: 100%; }
+        }
+        .btn-shine {
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-shine::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: skewX(-20deg);
+            animation: shine 3s infinite;
+        }
+
+        /* Scanline Overlay */
         @keyframes scanline {
             0% { transform: translateY(-100%); }
-            100% { transform: translateY(100%); }
+            100% { transform: translateY(100vh); }
         }
         .scanline {
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 2px;
-            background: rgba(239, 68, 68, 0.1);
-            z-index: 1000;
+            top: 0; left: 0; width: 100%; height: 5px;
+            background: linear-gradient(to right, transparent, rgba(239, 68, 68, 0.5), transparent);
+            z-index: 9999;
             pointer-events: none;
-            animation: scanline 8s linear infinite;
+            opacity: 0.3;
+            animation: scanline 4s linear infinite;
         }
 
-        @keyframes pulse-red {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.8; }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        ::-webkit-scrollbar-thumb { 
+            background: #334155; 
+            border-radius: 10px;
         }
-        .pulse-red {
-            animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
+        ::-webkit-scrollbar-thumb:hover { background: #ef4444; }
 
         @media print {
-            /* Sembunyikan elemen UI sistem */
-            .no-print, .scanline, button, header, nav, aside { 
+            .no-print, .scanline, .cyber-grid, button, header, nav, aside { 
                 display: none !important; 
             }
-            
             body { 
                 background: white !important; 
                 color: black !important; 
                 overflow: visible !important;
             }
-
-            /* Pastikan background grafik dicetak (untuk logo/kotak kelabu) */
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
+                animation: none !important;
             }
         }
     </style>
@@ -109,6 +162,10 @@
                     },
                     fontFamily: {
                         mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'spin-slow': 'spin 8s linear infinite',
                     }
                 }
             }
@@ -130,6 +187,7 @@
 </head>
 <body>
     <div class="scanline"></div>
+    <div class="cyber-grid"></div>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>
