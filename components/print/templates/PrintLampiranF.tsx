@@ -1,6 +1,6 @@
 import React from 'react';
 import { SystemData, JawatanGuru } from '../../../types';
-import SchoolHeader from '../headers/SchoolHeader';
+import BombaHeader from '../headers/BombaHeader';
 
 interface Props {
   data: SystemData;
@@ -12,9 +12,7 @@ const PrintLampiranF: React.FC<Props> = ({ data }) => {
   const guruPenasihat = data.teachers.find(t => t.jawatan === JawatanGuru.Penasihat)?.nama || "";
   const pengetua = data.teachers.find(t => t.jawatan.includes('Pengetua') || t.jawatan.includes('Guru Besar'))?.nama || "";
 
-  // Konfigurasi Baris Per Halaman (Dilaraskan untuk muat A4 dengan tepat dan padat)
-  // Muka 1 ada SchoolHeader -> muat 20 pelajar (sebelum ni 12)
-  // Muka 2 header simple -> muat 35 pelajar (sebelum ni 22)
+  // Konfigurasi Baris Per Halaman
   const ROWS_PAGE_1 = 20; 
   const ROWS_PAGE_REST = 35;
 
@@ -55,24 +53,24 @@ const PrintLampiranF: React.FC<Props> = ({ data }) => {
             className="relative w-full h-[297mm] bg-white p-8 pb-10 flex flex-col box-border"
             style={{ pageBreakAfter: 'always', pageBreakInside: 'avoid' }}
           >
-             {/* HEADER */}
+             {/* HEADER (Hanya Muka Surat Pertama ada Header Bomba) */}
              {isFirst ? (
                <>
-                 <SchoolHeader data={data} />
+                 <BombaHeader data={data} />
                  
-                 {/* Label Lampiran (Static Flow) */}
+                 {/* Label Lampiran */}
                  <div className="w-full flex justify-end mt-2 mb-1">
-                    <div className="font-bold text-[9pt] border border-black p-1 px-2">
+                    <div className="font-bold text-[9pt] border border-black p-1 px-3">
                        Lampiran F
                     </div>
                  </div>
 
                  <div className="text-center font-bold mb-4 uppercase">
-                    <h2 className="text-[12pt] underline">BORANG PENDAFTARAN KEAHLIAN</h2>
+                    <h2 className="text-[12pt] underline">BORANG PENDAFTARAN KEAHLIAN (KOLEKTIF)</h2>
                     <p className="text-[10pt]">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA</p>
                  </div>
-                 <div className="mb-2 text-[10pt]">
-                    <p>Guru Penasihat: <span className="font-bold uppercase">{guruPenasihat}</span></p>
+                 <div className="mb-2 text-[10pt] font-bold border-b border-black pb-1">
+                    MAKLUMAT ANGGOTA &nbsp;&nbsp;|&nbsp;&nbsp; GURU PENASIHAT: <span className="uppercase">{guruPenasihat}</span>
                  </div>
                </>
              ) : (
@@ -86,11 +84,11 @@ const PrintLampiranF: React.FC<Props> = ({ data }) => {
              <div className="flex-1">
                  <table className="w-full border-collapse border border-black text-[9pt]">
                    <thead>
-                     <tr className="bg-gray-100 h-[28px]">
+                     <tr className="bg-gray-100 h-[30px]">
                        <th className="border border-black p-1 w-[40px] text-center">BIL</th>
                        <th className="border border-black p-1 px-2 text-left">NAMA PENUH (HURUF BESAR)</th>
                        <th className="border border-black p-1 w-[110px] text-center">NO. K/P</th>
-                       <th className="border border-black p-1 w-[100px] text-center">NO. KEAHLIAN</th>
+                       <th className="border border-black p-1 w-[120px] text-center">NO. KEAHLIAN</th>
                        <th className="border border-black p-1 w-[80px] text-center">TINGKATAN</th>
                      </tr>
                    </thead>
@@ -98,9 +96,9 @@ const PrintLampiranF: React.FC<Props> = ({ data }) => {
                      {pageData.map((s, i) => (
                        <tr key={s.id} className="h-[25px]">
                          <td className="border border-black p-1 text-center">{startBil + i + 1}</td>
-                         <td className="border border-black p-1 px-2 font-bold uppercase truncate max-w-[250px]">{s.nama}</td>
+                         <td className="border border-black p-1 px-2 font-bold uppercase truncate max-w-[350px]">{s.nama}</td>
                          <td className="border border-black p-1 text-center font-mono">{s.noKP}</td>
-                         <td className="border border-black p-1 text-center font-bold">{s.noKeahlian || ''}</td>
+                         <td className="border border-black p-1 text-center font-bold text-red-900">{s.noKeahlian || ''}</td>
                          <td className="border border-black p-1 text-center uppercase">{s.tingkatan} {s.kelas}</td>
                        </tr>
                      ))}
@@ -112,15 +110,15 @@ const PrintLampiranF: React.FC<Props> = ({ data }) => {
 
              {/* FOOTER (Hanya di muka surat terakhir) */}
              {isLast && (
-               <div className="mt-4 flex justify-between items-start">
-                  <div className="text-center w-[220px]">
-                     <p className="font-bold uppercase text-[9pt] mb-12">Disediakan Oleh:</p>
+               <div className="mt-8 flex justify-between items-start">
+                  <div className="text-center w-[250px]">
+                     <p className="font-bold uppercase text-[9pt] mb-16">Disediakan Oleh:</p>
                      <div className="border-b border-black w-full mb-1"></div>
                      <p className="font-bold uppercase text-[9pt]">( {guruPenasihat || 'GURU PENASIHAT'} )</p>
                      <p className="text-[8pt]">Guru Penasihat</p>
                   </div>
-                  <div className="text-center w-[220px]">
-                     <p className="font-bold uppercase text-[9pt] mb-12">Disahkan Oleh:</p>
+                  <div className="text-center w-[250px]">
+                     <p className="font-bold uppercase text-[9pt] mb-16">Disahkan Oleh:</p>
                      <div className="border-b border-black w-full mb-1"></div>
                      <p className="font-bold uppercase text-[9pt]">( {pengetua || 'PENGETUA'} )</p>
                      <p className="text-[8pt]">Pengetua / Guru Besar</p>
