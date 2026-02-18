@@ -72,6 +72,20 @@
             animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
+        /* Glitch Effect Text */
+        @keyframes glitch {
+            0% { transform: translate(0) }
+            20% { transform: translate(-2px, 2px) }
+            40% { transform: translate(-2px, -2px) }
+            60% { transform: translate(2px, 2px) }
+            80% { transform: translate(2px, -2px) }
+            100% { transform: translate(0) }
+        }
+        .glitch-text:hover {
+            animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
+            color: #ef4444;
+        }
+
         /* Stagger Delays */
         .stagger-1 { animation-delay: 100ms; }
         .stagger-2 { animation-delay: 200ms; }
@@ -108,21 +122,6 @@
             animation: shine 3s infinite;
         }
 
-        /* Scanline Overlay */
-        @keyframes scanline {
-            0% { transform: translateY(-100%); }
-            100% { transform: translateY(100vh); }
-        }
-        .scanline {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 5px;
-            background: linear-gradient(to right, transparent, rgba(239, 68, 68, 0.5), transparent);
-            z-index: 9999;
-            pointer-events: none;
-            opacity: 0.3;
-            animation: scanline 4s linear infinite;
-        }
-
         /* Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
@@ -133,7 +132,7 @@
         ::-webkit-scrollbar-thumb:hover { background: #ef4444; }
 
         @media print {
-            .no-print, .scanline, .cyber-grid, button, header, nav, aside { 
+            .no-print, .cyber-grid, button, header, nav, aside { 
                 display: none !important; 
             }
             body { 
@@ -166,6 +165,7 @@
                     animation: {
                         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                         'spin-slow': 'spin 8s linear infinite',
+                        'ping-slow': 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite',
                     }
                 }
             }
@@ -186,7 +186,6 @@
 </script>
 </head>
 <body>
-    <div class="scanline"></div>
     <div class="cyber-grid"></div>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
