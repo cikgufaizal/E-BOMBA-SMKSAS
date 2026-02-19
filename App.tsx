@@ -161,9 +161,9 @@ const App: React.FC = () => {
              </div>
              {/* Decorative Code Lines */}
              <div className="h-10 overflow-hidden text-[9px] font-mono text-slate-600 leading-tight opacity-60">
-                <p>> MOUNTING_VOLUMES... OK</p>
-                <p>> CHECKING_INTEGRITY... OK</p>
-                <p>> BYPASSING_PROXY... DONE</p>
+                <p>&gt; MOUNTING_VOLUMES... OK</p>
+                <p>&gt; CHECKING_INTEGRITY... OK</p>
+                <p>&gt; BYPASSING_PROXY... DONE</p>
              </div>
           </div>
         </div>
