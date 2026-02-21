@@ -173,7 +173,7 @@ const App: React.FC = () => {
 
   // --- 2. UNIFIED LOGIN SCREEN ---
   if (!userRole) {
-    return <LoginScreen onLogin={setUserRole} />;
+    return <LoginScreen onLogin={setUserRole} data={data} />;
   }
 
   // --- 3A. BOMBA DASHBOARD (VIEW ONLY) ---

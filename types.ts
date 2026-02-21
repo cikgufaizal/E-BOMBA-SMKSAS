@@ -112,6 +112,9 @@ export interface CloudSettings {
   address?: string;
   autoSync: boolean;
   lastSync?: string;
+  adminPassword?: string;
+  guruPassword?: string;
+  bombaPassword?: string;
 }
 
 export interface SystemData {

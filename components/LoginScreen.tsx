@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Lock, Power, Zap, ScanLine, Activity } from 'lucide-react';
-import { UserRole } from '../types';
+import { UserRole, SystemData } from '../types';
 
 interface Props {
   onLogin: (role: UserRole) => void;
+  data?: SystemData;
 }
 
-const LoginScreen: React.FC<Props> = ({ onLogin }) => {
+const LoginScreen: React.FC<Props> = ({ onLogin, data }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -36,18 +37,34 @@ const LoginScreen: React.FC<Props> = ({ onLogin }) => {
 
     // Artificial Delay for effect
     setTimeout(() => {
-      const code = password.trim().toUpperCase();
+      const code = password.trim(); // Case sensitive for custom passwords? Or keep it simple. Let's trim.
       
-      if (code === 'CEB1003') {
+      // Default Passwords
+      const defaultAdmin = 'CEB1003';
+      const defaultGuru = 'GURU';
+      const defaultBomba = 'JBPM';
+
+      // Get from settings or fallback
+      const adminPwd = data?.settings?.adminPassword || defaultAdmin;
+      const guruPwd = data?.settings?.guruPassword || defaultGuru;
+      const bombaPwd = data?.settings?.bombaPassword || defaultBomba;
+
+      if (code === adminPwd) {
         onLogin('ADMIN');
-      } else if (code === 'GURU') {
+      } else if (code === guruPwd) {
         onLogin('GURU');
-      } else if (code === 'JBPM') {
+      } else if (code === bombaPwd) {
         onLogin('BOMBA');
       } else {
-        setError('ACCESS DENIED: INVALID CREDENTIALS');
-        setIsVerifying(false);
-        setPassword('');
+        // Also check default hardcoded if settings fail (safety net)
+        if (code === defaultAdmin) onLogin('ADMIN');
+        else if (code === defaultGuru) onLogin('GURU');
+        else if (code === defaultBomba) onLogin('BOMBA');
+        else {
+            setError('ACCESS DENIED: INVALID CREDENTIALS');
+            setIsVerifying(false);
+            setPassword('');
+        }
       }
     }, 1500);
   };
