@@ -49,11 +49,9 @@ const PrintLampiranA: React.FC<Props> = ({ data, targetId }) => {
         >
           <BombaHeader data={data} />
 
-          {/* Label Lampiran (Fixed Position in Flow) */}
-          <div className="w-full flex justify-end mt-2 mb-1">
-             <div className="font-bold text-[9pt] border border-black p-1 px-2">
-               Lampiran A
-             </div>
+          {/* Label Lampiran (Absolute Position) */}
+          <div className="absolute top-6 right-8 font-bold text-[9pt] border border-black p-1 px-2">
+            Lampiran A
           </div>
 
           <div className="text-center mb-4">
