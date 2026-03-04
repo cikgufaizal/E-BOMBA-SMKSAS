@@ -8,8 +8,13 @@ interface Props {
 }
 
 const PrintLampiranA: React.FC<Props> = ({ data, targetId }) => {
-  const s = data.students.find(x => x.id === targetId);
-  if (!s) return <div className="p-10 text-center text-red-500 font-bold">RALAT: Data Pelajar Tidak Dijumpai</div>;
+  const studentsToPrint = targetId === 'ALL' 
+    ? data.students.sort((a, b) => a.nama.localeCompare(b.nama))
+    : data.students.filter(x => x.id === targetId);
+
+  if (studentsToPrint.length === 0) {
+    return <div className="p-10 text-center text-red-500 font-bold">RALAT: Data Pelajar Tidak Dijumpai</div>;
+  }
 
   const schoolName = data.settings?.schoolName || "SMK SULTAN AHMAD SHAH";
   
@@ -32,102 +37,113 @@ const PrintLampiranA: React.FC<Props> = ({ data, targetId }) => {
   );
 
   return (
-    <div className="w-full h-[297mm] relative bg-white font-serif text-black p-8 box-border leading-[1.15]" style={{ pageBreakAfter: 'always' }}>
-      <BombaHeader data={data} />
+    <div className="print-all-wrapper">
+      {studentsToPrint.map((s, index) => (
+        <div 
+          key={s.id} 
+          className="w-full relative bg-white font-serif text-black p-8 box-border leading-[1.15]" 
+          style={{ 
+            pageBreakAfter: index === studentsToPrint.length - 1 ? 'auto' : 'always',
+            minHeight: '270mm'
+          }}
+        >
+          <BombaHeader data={data} />
 
-      {/* Label Lampiran (Fixed Position in Flow) */}
-      <div className="w-full flex justify-end mt-2 mb-1">
-         <div className="font-bold text-[9pt] border border-black p-1 px-2">
-           Lampiran A
-         </div>
-      </div>
+          {/* Label Lampiran (Fixed Position in Flow) */}
+          <div className="w-full flex justify-end mt-2 mb-1">
+             <div className="font-bold text-[9pt] border border-black p-1 px-2">
+               Lampiran A
+             </div>
+          </div>
 
-      <div className="text-center mb-4">
-         <h2 className="text-[12pt] font-bold tracking-wide underline">BORANG MAKLUMAT PERIBADI</h2>
-         <div className="text-[9pt] font-bold mt-0.5 uppercase">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA</div>
-      </div>
+          <div className="text-center mb-4">
+             <h2 className="text-[12pt] font-bold tracking-wide underline">BORANG MAKLUMAT PERIBADI</h2>
+             <div className="text-[9pt] font-bold mt-0.5 uppercase">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA</div>
+          </div>
 
-      <div className="px-2">
-         <FieldRow num="1" label="Nama Penuh" value={s.nama} />
-         <FieldRow num="2" label="No. Kad Pengenalan" value={s.noKP} />
-         <FieldRow num="3" label="Nama Sekolah" value={schoolName} />
-         <FieldRow num="4" label="Alamat Rumah" value={s.alamat || ''} />
-         
-         <div className="grid grid-cols-2 gap-8">
-            <FieldRow num="5" label="Umur" value={`${s.umur || ''} TAHUN`} />
-            <FieldRow num="6" label="Jantina" value={s.jantina} />
-         </div>
-         
-         <div className="grid grid-cols-2 gap-8">
-            <FieldRow num="7" label="Tingkatan" value={`${s.tingkatan} ${s.kelas}`} />
-            <FieldRow num="8" label="Bangsa" value={s.kaum} />
-         </div>
+          <div className="px-2">
+             <FieldRow num="1" label="Nama Penuh" value={s.nama} />
+             <FieldRow num="2" label="No. Kad Pengenalan" value={s.noKP} />
+             <FieldRow num="3" label="Nama Sekolah" value={schoolName} />
+             <FieldRow num="4" label="Alamat Rumah" value={s.alamat || ''} />
+             
+             <div className="grid grid-cols-2 gap-8">
+                <FieldRow num="5" label="Umur" value={`${s.umur || ''} TAHUN`} />
+                <FieldRow num="6" label="Jantina" value={s.jantina} />
+             </div>
+             
+             <div className="grid grid-cols-2 gap-8">
+                <FieldRow num="7" label="Tingkatan" value={`${s.tingkatan} ${s.kelas}`} />
+                <FieldRow num="8" label="Bangsa" value={s.kaum} />
+             </div>
 
-         <div className="mt-4 border-t border-black pt-2">
-            <div className="flex items-start gap-2 text-[10pt]">
-               <div className="w-[25px] font-medium">9.</div>
-               <div className="font-medium flex-1">
-                  PENGAKUAN KESIHATAN:
-                  <span className="text-[9pt] font-normal italic ml-2">(Adakah anda mempunyai penyakit berikut? Tandakan / pada yang berkenaan)</span>
-               </div>
-            </div>
-
-            <div className="mt-2 border border-black text-[9pt]">
-                {/* Table Header */}
-                <div className="flex border-b border-black bg-gray-50 h-[24px] items-center">
-                    <div className="flex-1 px-2 border-r border-black font-bold text-center">JENIS PENYAKIT</div>
-                    <div className="w-[60px] border-r border-black font-bold text-center">ADA</div>
-                    <div className="w-[60px] font-bold text-center">TIADA</div>
+             <div className="mt-4 border-t border-black pt-2">
+                <div className="flex items-start gap-2 text-[10pt]">
+                   <div className="w-[25px] font-medium">9.</div>
+                   <div className="font-medium flex-1">
+                      PENGAKUAN KESIHATAN:
+                      <span className="text-[9pt] font-normal italic ml-2">(Adakah anda mempunyai penyakit berikut? Tandakan / pada yang berkenaan)</span>
+                   </div>
                 </div>
 
-                {/* Rows */}
-                {[
-                   { l: 'a. Asma / Lelah', k: 'asma' },
-                   { l: 'b. Batuk Kering / TB', k: 'lelahTB' },
-                   { l: 'c. Kencing Manis', k: 'kencingManis' },
-                   { l: 'd. Darah Tinggi', k: 'darahTinggi' },
-                   { l: 'e. Masalah Penglihatan', k: 'penglihatan' },
-                   { l: 'f. Masalah Pendengaran', k: 'pendengaran' },
-                   { l: 'g. Penyakit Kronik Lain', k: 'kronikLain' },
-                 ].map((d, i) => (
-                   <div key={d.k} className={`flex items-center h-[22px] ${i !== 6 ? 'border-b border-black' : ''}`}>
-                      <div className="flex-1 px-2 pl-4 border-r border-black uppercase text-[9pt]">{d.l}</div>
-                      <div className="w-[60px] border-r border-black text-center flex items-center justify-center">
-                          <Check val={(s.health?.[d.k as keyof typeof s.health] as boolean) || false} />
-                      </div>
-                      <div className="w-[60px] text-center flex items-center justify-center">
-                          <CheckNo val={(s.health?.[d.k as keyof typeof s.health] as boolean) || false} />
-                      </div>
-                   </div>
-                 ))}
-            </div>
+                <div className="mt-2 border border-white text-[9pt]">
+                    {/* Table Header */}
+                    <div className="flex border-b border-white bg-gray-50 h-[24px] items-center">
+                        <div className="flex-1 px-2 border-r border-white font-bold text-center">JENIS PENYAKIT</div>
+                        <div className="w-[60px] border-r border-white font-bold text-center">ADA</div>
+                        <div className="w-[60px] font-bold text-center">TIADA</div>
+                    </div>
 
-            <div className="mt-2 flex gap-4 items-end">
-               <div className="text-[10pt] font-medium w-[150px]">Jika ADA, sila nyatakan:</div>
-               <div className="flex-1 border-b border-black border-dotted h-5 uppercase font-bold text-[10pt]">{s.masalahKesihatan || 'TIADA'}</div>
-            </div>
-             <div className="mt-1 flex gap-4 items-end">
-               <div className="text-[10pt] font-medium w-[150px]">Kecacatan (Jika ada):</div>
-               <div className="flex-1 border-b border-black border-dotted h-5 uppercase font-bold text-[10pt]">{s.health?.kecacatan || 'TIADA'}</div>
-            </div>
-         </div>
+                    {/* Rows */}
+                    {[
+                       { l: 'a. Asma / Lelah', k: 'asma' },
+                       { l: 'b. Batuk Kering / TB', k: 'lelahTB' },
+                       { l: 'c. Kencing Manis', k: 'kencingManis' },
+                       { l: 'd. Darah Tinggi', k: 'darahTinggi' },
+                       { l: 'e. Masalah Penglihatan', k: 'penglihatan' },
+                       { l: 'f. Masalah Pendengaran', k: 'pendengaran' },
+                       { l: 'g. Penyakit Kronik Lain', k: 'kronikLain' },
+                     ].map((d, i) => (
+                       <div key={d.k} className={`flex items-center h-[22px] ${i !== 6 ? 'border-b border-white' : ''}`}>
+                          <div className="flex-1 px-2 pl-4 border-r border-white uppercase text-[9pt]">{d.l}</div>
+                          <div className="w-[60px] border-r border-white text-center flex items-center justify-center">
+                              <Check val={(s.health?.[d.k as keyof typeof s.health] as boolean) || false} />
+                          </div>
+                          <div className="w-[60px] text-center flex items-center justify-center">
+                              <CheckNo val={(s.health?.[d.k as keyof typeof s.health] as boolean) || false} />
+                          </div>
+                       </div>
+                     ))}
+                </div>
 
-         <div className="mt-4 text-[10pt] leading-[1.2] text-justify bg-gray-50 p-3 border border-black rounded-sm">
-            "Saya dengan ini mengaku bahawa maklumat yang diberikan di atas adalah benar. Saya sihat tubuh badan dan bersedia untuk menyertai segala aktiviti yang dianjurkan oleh Pasukan Kadet Bomba dan Penyelamat Malaysia dengan kerelaan saya sendiri."
-         </div>
+                <div className="mt-2 flex gap-4 items-end">
+                   <div className="text-[10pt] font-medium w-[150px]">Jika ADA, sila nyatakan:</div>
+                   <div className="flex-1 border-b border-black border-dotted h-5 uppercase font-bold text-[10pt]">{s.masalahKesihatan || 'TIADA'}</div>
+                </div>
+                 <div className="mt-1 flex gap-4 items-end">
+                   <div className="text-[10pt] font-medium w-[150px]">Kecacatan (Jika ada):</div>
+                   <div className="flex-1 border-b border-black border-dotted h-5 uppercase font-bold text-[10pt]">{s.health?.kecacatan || 'TIADA'}</div>
+                </div>
+             </div>
 
-         <div className="mt-8 flex justify-between items-end">
-            <div className="text-[10pt]">
-               Tarikh: <span className="font-bold border-b border-black px-2">{new Date().toLocaleDateString('ms-MY')}</span>
-            </div>
+             <div className="mt-4 text-[10pt] leading-[1.2] text-justify bg-gray-50 p-3 border border-white rounded-sm">
+                "Saya dengan ini mengaku bahawa maklumat yang diberikan di atas adalah benar. Saya sihat tubuh badan dan bersedia untuk menyertai segala aktiviti yang dianjurkan oleh Pasukan Kadet Bomba dan Penyelamat Malaysia dengan kerelaan saya sendiri."
+             </div>
 
-            <div className="text-center w-[220px]">
-               <div className="border-b border-black h-12 w-full mb-1"></div>
-               <div className="text-[10pt] font-bold uppercase">({s.nama})</div>
-               <div className="text-[9pt] italic">Tandatangan Pelajar</div>
-            </div>
-         </div>
-      </div>
+             <div className="mt-8 flex justify-between items-end">
+                <div className="text-[10pt]">
+                   Tarikh: <span className="font-bold border-b border-black px-2">{new Date().toLocaleDateString('ms-MY')}</span>
+                </div>
+
+                <div className="text-center w-[220px]">
+                   <div className="border-b border-black h-12 w-full mb-1"></div>
+                   <div className="text-[10pt] font-bold uppercase">({s.nama})</div>
+                   <div className="text-[9pt] italic">Tandatangan Pelajar</div>
+                </div>
+             </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };

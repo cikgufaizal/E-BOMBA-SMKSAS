@@ -24,15 +24,26 @@ const ViewLampiranA: React.FC<Props> = ({ data, onPrint }) => {
               <h3 className="font-black text-white uppercase text-xl italic tracking-tighter">Senarai Semakan Kesihatan (Lampiran A)</h3>
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Klik butang cetak untuk menjana Borang A bagi setiap pelajar.</p>
             </div>
-            <div className="relative group w-full md:w-80">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-red-500 transition-colors" />
-              <input 
-                type="text" 
-                placeholder="CARI NAMA / NO KP..."
-                className="w-full pl-12 pr-6 py-4 bg-slate-950 border border-white/[0.05] rounded-2xl text-xs font-black uppercase tracking-widest outline-none focus:border-red-600 transition-all"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+            
+            <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+              <button 
+                onClick={() => onPrint('ALL', 'PENDAFTARAN')}
+                className="w-full md:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-white text-slate-900 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-200 transition-all shadow-xl active:scale-95"
+              >
+                <Printer className="w-5 h-5" />
+                Print Semua ({data.students.length})
+              </button>
+
+              <div className="relative group w-full md:w-80">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-red-500 transition-colors" />
+                <input 
+                  type="text" 
+                  placeholder="CARI NAMA / NO KP..."
+                  className="w-full pl-12 pr-6 py-4 bg-slate-950 border border-white/[0.05] rounded-2xl text-xs font-black uppercase tracking-widest outline-none focus:border-red-600 transition-all"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </div>
          </div>
          <div className="bg-red-600/10 border border-red-600/20 p-8 rounded-[2.5rem] flex items-center gap-4">

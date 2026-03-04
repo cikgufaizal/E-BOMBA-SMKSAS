@@ -21,11 +21,14 @@ const PrintLampiranB: React.FC<Props> = ({ data, targetId }) => {
 
   return (
     <div className="print-all-wrapper">
-      {studentsToPrint.map((s) => (
+      {studentsToPrint.map((s, index) => (
         <div 
           key={s.id} 
-          className="w-full h-[297mm] relative bg-white font-serif text-black leading-[1.4] p-[10mm_15mm] box-border" 
-          style={{ pageBreakAfter: 'always' }}
+          className="w-full relative bg-white font-serif text-black leading-[1.4] p-[5mm_10mm] box-border" 
+          style={{ 
+            pageBreakAfter: index === studentsToPrint.length - 1 ? 'auto' : 'always',
+            minHeight: '270mm'
+          }}
         >
           {/* Label Lampiran */}
           <div className="w-full flex justify-end mb-2">
