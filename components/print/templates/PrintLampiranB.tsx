@@ -21,25 +21,25 @@ const PrintLampiranB: React.FC<Props> = ({ data, targetId }) => {
       {studentsToPrint.map((s, index) => (
         <div 
           key={s.id}
-          className="w-full h-[297mm] relative bg-white font-serif text-black leading-[1.5] p-[5mm_10mm] box-border" 
+          className="w-[210mm] h-[297mm] relative bg-white font-serif text-black leading-[1.6] p-[15mm_20mm] box-border overflow-hidden" 
           style={{ pageBreakAfter: 'always' }}
         >
           {/* Label Lampiran */}
           <div className="w-full flex justify-end mb-1">
-             <div className="font-bold text-[11pt]">
+             <div className="font-bold text-[12pt]">
                Lampiran B
              </div>
           </div>
 
           {/* Header with Logo */}
-          <div className="flex flex-col items-center mb-4">
-            <img src={BOMBA_LOGO} alt="Logo JBPM" className="h-24 w-auto object-contain mb-2" />
+          <div className="flex flex-col items-center mb-6">
+            <img src={BOMBA_LOGO} alt="Logo JBPM" className="h-28 w-auto object-contain mb-4" />
             <h2 className="text-[14pt] font-bold text-center">JABATAN BOMBA DAN PENYELAMAT MALAYSIA</h2>
             <h3 className="text-[12pt] text-center">(Borang Pelepasan Tanggungjawab)</h3>
           </div>
 
           {/* Content */}
-          <div className="text-[12pt] space-y-5">
+          <div className="text-[12pt] space-y-6">
             
             {/* Nama Waris */}
             <div className="relative pt-2">
@@ -87,7 +87,7 @@ const PrintLampiranB: React.FC<Props> = ({ data, targetId }) => {
             </div>
 
             {/* School Name Section */}
-            <div className="flex flex-col items-center space-y-1">
+            <div className="flex flex-col items-center space-y-2">
               <h2 className="text-[13pt] font-bold text-center uppercase">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA DI</h2>
               <div className="w-full border-b border-black h-[24px] text-center font-bold uppercase text-[12pt]">
                 {schoolName}
@@ -109,7 +109,7 @@ const PrintLampiranB: React.FC<Props> = ({ data, targetId }) => {
             </div>
 
             {/* Footer */}
-            <div className="flex justify-between items-end pt-10">
+            <div className="flex justify-between items-end pt-12">
               <div className="flex items-baseline">
                 <span>Tarikh:</span>
                 <span className="w-[200px] border-b border-black ml-2 text-center font-bold min-h-[24px]">
@@ -118,7 +118,7 @@ const PrintLampiranB: React.FC<Props> = ({ data, targetId }) => {
               </div>
               <div className="flex flex-col items-center">
                 <div className="w-[250px] border-b border-black h-[24px]"></div>
-                <div className="text-[11pt] mt-1">( Ibu / Bapa / Penjaga )</div>
+                <div className="text-[12pt] mt-1">( Ibu / Bapa / Penjaga )</div>
               </div>
             </div>
 
