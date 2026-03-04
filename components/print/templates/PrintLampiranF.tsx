@@ -8,10 +8,11 @@ interface Props {
 const PrintLampiranF: React.FC<Props> = ({ data }) => {
   const sortedStudents = [...data.students].sort((a, b) => a.nama.localeCompare(b.nama));
   
-  const schoolName = data.settings?.schoolName || "";
-  const schoolAddress = data.settings?.address || "";
-  const schoolPhone = ""; 
-  const guruPenasihat = data.teachers.filter(t => t.jawatan === JawatanGuru.Penasihat).map(t => t.nama).join(', ') || "";
+  // Data as per user request
+  const schoolName = "SMK SULTAN AHMAD SHAH, CAMERON HIGHLANDS";
+  const schoolAddress = "JALAN DAYANG ENDAH, 39000 TANAH RATA, CAMERON HIGHLANDS PAHANG";
+  const schoolPhone = "0197782924"; 
+  const guruPenasihat = "AHMAD FAIZAL BIN AYOP";
   const BOMBA_LOGO = data.settings?.bombaLogoUrl || "https://upload.wikimedia.org/wikipedia/commons/8/87/Jabatan_Bomba_dan_Penyelamat_Malaysia.png";
 
   // Konfigurasi Baris Per Halaman
@@ -22,15 +23,17 @@ const PrintLampiranF: React.FC<Props> = ({ data }) => {
   let remaining = [...sortedStudents];
   
   // Page 1
-  pages.push(remaining.splice(0, ROWS_PAGE_1));
+  pages.push({ type: 'DATA', data: remaining.splice(0, ROWS_PAGE_1) });
   
-  // Subsequent pages
+  // User explicitly asked for Page 2 to be empty if there are more students or even if not?
+  // "KEMUDIAN PAGE 2 KOSONG, DAN PAGE 3 ADA BALIK"
+  // I will insert a blank page after page 1.
+  pages.push({ type: 'BLANK' });
+
+  // Subsequent pages starting from Page 3
   while (remaining.length > 0) {
-    pages.push(remaining.splice(0, ROWS_PAGE_REST));
+    pages.push({ type: 'DATA', data: remaining.splice(0, ROWS_PAGE_REST) });
   }
-  
-  // If no students, still show one empty page
-  if (pages.length === 0) pages.push([]);
 
   const renderTable = (pageData: any[], startBil: number, rowCount: number) => (
     <table className="w-full border-collapse border border-black text-[10pt]">
@@ -64,7 +67,7 @@ const PrintLampiranF: React.FC<Props> = ({ data }) => {
   );
 
   const renderSignature = () => (
-    <div className="mt-6 text-[10pt]">
+    <div className="mt-auto pt-6 text-[10pt]">
       <p className="mb-10">Disahkan oleh:</p>
       <div className="w-[250px] border-b border-black border-dotted mb-1"></div>
       <p>( <span className="inline-block w-[230px]"></span> )</p>
@@ -74,10 +77,19 @@ const PrintLampiranF: React.FC<Props> = ({ data }) => {
 
   return (
     <div className="w-full font-serif text-black bg-white leading-[1.2]">
-      {pages.map((pageData, idx) => {
+      {pages.map((page, idx) => {
         const isFirst = idx === 0;
+        const isBlank = page.type === 'BLANK';
+        
         let startBil = 0;
-        for (let i = 0; i < idx; i++) startBil += (i === 0 ? ROWS_PAGE_1 : ROWS_PAGE_REST);
+        // Calculate startBil for data pages
+        let dataPageIdx = 0;
+        for (let i = 0; i < idx; i++) {
+          if (pages[i].type === 'DATA') {
+            startBil += (dataPageIdx === 0 ? ROWS_PAGE_1 : ROWS_PAGE_REST);
+            dataPageIdx++;
+          }
+        }
 
         return (
           <div 
@@ -90,55 +102,61 @@ const PrintLampiranF: React.FC<Props> = ({ data }) => {
               Lampiran F
             </div>
 
-            {isFirst && (
-              <div className="flex flex-col items-center mb-6">
-                <img src={BOMBA_LOGO} alt="Logo JBPM" className="h-20 w-auto object-contain mb-4" />
-                <div className="text-center font-bold text-[11pt] uppercase">
-                  BORANG PENDAFTARAN<br/>
-                  AHLI KADET BOMBA DAN PENYELAMAT MALAYSIA
-                </div>
+            {isBlank ? (
+              <div className="flex-1 flex items-center justify-center text-gray-300 italic">
+                (Halaman ini sengaja dikosongkan)
               </div>
-            )}
-
-            {isFirst && (
-              <div className="mb-6 text-[10pt] space-y-1">
-                <div className="flex">
-                  <span className="w-[150px]">Nama Sekolah</span>
-                  <span className="mr-2">:</span>
-                  <span className="flex-1 border-b border-black border-dotted font-bold uppercase">{schoolName}</span>
-                </div>
-                <div className="flex items-start">
-                  <span className="w-[150px]">Alamat Sekolah</span>
-                  <span className="mr-2">:</span>
-                  <div className="flex-1 space-y-1">
-                    <div className="border-b border-black border-dotted font-bold uppercase min-h-[1.2em]">{schoolAddress}</div>
-                    <div className="border-b border-black border-dotted min-h-[1.2em]"></div>
-                    <div className="border-b border-black border-dotted min-h-[1.2em]"></div>
+            ) : (
+              <>
+                {isFirst && (
+                  <div className="flex flex-col items-center mb-6">
+                    <img src={BOMBA_LOGO} alt="Logo JBPM" className="h-20 w-auto object-contain mb-4" />
+                    <div className="text-center font-bold text-[11pt] uppercase">
+                      BORANG PENDAFTARAN<br/>
+                      AHLI KADET BOMBA DAN PENYELAMAT MALAYSIA
+                    </div>
                   </div>
-                </div>
-                <div className="flex">
-                  <span className="w-[150px]">No. Telefon</span>
-                  <span className="mr-2">:</span>
-                  <span className="flex-1 border-b border-black border-dotted font-bold">{schoolPhone}</span>
-                </div>
-                <div className="flex items-start">
-                  <span className="w-[150px]">Nama Guru Penasihat</span>
-                  <span className="mr-2">:</span>
-                  <div className="flex-1 space-y-1">
-                    <div className="border-b border-black border-dotted font-bold uppercase min-h-[1.2em]">{guruPenasihat}</div>
-                    <div className="border-b border-black border-dotted min-h-[1.2em]"></div>
-                    <div className="border-b border-black border-dotted min-h-[1.2em]"></div>
-                    <div className="border-b border-black border-dotted min-h-[1.2em]"></div>
+                )}
+
+                {isFirst && (
+                  <div className="mb-6 text-[10pt] space-y-1">
+                    <div className="flex">
+                      <span className="w-[150px]">Nama Sekolah</span>
+                      <span className="mr-2">:</span>
+                      <span className="flex-1 border-b border-black font-bold uppercase">{schoolName}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="w-[150px]">Alamat Sekolah</span>
+                      <span className="mr-2">:</span>
+                      <div className="flex-1 space-y-1">
+                        <div className="border-b border-black font-bold uppercase min-h-[1.2em]">{schoolAddress}</div>
+                        <div className="border-b border-black min-h-[1.2em]"></div>
+                      </div>
+                    </div>
+                    <div className="flex">
+                      <span className="w-[150px]">No. Telefon</span>
+                      <span className="mr-2">:</span>
+                      <span className="flex-1 border-b border-black font-bold">{schoolPhone}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="w-[150px]">Nama Guru Penasihat</span>
+                      <span className="mr-2">:</span>
+                      <div className="flex-1 space-y-1">
+                        <div className="border-b border-black font-bold uppercase min-h-[1.2em]">{guruPenasihat}</div>
+                        <div className="border-b border-black min-h-[1.2em]"></div>
+                        <div className="border-b border-black min-h-[1.2em]"></div>
+                      </div>
+                    </div>
                   </div>
+                )}
+
+                <div className="flex-1">
+                  {renderTable(page.data || [], startBil, isFirst ? ROWS_PAGE_1 : ROWS_PAGE_REST)}
                 </div>
-              </div>
+
+                {renderSignature()}
+              </>
             )}
-
-            <div className="flex-1">
-              {renderTable(pageData, startBil, isFirst ? ROWS_PAGE_1 : ROWS_PAGE_REST)}
-            </div>
-
-            {renderSignature()}
           </div>
         );
       })}
