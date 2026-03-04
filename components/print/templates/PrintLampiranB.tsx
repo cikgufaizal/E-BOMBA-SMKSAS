@@ -1,6 +1,5 @@
 import React from 'react';
 import { SystemData } from '../../../types';
-import BombaHeader from '../headers/BombaHeader';
 
 interface Props {
   data: SystemData;
@@ -12,71 +11,109 @@ const PrintLampiranB: React.FC<Props> = ({ data, targetId }) => {
   if (!s) return <div className="p-10 text-center text-red-500 font-bold">RALAT: Data Pelajar Tidak Dijumpai</div>;
 
   const schoolName = data.settings?.schoolName || "SMK SULTAN AHMAD SHAH";
+  const BOMBA_LOGO = data.settings?.bombaLogoUrl || "https://upload.wikimedia.org/wikipedia/commons/8/87/Jabatan_Bomba_dan_Penyelamat_Malaysia.png";
 
   return (
-    <div className="w-full h-[297mm] relative bg-white font-serif text-black leading-[1.3] p-8 box-border" style={{ pageBreakAfter: 'always' }}>
-      <BombaHeader data={data} />
+    <div className="w-full h-[297mm] relative bg-white font-serif text-black leading-[1.6] p-[15mm_20mm] box-border" style={{ pageBreakAfter: 'always' }}>
       
       {/* Label Lampiran */}
-      <div className="w-full flex justify-end mt-2 mb-1">
-         <div className="font-bold text-[9pt] border border-black p-1 px-3">
+      <div className="w-full flex justify-end mb-4">
+         <div className="font-bold text-[11pt]">
            Lampiran B
          </div>
       </div>
 
-      <div className="text-center mb-8">
-         <h2 className="text-[12pt] font-bold tracking-wide underline">BORANG PELEPASAN TANGGUNGJAWAB</h2>
-         <div className="text-[9pt] font-bold mt-0.5 uppercase">KEBENARAN IBU BAPA / PENJAGA</div>
+      {/* Header with Logo */}
+      <div className="flex flex-col items-center mb-8">
+        <img src={BOMBA_LOGO} alt="Logo JBPM" className="h-28 w-auto object-contain mb-4" />
+        <h2 className="text-[14pt] font-bold text-center">JABATAN BOMBA DAN PENYELAMAT MALAYSIA</h2>
+        <h3 className="text-[12pt] text-center">(Borang Pelepasan Tanggungjawab)</h3>
       </div>
 
-      <div className="px-4 text-[10pt] text-justify">
-         
-         <p className="mb-2">
-           Saya <span className="font-bold uppercase border-b border-black px-2">{s.namaWaris || '................................................'}</span> 
-           &nbsp;No. Kad Pengenalan <span className="font-bold border-b border-black px-2">{s.noKPWaris || '......................'}</span>
-         </p>
-         <p className="text-[9pt] text-gray-500 italic mb-4 mt-[-4px]">(Nama Ibu / Bapa / Penjaga)</p>
+      {/* Content */}
+      <div className="text-[12pt] space-y-6">
+        
+        {/* Nama Waris */}
+        <div className="relative pt-4">
+          <div className="flex items-baseline">
+            <span>Saya</span>
+            <span className="flex-1 border-b border-black border-dotted mx-2 text-center font-bold uppercase min-h-[24px]">
+              {s.namaWaris || ''}
+            </span>
+            <span>No. Kad Pengenalan</span>
+            <span className="w-[200px] border-b border-black border-dotted ml-2 text-center font-bold min-h-[24px]">
+              {s.noKPWaris || ''}
+            </span>
+          </div>
+          <div className="flex justify-center mt-1">
+            <span className="text-[10pt] italic">(Nama ibu bapa/penjaga)</span>
+          </div>
+        </div>
 
-         <p className="mb-6">
-           Beralamat di <span className="font-bold uppercase border-b border-black px-2">{s.alamatWaris || s.alamat || '................................................................................................'}</span>
-         </p>
+        {/* Alamat */}
+        <div className="space-y-4">
+          <div className="flex items-baseline">
+            <span>Beralamat</span>
+            <span className="flex-1 border-b border-black border-dotted ml-2 font-bold uppercase min-h-[24px]">
+              {s.alamatWaris || s.alamat || ''}
+            </span>
+          </div>
+          <div className="border-b border-black border-dotted w-full h-[24px]"></div>
+        </div>
 
-         <p className="mb-2">
-           Dengan ini memberi kebenaran kepada anak / jagaan saya <span className="font-bold uppercase border-b border-black px-2">{s.nama}</span>
-         </p>
-         <p className="mb-4">
-           No. Kad Pengenalan <span className="font-bold border-b border-black px-2">{s.noKP}</span> Tingkatan <span className="font-bold border-b border-black px-2 uppercase">{s.tingkatan} {s.kelas}</span>
-         </p>
-         <p>
-           Untuk menyertai <strong>PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA</strong> di sekolah:
-         </p>
-         <p className="text-center font-bold uppercase border-b border-black my-2 text-[11pt]">{schoolName}</p>
+        {/* Nama Pelajar */}
+        <div className="relative pt-4">
+          <div className="flex items-baseline">
+            <span>dengan ini membenarkan</span>
+            <span className="flex-1 border-b border-black border-dotted ml-2 text-center font-bold uppercase min-h-[24px]">
+              {s.nama}
+            </span>
+          </div>
+          <div className="flex justify-center mt-1">
+            <span className="text-[10pt] italic">( Nama Pelajar )</span>
+          </div>
+        </div>
 
-         <div className="mt-6 border border-black p-4 bg-gray-50 shadow-sm rounded-sm">
-           <p className="font-bold underline mb-1">PENGAKUAN WARIS:</p>
-           <p className="leading-relaxed">
-             "Saya faham bahawa pihak sekolah dan Jabatan Bomba dan Penyelamat Malaysia akan mengambil segala langkah keselamatan yang sewajarnya. Namun demikian, saya mengakui bahawa saya tidak akan mengambil sebarang tindakan undang-undang atau mahkamah terhadap pihak sekolah atau Jabatan sekiranya berlaku sebarang kemalangan, kecederaan atau kehilangan harta benda yang berlaku di luar jangkaan atau kawalan pihak penganjur semasa aktiviti dijalankan."
-           </p>
-           <p className="mt-2 leading-relaxed">
-             Saya juga memberi kebenaran kepada pihak pengurusan untuk menguruskan rawatan perubatan kecemasan bagi anak saya jika diperlukan.
-           </p>
-         </div>
+        <div className="text-center font-bold">
+          menyertai:
+        </div>
 
-         <div className="mt-12 grid grid-cols-2 gap-16">
-            <div>
-               <p className="mb-8">Tarikh: <span className="font-bold border-b border-black px-2">{new Date().toLocaleDateString('ms-MY')}</span></p>
-               <div className="h-16 border-b border-black w-full"></div>
-               <p className="text-[9pt] font-bold uppercase mt-1 text-center">( TANDATANGAN IBU / BAPA / PENJAGA )</p>
-               <p className="text-[8pt] uppercase mt-0 text-center">Nama: {s.namaWaris}</p>
-            </div>
+        {/* School Name Section */}
+        <div className="flex flex-col items-center space-y-2">
+          <h2 className="text-[13pt] font-bold text-center uppercase">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA DI</h2>
+          <div className="w-full border-b border-black border-dotted h-[24px] text-center font-bold uppercase text-[12pt]">
+            {schoolName}
+          </div>
+          <div className="text-[10pt] italic">( Nama sekolah )</div>
+        </div>
 
-            <div>
-               <p className="mb-8">Disaksikan Oleh:</p>
-               <div className="h-16 border-b border-black w-full"></div>
-               <p className="text-[9pt] font-bold uppercase mt-1 text-center">( TANDATANGAN SAKSI )</p>
-               <p className="text-[8pt] uppercase mt-0 text-center">Nama: ...........................................</p>
-            </div>
-         </div>
+        {/* Paragraphs */}
+        <div className="text-justify space-y-4 pt-4">
+          <p>
+            Saya sedar bahawa kebenaran ini meliputi aktiviti-aktiviti, lawatan dan perkhemahan yang dianjurkan oleh sama ada pihak sekolah atau pihak bomba.
+          </p>
+          <p>
+            Saya sedar bahawa pihak penganjur akan mengambil segala langkah keselamatan, dengan itu berjanji tidak akan mengambil sebarang tindakan mahkamah bagi sebarang kejadian di luar kawalan pihak penganjur yang mengakibatkan kecacatan sementara dan atau kecacatan kekal dan atau kematian ke atas anak / pelajar jagaan saya semasa dalam perjalanan pergi dan balik untuk menyertai aktiviti dan atau semasa penglibatannya di dalam aktiviti-aktiviti yang dijalankan.
+          </p>
+          <p>
+            Saya juga membenarkan anak / pelajar jagaan saya mendapat rawatan perubatan yang sewajarnya sekiranya berlaku kecemasan.
+          </p>
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-between items-end pt-12">
+          <div className="flex items-baseline">
+            <span>Tarikh:</span>
+            <span className="w-[200px] border-b border-black border-dotted ml-2 text-center font-bold min-h-[24px]">
+              {new Date().toLocaleDateString('ms-MY')}
+            </span>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="w-[250px] border-b border-black border-dotted h-[24px]"></div>
+            <div className="text-[11pt] mt-1">( Ibu / Bapa / Penjaga )</div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
