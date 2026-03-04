@@ -8,7 +8,7 @@ interface Props {
 
 const PrintLampiranB: React.FC<Props> = ({ data, targetId }) => {
   const studentsToPrint = targetId === 'ALL' 
-    ? data.students.filter(s => s.namaWaris) // Only print those with waris info if printing all
+    ? data.students.filter(s => s.namaWaris) 
     : data.students.filter(x => x.id === targetId);
 
   if (studentsToPrint.length === 0) return <div className="p-10 text-center text-red-500 font-bold">RALAT: Data Pelajar Tidak Dijumpai</div>;
@@ -18,85 +18,88 @@ const PrintLampiranB: React.FC<Props> = ({ data, targetId }) => {
 
   return (
     <div className="w-full">
-      {studentsToPrint.map((s, index) => (
+      {studentsToPrint.map((s) => (
         <div 
           key={s.id}
-          className="w-full h-[297mm] relative bg-white font-serif text-black leading-[1.5] p-[5mm_10mm] box-border" 
+          className="w-full h-[296mm] relative bg-white font-serif text-black leading-relaxed p-[15mm_20mm] box-border flex flex-col" 
           style={{ pageBreakAfter: 'always' }}
         >
           {/* Label Lampiran */}
-          <div className="w-full flex justify-end mb-1">
-             <div className="font-bold text-[11pt]">
+          <div className="w-full flex justify-end mb-4">
+             <div className="font-bold text-[11pt] border border-black px-2 py-1">
                Lampiran B
              </div>
           </div>
 
           {/* Header with Logo */}
-          <div className="flex flex-col items-center mb-4">
-            <img src={BOMBA_LOGO} alt="Logo JBPM" className="h-24 w-auto object-contain mb-2" />
-            <h2 className="text-[14pt] font-bold text-center">JABATAN BOMBA DAN PENYELAMAT MALAYSIA</h2>
-            <h3 className="text-[12pt] text-center">(Borang Pelepasan Tanggungjawab)</h3>
+          <div className="flex flex-col items-center mb-6">
+            <img src={BOMBA_LOGO} alt="Logo JBPM" className="h-24 w-auto object-contain mb-3" />
+            <h2 className="text-[15pt] font-bold text-center tracking-tight">JABATAN BOMBA DAN PENYELAMAT MALAYSIA</h2>
+            <h3 className="text-[12pt] font-bold text-center mt-1">(Borang Pelepasan Tanggungjawab)</h3>
           </div>
 
-          {/* Content */}
-          <div className="text-[12pt] space-y-5">
+          {/* Content Body */}
+          <div className="text-[11.5pt] space-y-5 flex-1">
             
-            {/* Nama Waris */}
-            <div className="relative pt-2">
-              <div className="flex items-baseline">
-                <span>Saya</span>
-                <span className="flex-1 border-b border-black mx-2 text-center font-bold uppercase min-h-[24px]">
+            {/* Nama Waris Section */}
+            <div className="space-y-1">
+              <div className="flex items-end">
+                <span className="whitespace-nowrap">Saya</span>
+                <div className="flex-1 border-b border-black/80 mx-2 text-center font-bold uppercase pb-0.5 min-h-[22px]">
                   {s.namaWaris || '________________________________________________'}
-                </span>
-                <span>No. Kad Pengenalan</span>
-                <span className="w-[220px] border-b border-black ml-2 text-center font-bold min-h-[24px]">
-                  {s.noKPWaris || '______________________'}
-                </span>
+                </div>
               </div>
-              <div className="flex justify-center mt-1">
-                <span className="text-[10pt] italic">(Nama ibu bapa/penjaga)</span>
+              <div className="flex justify-center">
+                <span className="text-[9.5pt] italic text-gray-500">(Nama ibu bapa / penjaga)</span>
               </div>
             </div>
 
-            {/* Alamat */}
-            <div className="space-y-4">
-              <div className="flex items-baseline">
-                <span>Beralamat</span>
-                <span className="flex-1 border-b border-black ml-2 font-bold uppercase min-h-[24px]">
+            <div className="flex items-end">
+              <span className="whitespace-nowrap">No. Kad Pengenalan</span>
+              <div className="w-[260px] border-b border-black/80 ml-2 text-center font-bold pb-0.5 min-h-[22px]">
+                {s.noKPWaris || '______________________'}
+              </div>
+            </div>
+
+            {/* Alamat Section */}
+            <div className="space-y-1">
+              <div className="flex items-end">
+                <span className="whitespace-nowrap">Beralamat</span>
+                <div className="flex-1 border-b border-black/80 ml-2 font-bold uppercase pb-0.5 min-h-[22px]">
                   {s.alamatWaris || s.alamat || '____________________________________________________________________________________'}
-                </span>
+                </div>
               </div>
-              <div className="border-b border-black w-full h-[24px]"></div>
+              <div className="border-b border-black/80 w-full h-[22px]"></div>
             </div>
 
-            {/* Nama Pelajar */}
-            <div className="relative pt-2">
-              <div className="flex items-baseline">
-                <span>dengan ini membenarkan</span>
-                <span className="flex-1 border-b border-black ml-2 text-center font-bold uppercase min-h-[24px]">
+            {/* Membenarkan Section */}
+            <div className="space-y-1 pt-1">
+              <div className="flex items-end">
+                <span className="whitespace-nowrap">dengan ini membenarkan</span>
+                <div className="flex-1 border-b border-black/80 ml-2 text-center font-bold uppercase pb-0.5 min-h-[22px]">
                   {s.nama}
-                </span>
+                </div>
               </div>
-              <div className="flex justify-center mt-1">
-                <span className="text-[10pt] italic">( Nama Pelajar )</span>
+              <div className="flex justify-center">
+                <span className="text-[9.5pt] italic text-gray-500">( Nama Pelajar )</span>
               </div>
             </div>
 
-            <div className="text-center font-bold">
+            <div className="text-center font-bold py-1 uppercase tracking-widest text-[11pt]">
               menyertai:
             </div>
 
             {/* School Name Section */}
             <div className="flex flex-col items-center space-y-1">
-              <h2 className="text-[13pt] font-bold text-center uppercase">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA DI</h2>
-              <div className="w-full border-b border-black h-[24px] text-center font-bold uppercase text-[12pt]">
+              <h2 className="text-[12pt] font-bold text-center uppercase">PASUKAN KADET BOMBA DAN PENYELAMAT MALAYSIA DI</h2>
+              <div className="w-full border-b border-black/80 pb-0.5 text-center font-bold uppercase text-[12pt]">
                 {schoolName}
               </div>
-              <div className="text-[10pt] italic">( Nama sekolah )</div>
+              <div className="text-[9.5pt] italic text-gray-500">( Nama sekolah )</div>
             </div>
 
-            {/* Paragraphs */}
-            <div className="text-justify space-y-4 pt-2">
+            {/* Terms & Conditions */}
+            <div className="text-justify space-y-4 pt-2 leading-relaxed text-[11.5pt]">
               <p>
                 Saya sedar bahawa kebenaran ini meliputi aktiviti-aktiviti, lawatan dan perkhemahan yang dianjurkan oleh sama ada pihak sekolah atau pihak bomba.
               </p>
@@ -107,22 +110,25 @@ const PrintLampiranB: React.FC<Props> = ({ data, targetId }) => {
                 Saya juga membenarkan anak / pelajar jagaan saya mendapat rawatan perubatan yang sewajarnya sekiranya berlaku kecemasan.
               </p>
             </div>
+          </div>
 
-            {/* Footer */}
-            <div className="flex justify-between items-end pt-10">
-              <div className="flex items-baseline">
-                <span>Tarikh:</span>
-                <span className="w-[200px] border-b border-black ml-2 text-center font-bold min-h-[24px]">
+          {/* Footer Section */}
+          <div className="flex justify-between items-end mt-8 pb-6">
+            <div className="flex flex-col space-y-1">
+              <div className="flex items-end">
+                <span className="font-bold">Tarikh:</span>
+                <div className="w-[160px] border-b border-black/80 ml-2 text-center font-bold pb-0.5">
                   {new Date().toLocaleDateString('ms-MY')}
-                </span>
-              </div>
-              <div className="flex flex-col items-center">
-                <div className="w-[250px] border-b border-black h-[24px]"></div>
-                <div className="text-[11pt] mt-1">( Ibu / Bapa / Penjaga )</div>
+                </div>
               </div>
             </div>
-
+            
+            <div className="flex flex-col items-center">
+              <div className="w-[260px] border-b border-black/80 h-[22px]"></div>
+              <div className="text-[10.5pt] font-bold mt-2">( Tandatangan Ibu / Bapa / Penjaga )</div>
+            </div>
           </div>
+
         </div>
       ))}
     </div>
