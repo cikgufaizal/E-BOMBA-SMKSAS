@@ -28,15 +28,26 @@ const ViewLampiranB: React.FC<Props> = ({ data, onPrint }) => {
              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-2">Borang kebenaran waris dan pelepasan tanggungjawab.</p>
           </div>
         </div>
-        <div className="relative group w-full md:w-80">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-red-500 transition-colors" />
-          <input 
-            type="text" 
-            placeholder="CARI NAMA / NO KP..."
-            className="w-full pl-12 pr-6 py-4 bg-slate-950 border border-white/[0.05] rounded-2xl text-xs font-black uppercase tracking-widest outline-none focus:border-red-600 transition-all"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        
+        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+          <button 
+            onClick={() => onPrint('ALL', 'LAMPIRAN_B')}
+            className="w-full md:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-white text-slate-900 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-200 transition-all shadow-xl active:scale-95"
+          >
+            <Printer className="w-5 h-5" />
+            Print Semua ({data.students.length})
+          </button>
+
+          <div className="relative group w-full md:w-80">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-red-500 transition-colors" />
+            <input 
+              type="text" 
+              placeholder="CARI NAMA / NO KP..."
+              className="w-full pl-12 pr-6 py-4 bg-slate-950 border border-white/[0.05] rounded-2xl text-xs font-black uppercase tracking-widest outline-none focus:border-red-600 transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
