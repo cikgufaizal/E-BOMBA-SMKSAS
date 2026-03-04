@@ -16,8 +16,8 @@ const PrintLampiranF: React.FC<Props> = ({ data }) => {
   const BOMBA_LOGO = data.settings?.bombaLogoUrl || "https://upload.wikimedia.org/wikipedia/commons/8/87/Jabatan_Bomba_dan_Penyelamat_Malaysia.png";
 
   // Konfigurasi Baris Per Halaman
-  const ROWS_PAGE_1 = 10; 
-  const ROWS_PAGE_REST = 25;
+  const ROWS_PAGE_1 = 20; 
+  const ROWS_PAGE_REST = 35;
 
   const pages = [];
   let remaining = [...sortedStudents];
@@ -25,12 +25,7 @@ const PrintLampiranF: React.FC<Props> = ({ data }) => {
   // Page 1
   pages.push({ type: 'DATA', data: remaining.splice(0, ROWS_PAGE_1) });
   
-  // User explicitly asked for Page 2 to be empty if there are more students or even if not?
-  // "KEMUDIAN PAGE 2 KOSONG, DAN PAGE 3 ADA BALIK"
-  // I will insert a blank page after page 1.
-  pages.push({ type: 'BLANK' });
-
-  // Subsequent pages starting from Page 3
+  // Subsequent pages
   while (remaining.length > 0) {
     pages.push({ type: 'DATA', data: remaining.splice(0, ROWS_PAGE_REST) });
   }
@@ -123,14 +118,14 @@ const PrintLampiranF: React.FC<Props> = ({ data }) => {
                     <div className="flex">
                       <span className="w-[150px]">Nama Sekolah</span>
                       <span className="mr-2">:</span>
-                      <span className="flex-1 border-b border-black font-bold uppercase">{schoolName}</span>
+                      <span className="flex-1 border-b border-black font-bold uppercase">SMK SULTAN AHMAD SHAH, CAMERON HIGHLANDS</span>
                     </div>
                     <div className="flex items-start">
                       <span className="w-[150px]">Alamat Sekolah</span>
                       <span className="mr-2">:</span>
                       <div className="flex-1 space-y-1">
-                        <div className="border-b border-black font-bold uppercase min-h-[1.2em]">{schoolAddress}</div>
-                        <div className="border-b border-black min-h-[1.2em]"></div>
+                        <div className="border-b border-black font-bold uppercase min-h-[1.2em]">JALAN DAYANG ENDAH, 39000 TANAH RATA,</div>
+                        <div className="border-b border-black font-bold uppercase min-h-[1.2em]">CAMERON HIGHLANDS PAHANG</div>
                       </div>
                     </div>
                     <div className="flex">
@@ -143,7 +138,6 @@ const PrintLampiranF: React.FC<Props> = ({ data }) => {
                       <span className="mr-2">:</span>
                       <div className="flex-1 space-y-1">
                         <div className="border-b border-black font-bold uppercase min-h-[1.2em]">{guruPenasihat}</div>
-                        <div className="border-b border-black min-h-[1.2em]"></div>
                         <div className="border-b border-black min-h-[1.2em]"></div>
                       </div>
                     </div>
