@@ -84,19 +84,19 @@ const KehadiranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
             </div>
             <Table
               headers={['Tarikh Aktiviti', 'Hadir', 'Peratus', 'Tindakan']}
-              data={data.attendances.sort((a,b) => b.tarikh.localeCompare(a.tarikh))}
+              data={[...data.attendances].sort((a,b) => (b.tarikh || '').localeCompare(a.tarikh || ''))}
               renderRow={(att: Attendance) => (
                 <tr key={att.id} className="hover:bg-slate-900/50 transition-colors">
                   <td className="px-6 py-4 text-sm font-bold text-slate-200 uppercase tracking-tighter">{att.tarikh}</td>
                   <td className="px-6 py-4 text-sm font-medium text-slate-400">
                     <div className="flex items-center gap-2">
                       <Users className="w-3 h-3 text-red-500" />
-                      {att.presents.length} / {data.students.length}
+                      {Array.isArray(att.presents) ? att.presents.length : 0} / {data.students.length}
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className="font-black text-emerald-500 text-xs">
-                      {data.students.length ? Math.round((att.presents.length / data.students.length) * 100) : 0}%
+                      {data.students.length ? Math.round(((Array.isArray(att.presents) ? att.presents.length : 0) / data.students.length) * 100) : 0}%
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -130,7 +130,7 @@ const KehadiranManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
             </div>
           </div>
           <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 bg-slate-900/50">
-            {data.students.sort((a,b) => a.nama.localeCompare(b.nama)).map(s => {
+            {[...data.students].sort((a,b) => (a.nama || '').localeCompare(b.nama || '')).map(s => {
               const isPresent = attendanceList.includes(s.id);
               return (
                 <button

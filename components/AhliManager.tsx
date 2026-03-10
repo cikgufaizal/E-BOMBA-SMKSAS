@@ -172,7 +172,7 @@ const AhliManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.02]">
-              {filteredStudents.length > 0 ? filteredStudents.sort((a,b) => a.nama.localeCompare(b.nama)).map((student, idx) => (
+              {filteredStudents.length > 0 ? [...filteredStudents].sort((a,b) => (a.nama || '').localeCompare(b.nama || '')).map((student, idx) => (
                 <tr key={student.id} className="group hover:bg-white/[0.02] transition-colors">
                   <td className="px-6 py-4 text-xs font-black text-slate-600">{idx + 1}</td>
                   <td className="px-6 py-4">

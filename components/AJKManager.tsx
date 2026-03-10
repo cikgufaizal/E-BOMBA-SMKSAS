@@ -134,7 +134,7 @@ const AJKManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
 
       <Table
         headers={['Bil', 'Nama AJK', 'Jawatan', 'Ting/Kelas', 'Tindakan']}
-        data={data.committees.sort((a, b) => {
+        data={[...data.committees].sort((a, b) => {
            const order = Object.values(JawatanAJK);
            return order.indexOf(a.jawatan) - order.indexOf(b.jawatan);
         })}

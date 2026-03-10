@@ -100,9 +100,11 @@ const AktivitiManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
 
   const getAttendanceStats = (date: string) => {
     const att = data.attendances.find(a => a.tarikh === date);
-    if (!att) return 'Tiada Log';
-    const percent = data.students.length ? Math.round((att.presents.length / data.students.length) * 100) : 0;
-    return `${att.presents.length}/${data.students.length} (${percent}%)`;
+    if (!att || !att.presents) return 'Tiada Log';
+    const presentsCount = Array.isArray(att.presents) ? att.presents.length : 0;
+    const studentsCount = Array.isArray(data.students) ? data.students.length : 0;
+    const percent = studentsCount ? Math.round((presentsCount / studentsCount) * 100) : 0;
+    return `${presentsCount}/${studentsCount} (${percent}%)`;
   };
 
   return (
@@ -128,7 +130,7 @@ const AktivitiManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
              </div>
              
              <div className="flex flex-wrap gap-4">
-                {formData.photos?.map((photo, idx) => (
+                {Array.isArray(formData.photos) && formData.photos.map((photo, idx) => (
                   <div key={idx} className="w-24 h-24 relative group rounded-xl overflow-hidden border border-slate-700 bg-slate-800 shadow-lg">
                     <img src={photo} alt="Preview" className="w-full h-full object-cover" />
                     <button 
@@ -187,7 +189,7 @@ const AktivitiManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
 
       <Table
         headers={['Tarikh', 'Masa/Tempat', 'Aktiviti', 'Gambar', 'Tindakan']}
-        data={data.activities.sort((a,b) => b.tarikh.localeCompare(a.tarikh))}
+        data={[...data.activities].sort((a,b) => (b.tarikh || '').localeCompare(a.tarikh || ''))}
         renderRow={(act: Activity) => (
           <tr key={act.id} className="group hover:bg-slate-900/50 transition-colors border-b border-white/[0.02]">
             <td className="px-6 py-4">
@@ -203,7 +205,7 @@ const AktivitiManager: React.FC<Props> = ({ data, updateData, onPrint }) => {
                <span className="text-[9px] font-black text-slate-600 mt-2 block uppercase tracking-widest">KEHADIRAN: {getAttendanceStats(act.tarikh)}</span>
             </td>
             <td className="px-6 py-4">
-               {act.photos && act.photos.length > 0 ? (
+               {Array.isArray(act.photos) && act.photos.length > 0 ? (
                  <div className="flex -space-x-3">
                    {act.photos.map((p, i) => (
                      <div key={i} className="w-10 h-10 rounded-xl border-2 border-slate-900 overflow-hidden ring-2 ring-slate-800 shadow-lg transform hover:scale-110 hover:z-10 transition-transform bg-slate-800">
